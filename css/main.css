@@ -961,8 +961,8 @@ pre .javascript .function {
   padding: 0 10px;
 }
 .headband {
-  background: url("../../image/bg.jpg");
-  height: 300px;
+  background: url("../../image/header-bg.jpg");
+  height: 180px;
 }
 .site-meta {
   flex-grow: 1;
@@ -1168,7 +1168,7 @@ pre .javascript .function {
 }
 .links-of-author a::before,
 .links-of-author span.exturl::before {
-  background: #bdffff;
+  background: #5b332d;
   border-radius: 50%;
   content: ' ';
   display: inline-block;
@@ -1498,8 +1498,8 @@ pre .javascript .function {
   padding: 0 10px;
 }
 .headband {
-  background: url("../../image/bg.jpg");
-  height: 300px;
+  background: url("../../image/header-bg.jpg");
+  height: 180px;
 }
 .site-meta {
   flex-grow: 1;
