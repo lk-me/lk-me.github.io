@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>【零零碎碎的技术】博客搭建</title>
+    <url>/2021/04/25/blog%E7%9A%84%E6%90%AD%E5%BB%BA/</url>
+    <content><![CDATA[<h1 id="blog的搭建"><a href="#blog的搭建" class="headerlink" title="blog的搭建"></a>blog的搭建</h1><p><em><strong>此博客是github，用hexo，并用使用next主题进行配置和搭建。</strong></em></p>
+<span id="more"></span>
+
+<p><strong>吐槽一下，作为一名纯种的后端搭建blog，尽管网上有说明，但是还是觉得有些许吃力。特别是我换顶部图片，简直是我一步一步试出来的</strong></p>
+<p>搭建步骤</p>
+<ul>
+<li>注册一个github，并且新建一个名字一样的github仓库</li>
+<li>配置本地的hexo环境</li>
+<li>下载next主题</li>
+<li>直接在<code>_posts</code>下开始写博客</li>
+<li>大功告成</li>
+</ul>
+<p>注意：</p>
+<h4 id="问题1：背景图片更换"><a href="#问题1：背景图片更换" class="headerlink" title="问题1：背景图片更换"></a>问题1：背景图片更换</h4><p>解决：在<code>main.styl</code>加入<code>@import &quot;_custom/styles.styl&quot;</code>，背景图片放在<code>themes\next\source\images</code>文件夹中，本地创建<code>themes\next\source\css\ _custom\style.styl</code>文件。</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line">body &#123; </span><br><span class="line">background: url(<span class="regexp">/images/</span>图片名);</span><br><span class="line">background-repeat: no-repeat;<span class="comment">// 设定背景图片非重复填充</span></span><br><span class="line">background-attachment: fixed;<span class="comment">// 设置背景图片不随页面滚动</span></span><br><span class="line">background-position: <span class="number">50</span>% <span class="number">50</span>%;<span class="comment">// 设置背景图片位置</span></span><br><span class="line">background-size: cover<span class="comment">//</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h4 id="问题2：顶部图片更换"><a href="#问题2：顶部图片更换" class="headerlink" title="问题2：顶部图片更换"></a>问题2：顶部图片更换</h4><p>解决：在<code>headerband.styl</code>中插入下面那句话，背景图片放在站点的source/image下</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line">.headband &#123;</span><br><span class="line">  <span class="comment">//background: $headband-bg;</span></span><br><span class="line">    background: url(<span class="string">&#x27;../../image/header-bg.jpg&#x27;</span>);</span><br><span class="line">  height: 180px;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+]]></content>
+      <tags>
+        <tag>零零碎碎的技术</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>【Linux技术分享】systemctl和service启动服务</title>
+    <url>/2021/04/25/systemctl%E5%92%8Cservice/</url>
+    <content><![CDATA[<h1 id="Linux开启自启服务器"><a href="#Linux开启自启服务器" class="headerlink" title="Linux开启自启服务器"></a>Linux开启自启服务器</h1><p><em><strong>网上很多介绍systemctl和service的区别和使用，我觉得都没有说到点子上，本文介绍这两个自启动命令，并且加自己经常使用具体方法。</strong></em></p>
+<span id="more"></span>
+<h2 id="systemctl"><a href="#systemctl" class="headerlink" title="systemctl"></a>systemctl</h2><ol>
+<li><p>背景说明</p>
+<blockquote>
+<p>systemd，当系统启动之后systemd就会成功系统的第一个进程，而我们这个systemctl命令就是systemd命令中最重要的命令之一，用于管理系统。</p>
+</blockquote>
+<blockquote>
+<p>systemctl命令在centos6及以下版本是不支持的，调用这个命令会报<code>命令未找到</code> or <code>command not found</code>错误,但是在7以上Linux为了提高系统的启动速度，尽可能的增加多个进程同时启动，所以就支持了systemd，也就是systemctl命令。</p>
+</blockquote>
+</li>
+<li><p>调用方法</p>
+<table>
+<thead>
+<tr>
+<th align="left">systemctl 命令</th>
+<th align="left">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">systemctl stop</td>
+<td align="left">停止</td>
+</tr>
+<tr>
+<td align="left">systemctl start</td>
+<td align="left">开始</td>
+</tr>
+<tr>
+<td align="left">systemctl status</td>
+<td align="left">查看状态</td>
+</tr>
+<tr>
+<td align="left">systemctl mark</td>
+<td align="left">注销</td>
+</tr>
+<tr>
+<td align="left">systemctl suspend</td>
+<td align="left">进入睡眠</td>
+</tr>
+<tr>
+<td align="left">systemctl hibermate</td>
+<td align="left">进入休眠</td>
+</tr>
+<tr>
+<td align="left">systemctl get-default</td>
+<td align="left">获得当前运行级别</td>
+</tr>
+</tbody></table>
+</li>
+<li><p>具体调用逻辑</p>
+<blockquote>
+<p>关键词daemon：后台服务进程，常驻。</p>
+</blockquote>
+<p> 文件保存路径主要是在以下三个路径，我自己写的service文件通常会用脚本，拷贝到下面三个路径中。</p>
+<ul>
+<li>/usr/lib/systemd/system</li>
+<li>/run/systemd/system</li>
+<li>/etc/systemd/system</li>
+</ul>
+<p> unit文件分很多种，我主要讲一下service文件和Target文件，这两个文件在写linux应用的时候用的比较多一点。</p>
+<ol>
+<li><p>service:文件扩展名为.service，用于定义系统服务，文件内容类似于desktop文件。</p>
+<p> [unit]段常用的选项</p>
+<ul>
+<li>Description：描述信息，意义性描述</li>
+<li>After：定义unit的启动顺序，晚于某服务启动</li>
+<li>Requies：依赖其他的units，当依赖的服务没启动，是不能启动此服务的，强依赖</li>
+<li>Waints：和上面一样，弱依赖</li>
+<li>Conficts：定义units冲突关系（不太明白）</li>
+</ul>
+<p> [Service]段常用选项</p>
+<ul>
+<li><p>Type：用于定义影响ExecStart和相关参数功能unit进程启动类型</p>
+<ol>
+<li>simple:默认值，这个daemon主要由execstart后面所写的字符串来启动，启动后常驻内存。</li>
+<li>forking:由 ExecStart 启动的程序通过 spawns 延伸出其他子程序来作为此 daemon 的主要服务。原生的父程序在启动结束后就会终止运行，ps：类似于管道启动</li>
+<li>oneshot:与simple类似的启动方式类似，但是工作完就结束，不常驻内存</li>
+<li>dbus:与simple类似的启动方式类似，但要设置DbusName=XX，daemon程序才会运行。</li>
+<li>notify:暂时不了解</li>
+<li>idle:与simple类似，要执行这个daemon 必须要所有的工作都顺利执行完毕后才会执行。这类的daemon 通常是开机到最后才执行即可的服务</li>
+</ol>
+</li>
+<li><p>EnvironmentFile：环境配置文件</p>
+</li>
+<li><p>ExecStart：启动脚本或者命令进程</p>
+</li>
+<li><p>ExecStop：停止脚本或者命令进程</p>
+</li>
+</ul>
+<p> [install]段常用选项</p>
+<ul>
+<li>Alias：暂时不了解</li>
+<li>RequiredBy：被哪些units所依赖，强</li>
+<li>WantedBy：如上，弱</li>
+</ul>
+</li>
+<li><p>Target：文件扩展为.target，用于模拟实现“运行级别”。</p>
+</li>
+</ol>
+<p> 举个实际性的例子，如果我完成了一个程序的编写或者脚本的编写，想让他开机启动并且常驻的话，我就可以自己写一个servcie文件，放入上文中三条路径中，类似下面这个文件。</p>
+ <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;test</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;forking</span><br><span class="line">ExecStart&#x3D;&#x2F;home&#x2F;mecry&#x2F;DemonShell</span><br><span class="line">ExecStop&#x3D;&#x2F;bin&#x2F;kill -HUP $MAINPID</span><br><span class="line">PrivateTmp&#x3D;true</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure>
+
+<p> ExecStart就是我在电脑中目标脚本，脚本中可以写一些监视开机启动的命令，输出到指定文件夹下，比如我监听笔记本闭合事件，开关机时间等，具体日志输出就在/home中的listen.txt文件下。</p>
+ <figure class="highlight sh"><table><tr><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> 1 | evtest &gt;&gt;/home/listen.txt</span><br></pre></td></tr></table></figure></li>
+</ol>
+<p><strong>注意：脚本启动都是已root权限启动，方便调试。非root权限无法启动service服务</strong></p>
+<h2 id="service"><a href="#service" class="headerlink" title="service"></a>service</h2><ol>
+<li><p>背景说明</p>
+<blockquote>
+<p>service本质为进程，是linux最早控制服务的一种手段，并不是所有linux都有这个命令，主要是在redhat，fedora，mandriva，centos中 ，这个命令的可执行程序在/sbin下（一般进程都是在/usr/bin下）</p>
+</blockquote>
+</li>
+<li><p>调用方法</p>
+<blockquote>
+<p>其实没什么调用方法，主要是看你service下的逻辑支持是什么实现，就可以怎么实现。<br> 比如<code>service dbus start</code>，其实调用dbus这个服务文件中start的函数实现。</p>
+</blockquote>
+</li>
+<li><p>具体实现</p>
+<p> 看个栗子，比如我本机的dbus服务,文件存放都存放在<code>/etc/init.d/</code>目录下。</p>
+ <figure class="highlight sh"><table><tr><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"><span class="comment">### BEGIN INIT INFO</span></span><br><span class="line"><span class="comment"># Provides:          dbus</span></span><br><span class="line"><span class="comment"># Required-Start:    $remote_fs $syslog</span></span><br><span class="line"><span class="comment"># Required-Stop:     $remote_fs $syslog</span></span><br><span class="line"><span class="comment"># Default-Start:     2 3 4 5</span></span><br><span class="line"><span class="comment"># Default-Stop:</span></span><br><span class="line"><span class="comment"># Short-Description: D-Bus systemwide message bus</span></span><br><span class="line"><span class="comment"># Description:       D-Bus is a simple interprocess messaging system, used</span></span><br><span class="line"><span class="comment">#                    for sending messages between applications.</span></span><br><span class="line"><span class="comment">### END INIT INFO</span></span><br><span class="line"><span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"><span class="comment"># Debian init.d script for D-BUS</span></span><br><span class="line"><span class="comment"># Copyright © 2003 Colin Walters &lt;walters@debian.org&gt;</span></span><br><span class="line"><span class="comment"># Copyright © 2005 Sjoerd Simons &lt;sjoerd@debian.org&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">set</span> -e</span><br><span class="line"></span><br><span class="line">DAEMON=/usr/bin/dbus-daemon</span><br><span class="line">UUIDGEN=/usr/bin/dbus-uuidgen</span><br><span class="line">UUIDGEN_OPTS=--ensure</span><br><span class="line">NAME=dbus</span><br><span class="line">DAEMONUSER=messagebus</span><br><span class="line">PIDDIR=/var/run/dbus</span><br><span class="line">PIDFILE=<span class="variable">$PIDDIR</span>/pid</span><br><span class="line">DESC=<span class="string">&quot;system message bus&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">test</span> -x <span class="variable">$DAEMON</span> || <span class="built_in">exit</span> 0</span><br><span class="line"></span><br><span class="line">. /lib/lsb/init-functions</span><br><span class="line"></span><br><span class="line"><span class="comment"># Source defaults file; edit that file to configure this script.</span></span><br><span class="line">PARAMS=<span class="string">&quot;&quot;</span></span><br><span class="line"><span class="keyword">if</span> [ -e /etc/default/dbus ]; <span class="keyword">then</span></span><br><span class="line">. /etc/default/dbus</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">create_machineid</span></span>() &#123;</span><br><span class="line"><span class="comment"># Create machine-id file</span></span><br><span class="line"><span class="keyword">if</span> [ -x <span class="variable">$UUIDGEN</span> ]; <span class="keyword">then</span></span><br><span class="line">    <span class="variable">$UUIDGEN</span> <span class="variable">$UUIDGEN_OPTS</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">start_it_up()</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">if</span> [ ! -d <span class="variable">$PIDDIR</span> ]; <span class="keyword">then</span></span><br><span class="line">    mkdir -p <span class="variable">$PIDDIR</span></span><br><span class="line">    chown <span class="variable">$DAEMONUSER</span> <span class="variable">$PIDDIR</span></span><br><span class="line">    chgrp <span class="variable">$DAEMONUSER</span> <span class="variable">$PIDDIR</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> ! mountpoint -q /proc/ ; <span class="keyword">then</span></span><br><span class="line">    log_failure_msg <span class="string">&quot;Can&#x27;t start <span class="variable">$DESC</span> - /proc is not mounted&quot;</span></span><br><span class="line">    <span class="built_in">return</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ -e <span class="variable">$PIDFILE</span> ]; <span class="keyword">then</span></span><br><span class="line">    <span class="keyword">if</span> <span class="variable">$0</span> status &gt; /dev/null ; <span class="keyword">then</span></span><br><span class="line">    log_success_msg <span class="string">&quot;<span class="variable">$DESC</span> already started; not starting.&quot;</span></span><br><span class="line">    <span class="built_in">return</span></span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    log_success_msg <span class="string">&quot;Removing stale PID file <span class="variable">$PIDFILE</span>.&quot;</span></span><br><span class="line">    rm -f <span class="variable">$PIDFILE</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line">create_machineid</span><br><span class="line"></span><br><span class="line">log_daemon_msg <span class="string">&quot;Starting <span class="variable">$DESC</span>&quot;</span> <span class="string">&quot;<span class="variable">$NAME</span>&quot;</span></span><br><span class="line">start-stop-daemon --start --quiet --pidfile <span class="variable">$PIDFILE</span> \</span><br><span class="line">    --<span class="built_in">exec</span> <span class="variable">$DAEMON</span> -- --system <span class="variable">$PARAMS</span></span><br><span class="line">log_end_msg $?</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">shut_it_down()</span><br><span class="line">&#123;</span><br><span class="line">log_daemon_msg <span class="string">&quot;Stopping <span class="variable">$DESC</span>&quot;</span> <span class="string">&quot;<span class="variable">$NAME</span>&quot;</span></span><br><span class="line">start-stop-daemon --stop --retry 5 --quiet --oknodo --pidfile <span class="variable">$PIDFILE</span> \</span><br><span class="line">    --user <span class="variable">$DAEMONUSER</span></span><br><span class="line"><span class="comment"># We no longer include these arguments so that start-stop-daemon</span></span><br><span class="line"><span class="comment"># can do its job even given that we may have been upgraded.</span></span><br><span class="line"><span class="comment"># We rely on the pidfile being sanely managed</span></span><br><span class="line"><span class="comment"># --exec $DAEMON -- --system $PARAMS</span></span><br><span class="line">log_end_msg $?</span><br><span class="line">rm -f <span class="variable">$PIDFILE</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">reload_it()</span><br><span class="line">&#123;</span><br><span class="line">create_machineid</span><br><span class="line">log_action_begin_msg <span class="string">&quot;Reloading <span class="variable">$DESC</span> config&quot;</span></span><br><span class="line">dbus-send --print-reply --system --<span class="built_in">type</span>=method_call \</span><br><span class="line">            --dest=org.freedesktop.DBus \</span><br><span class="line">            / org.freedesktop.DBus.ReloadConfig &gt; /dev/null</span><br><span class="line"><span class="comment"># hopefully this is enough time for dbus to reload it&#x27;s config file.</span></span><br><span class="line">log_action_end_msg $?</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">case</span> <span class="string">&quot;<span class="variable">$1</span>&quot;</span> <span class="keyword">in</span></span><br><span class="line">start)</span><br><span class="line">    start_it_up</span><br><span class="line">;;</span><br><span class="line">stop)</span><br><span class="line">    shut_it_down</span><br><span class="line">;;</span><br><span class="line">reload|force-reload)</span><br><span class="line">    reload_it</span><br><span class="line">;;</span><br><span class="line">restart)</span><br><span class="line">    shut_it_down</span><br><span class="line">    start_it_up</span><br><span class="line">;;</span><br><span class="line">status)</span><br><span class="line">    status_of_proc -p <span class="variable">$PIDFILE</span> <span class="variable">$DAEMON</span> <span class="variable">$NAME</span> &amp;&amp; <span class="built_in">exit</span> 0 || <span class="built_in">exit</span> $?</span><br><span class="line">    ;;</span><br><span class="line">*)</span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;Usage: /etc/init.d/<span class="variable">$NAME</span> &#123;start|stop|reload|restart|force-reload|status&#125;&quot;</span> &gt;&amp;2</span><br><span class="line">    <span class="built_in">exit</span> 2</span><br><span class="line">;;</span><br><span class="line"><span class="keyword">esac</span></span><br></pre></td></tr></table></figure>
+<p> 说明：实际上dbus的service，就是一个.sh脚本，如果有C或者sh的基础就很好弄懂是什么意思，比如<code>service dbus start</code>，service进程就会从<code>/etc/init.d/</code>目录下找到dbus这个服务，这个sh脚本的<code>case</code>参数传入<code>start</code>，调用具体的实现逻辑。</p>
+<p> 再举一个简单点的例子，和实际用法。</p>
+ <figure class="highlight sh"><table><tr><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line">SERVERNAME= <span class="string">&quot;DemonShell&quot;</span></span><br><span class="line"></span><br><span class="line">start()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">echo</span>  <span class="string">&quot;start <span class="variable">$SERVERNAME</span>&quot;</span></span><br><span class="line">    /home/mecry/DemonShell</span><br><span class="line">    <span class="built_in">echo</span>  <span class="string">&quot;start <span class="variable">$SERVERNAME</span> ok!&quot;</span></span><br><span class="line">    <span class="built_in">exit</span>  0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">stop()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">echo</span>  <span class="string">&quot;stop <span class="variable">$SERVERNAME</span>&quot;</span></span><br><span class="line">    killall <span class="variable">$SERVERNAME</span></span><br><span class="line">    <span class="built_in">echo</span>  <span class="string">&quot;stop <span class="variable">$SERVERNAME</span> ok!&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">case</span>  <span class="string">&quot;<span class="variable">$1</span>&quot;</span>  <span class="keyword">in</span></span><br><span class="line">start)</span><br><span class="line">    start</span><br><span class="line">    ;;</span><br><span class="line">stop)</span><br><span class="line">    stop</span><br><span class="line">    ;;</span><br><span class="line">restart)</span><br><span class="line">    stop</span><br><span class="line">    start</span><br><span class="line">    ;;</span><br><span class="line">*)</span><br><span class="line">    <span class="built_in">echo</span>  <span class="string">&quot;usage: <span class="variable">$0</span> start|stop|restart&quot;</span></span><br><span class="line">    <span class="built_in">exit</span>  0;</span><br><span class="line"><span class="keyword">esac</span></span><br><span class="line"><span class="built_in">exit</span></span><br></pre></td></tr></table></figure>
+<p> 和上面的systemctl一样，<code>/home/mecry/DemonShell</code>是我脚本存放位置，开机控制其启动，调用service也可以控制启动和关闭此脚本，非常方便。</p>
+</li>
+</ol>
+<h2 id="systemctl和service优点缺点"><a href="#systemctl和service优点缺点" class="headerlink" title="systemctl和service优点缺点"></a>systemctl和service优点缺点</h2><pre><code>建议使用systemctl，比较规范方便
+</code></pre>
+]]></content>
+      <tags>
+        <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+</search>
