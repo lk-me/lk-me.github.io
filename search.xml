@@ -1,32 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>【零零碎碎的技术】博客搭建</title>
-    <url>/2021/04/25/blog%E7%9A%84%E6%90%AD%E5%BB%BA/</url>
-    <content><![CDATA[<h1 id="blog的搭建"><a href="#blog的搭建" class="headerlink" title="blog的搭建"></a>blog的搭建</h1><p><em><strong>此博客是github，用hexo，并用使用next主题进行配置和搭建。</strong></em></p>
-<span id="more"></span>
-
-<p><strong>吐槽一下，作为一名纯种的后端搭建blog，尽管网上有说明，但是还是觉得有些许吃力。特别是我换顶部图片，简直是我一步一步试出来的</strong></p>
-<p>搭建步骤</p>
-<ul>
-<li>注册一个github，并且新建一个名字一样的github仓库</li>
-<li>配置本地的hexo环境</li>
-<li>下载next主题</li>
-<li>直接在<code>_posts</code>下开始写博客</li>
-<li>大功告成</li>
-</ul>
-<p>注意：</p>
-<h4 id="问题1：背景图片更换"><a href="#问题1：背景图片更换" class="headerlink" title="问题1：背景图片更换"></a>问题1：背景图片更换</h4><p>解决：在<code>main.styl</code>加入<code>@import &quot;_custom/styles.styl&quot;</code>，背景图片放在<code>themes\next\source\images</code>文件夹中，本地创建<code>themes\next\source\css\ _custom\style.styl</code>文件。</p>
-<figure class="highlight js"><table><tr><td class="code"><pre><span class="line">body &#123; </span><br><span class="line">background: url(<span class="regexp">/images/</span>图片名);</span><br><span class="line">background-repeat: no-repeat;<span class="comment">// 设定背景图片非重复填充</span></span><br><span class="line">background-attachment: fixed;<span class="comment">// 设置背景图片不随页面滚动</span></span><br><span class="line">background-position: <span class="number">50</span>% <span class="number">50</span>%;<span class="comment">// 设置背景图片位置</span></span><br><span class="line">background-size: cover<span class="comment">//</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<h4 id="问题2：顶部图片更换"><a href="#问题2：顶部图片更换" class="headerlink" title="问题2：顶部图片更换"></a>问题2：顶部图片更换</h4><p>解决：在<code>headerband.styl</code>中插入下面那句话，背景图片放在站点的source/image下</p>
-<figure class="highlight js"><table><tr><td class="code"><pre><span class="line">.headband &#123;</span><br><span class="line">  <span class="comment">//background: $headband-bg;</span></span><br><span class="line">    background: url(<span class="string">&#x27;../../image/header-bg.jpg&#x27;</span>);</span><br><span class="line">  height: 180px;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-]]></content>
-      <tags>
-        <tag>零零碎碎的技术</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>【Linux技术分享】systemctl和service启动服务</title>
     <url>/2021/04/25/systemctl%E5%92%8Cservice/</url>
     <content><![CDATA[<h1 id="Linux开启自启服务器"><a href="#Linux开启自启服务器" class="headerlink" title="Linux开启自启服务器"></a>Linux开启自启服务器</h1><p><em><strong>网上很多介绍systemctl和service的区别和使用，我觉得都没有说到点子上，本文介绍这两个自启动命令，并且加自己经常使用具体方法。</strong></em></p>
@@ -160,6 +134,41 @@
 ]]></content>
       <tags>
         <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>【零零碎碎的技术】博客搭建</title>
+    <url>/2021/04/20/blog%E7%9A%84%E6%90%AD%E5%BB%BA/</url>
+    <content><![CDATA[<h1 id="blog的搭建"><a href="#blog的搭建" class="headerlink" title="blog的搭建"></a>blog的搭建</h1><p><em><strong>此博客是github，用hexo，并用使用next主题进行配置和搭建。</strong></em></p>
+<span id="more"></span>
+
+<p><strong>吐槽一下，作为一名纯种的后端搭建blog，尽管网上有说明，但是还是觉得有些许吃力。特别是我换顶部图片，简直是我一步一步试出来的</strong></p>
+<p>搭建步骤</p>
+<ul>
+<li>注册一个github，并且新建一个名字一样的github仓库</li>
+<li>配置本地的hexo环境</li>
+<li>下载next主题</li>
+<li>直接在<code>_posts</code>下开始写博客</li>
+<li>大功告成</li>
+</ul>
+<p>注意：</p>
+<h4 id="问题1：背景图片更换"><a href="#问题1：背景图片更换" class="headerlink" title="问题1：背景图片更换"></a>问题1：背景图片更换</h4><p>解决：在<code>main.styl</code>加入<code>@import &quot;_custom/styles.styl&quot;</code>，背景图片放在<code>themes\next\source\images</code>文件夹中，本地创建<code>themes\next\source\css\ _custom\style.styl</code>文件。</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line">body &#123; </span><br><span class="line">background: url(<span class="regexp">/images/</span>图片名);</span><br><span class="line">background-repeat: no-repeat;<span class="comment">// 设定背景图片非重复填充</span></span><br><span class="line">background-attachment: fixed;<span class="comment">// 设置背景图片不随页面滚动</span></span><br><span class="line">background-position: <span class="number">50</span>% <span class="number">50</span>%;<span class="comment">// 设置背景图片位置</span></span><br><span class="line">background-size: cover<span class="comment">//</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h4 id="问题2：顶部图片更换"><a href="#问题2：顶部图片更换" class="headerlink" title="问题2：顶部图片更换"></a>问题2：顶部图片更换</h4><p>解决：在<code>headerband.styl</code>中插入下面那句话，背景图片放在站点的source/image下</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line">.headband &#123;</span><br><span class="line">  <span class="comment">//background: $headband-bg;</span></span><br><span class="line">    background: url(<span class="string">&#x27;../../image/header-bg.jpg&#x27;</span>);</span><br><span class="line">  height: 180px;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="问题3：文章置顶"><a href="#问题3：文章置顶" class="headerlink" title="问题3：文章置顶"></a>问题3：文章置顶</h4><p>解决：直接复制替换node_modules/hexo-generator-index/lib/generator.js的内容</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line"><span class="meta">&#x27;use strict&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> pagination = <span class="built_in">require</span>(<span class="string">&#x27;hexo-pagination&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = <span class="function"><span class="keyword">function</span>(<span class="params">locals</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> config = <span class="built_in">this</span>.config;</span><br><span class="line">  <span class="keyword">var</span> posts = locals.posts.sort(config.index_generator.order_by);</span><br><span class="line"></span><br><span class="line">  posts.data = posts.data.sort(<span class="function"><span class="keyword">function</span>(<span class="params">a, b</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">if</span>(a.top &amp;&amp; b.top) &#123;</span><br><span class="line">          <span class="keyword">if</span>(a.top == b.top) <span class="keyword">return</span> b.date - a.date;</span><br><span class="line">          <span class="keyword">else</span> <span class="keyword">return</span> b.top - a.top;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">if</span>(a.top &amp;&amp; !b.top) &#123;</span><br><span class="line">          <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">if</span>(!a.top &amp;&amp; b.top) &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">return</span> b.date - a.date;</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">var</span> paginationDir = config.pagination_dir || <span class="string">&#x27;page&#x27;</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> pagination(<span class="string">&#x27;&#x27;</span>, posts, &#123;</span><br><span class="line">    perPage: config.index_generator.per_page,</span><br><span class="line">    layout: [<span class="string">&#x27;index&#x27;</span>, <span class="string">&#x27;archive&#x27;</span>],</span><br><span class="line">    format: paginationDir + <span class="string">&#x27;/%d/&#x27;</span>,</span><br><span class="line">    data: &#123;</span><br><span class="line">      __index: <span class="literal">true</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>配置插件</p>
+<p>$ npm uninstall hexo-generator-index –save</p>
+<p>$ npm install hexo-generator-index-pin-top –save</p>
+<p>然后在需要置顶的文章的Front-matter中加上top: true或者top数字top: 1：</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line">title: 置顶</span><br><span class="line">date: <span class="number">2019</span>-<span class="number">09</span>-<span class="number">09</span> <span class="number">09</span>:<span class="number">09</span>:<span class="number">09</span></span><br><span class="line">top: <span class="literal">true</span></span><br><span class="line">top: <span class="number">1</span></span><br></pre></td></tr></table></figure>
+<p>按照数字大小依次往下置顶排序</p>
+]]></content>
+      <tags>
+        <tag>零零碎碎的技术</tag>
       </tags>
   </entry>
 </search>
