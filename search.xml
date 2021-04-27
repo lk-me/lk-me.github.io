@@ -1,6 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【问题解决】vscode上go的自动补全和跳转</title>
+    <url>/2021/04/27/vscode%E4%B8%ADgo/</url>
+    <content><![CDATA[<h1 id="vscode上go自动补全问题和跳转问题"><a href="#vscode上go自动补全问题和跳转问题" class="headerlink" title="vscode上go自动补全问题和跳转问题"></a>vscode上go自动补全问题和跳转问题</h1><p><em><strong>在UOS环境下用vscode，不能跳转和自动补全。</strong></em></p>
+<span id="more"></span>
+<h2 id="ctrl不能跳转"><a href="#ctrl不能跳转" class="headerlink" title="ctrl不能跳转"></a>ctrl不能跳转</h2><p>解决：</p>
+<ol>
+<li>settings-&gt;搜索 use language server</li>
+</ol>
+<p>-&gt;Go: Use Language Server 改为非选中状态,就可以跳转了,这里是重点,重点.必须的要更改。<br>2. 设置搜索Docs Tool，把 Docs Tool改成gogetdoc或者guru试试，我的用guru就可以。</p>
+<h2 id="自动补全失效"><a href="#自动补全失效" class="headerlink" title="自动补全失效"></a>自动补全失效</h2><p>解决：<br>在升级到 1.11后， go加入了go module这一特性， 支持相对路径的导入包，这样在$GOPATH之外的地方也可以进行项目开发。</p>
+<ol>
+<li>但是vscode中很多插件只能工作在 $GOPATH下， 其中最重要的代码智能提示也是如此代码提示主要由 github.com/mdemsky/gocode 这个模块负责， 为了支持go module， 要使用新的gocode模块，项目地址为 github.com/stamblerre/gocode， 为了更新插件</li>
+</ol>
+<p>将$GOPATH/bin 中的 gocode 可执行文件删掉</p>
+<ol start="2">
+<li><p>go get -u -v github.com/stamblerre/gocode 获取包， 这里是不能安装的，有冲突</p>
+</li>
+<li><p>去到 $GOPATH/src/golang.org/x 这个目录下， 删除tools这个包，它和新版的 gocode不兼容，不要试图 git pull获取最新版，这个是被墙了的</p>
+</li>
+<li><p>从 <a href="https://github.com/golang/tools">https://github.com/golang/tools</a> 下载最新的tools包，clone很慢就直接下载 zip 文件， 解压到刚才原来的位置。</p>
+</li>
+<li><p>编译安装 stamblerre/gocode， go build -o $GOPATH/bin/gocode-gomod github.com/stamblerre/gocode或者直接到$GOPATH/src/github.com/stamblerre/gocode目录下执行go build</p>
+</li>
+</ol>
+<p>到此， Vscode智能提示就可以正常工作了</p>
+]]></content>
+      <tags>
+        <tag>问题解决</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【读书有感】谈谈《博弈论诡计》</title>
     <url>/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/</url>
     <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p><strong>在一个咖啡屋偶然接触到这本书，当时旁边我翻遍了隔壁书架，一群要么是《骆驼祥子》，《呐喊》，《酒馆》这种上世纪的书，或是再给我整点余秋雨的风风雨雨，或者是再搞点三毛的恩恩爱爱，想找两本王朔的或者徐华的却翻不到，碰巧遇到了，博弈论。现在想起，可能是《博弈论》前两的囚徒困境吸引住了我吧。现在距看完这本书两个月了，许多片段还能历历在目。</strong></p>

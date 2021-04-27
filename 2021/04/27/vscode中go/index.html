@@ -20,17 +20,20 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="Welcome to see me ！">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Link Mecry">
-<meta property="og:url" content="http://example.com/tags/Linux%E6%8A%80%E6%9C%AF%E5%88%86%E4%BA%AB/index.html">
+  <meta name="description" content="vscode上go自动补全问题和跳转问题在UOS环境下用vscode，不能跳转和自动补全。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【问题解决】vscode上go的自动补全和跳转">
+<meta property="og:url" content="http://example.com/2021/04/27/vscode%E4%B8%ADgo/index.html">
 <meta property="og:site_name" content="Link Mecry">
-<meta property="og:description" content="Welcome to see me ！">
+<meta property="og:description" content="vscode上go自动补全问题和跳转问题在UOS环境下用vscode，不能跳转和自动补全。">
 <meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-04-27T10:05:30.000Z">
+<meta property="article:modified_time" content="2021-04-27T05:16:47.995Z">
 <meta property="article:author" content="Mecry">
+<meta property="article:tag" content="问题解决">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="http://example.com/tags/Linux%E6%8A%80%E6%9C%AF%E5%88%86%E4%BA%AB/">
+<link rel="canonical" href="http://example.com/2021/04/27/vscode%E4%B8%ADgo/">
 
 
 <script id="page-configurations">
@@ -38,12 +41,12 @@
   CONFIG.page = {
     sidebar: "",
     isHome : false,
-    isPost : false,
+    isPost : true,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>标签: Linux技术分享 | Link Mecry</title>
+  <title>【问题解决】vscode上go的自动补全和跳转 | Link Mecry</title>
   
 
 
@@ -180,51 +183,102 @@
         <div class="content-wrap">
           
 
-          <div class="content tag">
+          <div class="content post posts-expand">
             
 
+    
   
   
-  
-  <div class="post-block">
-    <div class="posts-collapse">
-      <div class="collection-title">
-        <h2 class="collection-header">Linux技术分享
-          <small>标签</small>
-        </h2>
-      </div>
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/27/vscode%E4%B8%ADgo/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Mecry">
+      <meta itemprop="description" content="Welcome to see me ！">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Link Mecry">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【问题解决】vscode上go的自动补全和跳转
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-27 18:05:30 / 修改时间：13:16:47" itemprop="dateCreated datePublished" datetime="2021-04-27T18:05:30+08:00">2021-04-27</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-    <div class="collection-year">
-      <span class="collection-header">2021</span>
+        <h1 id="vscode上go自动补全问题和跳转问题"><a href="#vscode上go自动补全问题和跳转问题" class="headerlink" title="vscode上go自动补全问题和跳转问题"></a>vscode上go自动补全问题和跳转问题</h1><p><em><strong>在UOS环境下用vscode，不能跳转和自动补全。</strong></em></p>
+<span id="more"></span>
+<h2 id="ctrl不能跳转"><a href="#ctrl不能跳转" class="headerlink" title="ctrl不能跳转"></a>ctrl不能跳转</h2><p>解决：</p>
+<ol>
+<li>settings-&gt;搜索 use language server</li>
+</ol>
+<p>-&gt;Go: Use Language Server 改为非选中状态,就可以跳转了,这里是重点,重点.必须的要更改。<br>2. 设置搜索Docs Tool，把 Docs Tool改成gogetdoc或者guru试试，我的用guru就可以。</p>
+<h2 id="自动补全失效"><a href="#自动补全失效" class="headerlink" title="自动补全失效"></a>自动补全失效</h2><p>解决：<br>在升级到 1.11后， go加入了go module这一特性， 支持相对路径的导入包，这样在$GOPATH之外的地方也可以进行项目开发。</p>
+<ol>
+<li>但是vscode中很多插件只能工作在 $GOPATH下， 其中最重要的代码智能提示也是如此代码提示主要由 github.com/mdemsky/gocode 这个模块负责， 为了支持go module， 要使用新的gocode模块，项目地址为 github.com/stamblerre/gocode， 为了更新插件</li>
+</ol>
+<p>将$GOPATH/bin 中的 gocode 可执行文件删掉</p>
+<ol start="2">
+<li><p>go get -u -v github.com/stamblerre/gocode 获取包， 这里是不能安装的，有冲突</p>
+</li>
+<li><p>去到 $GOPATH/src/golang.org/x 这个目录下， 删除tools这个包，它和新版的 gocode不兼容，不要试图 git pull获取最新版，这个是被墙了的</p>
+</li>
+<li><p>从 <a target="_blank" rel="noopener" href="https://github.com/golang/tools">https://github.com/golang/tools</a> 下载最新的tools包，clone很慢就直接下载 zip 文件， 解压到刚才原来的位置。</p>
+</li>
+<li><p>编译安装 stamblerre/gocode， go build -o $GOPATH/bin/gocode-gomod github.com/stamblerre/gocode或者直接到$GOPATH/src/github.com/stamblerre/gocode目录下执行go build</p>
+</li>
+</ol>
+<p>到此， Vscode智能提示就可以正常工作了</p>
+
     </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+    
+    
+    
 
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2021-04-25T11:34:48+08:00"
-              content="2021-04-25">
-          04-25
-        </time>
-      </div>
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/" rel="tag"># 问题解决</a>
+          </div>
 
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/04/25/systemctl%E5%92%8Cservice/" itemprop="url">
-            <span itemprop="name">【Linux技术分享】systemctl和service启动服务</span>
-          </a>
-      </div>
+        
 
-    </header>
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/" rel="prev" title="【读书有感】谈谈《博弈论诡计》">
+      <i class="fa fa-chevron-left"></i> 【读书有感】谈谈《博弈论诡计》
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
   </article>
-
-    </div>
-  </div>
   
   
-  
-
   
 
 
@@ -277,6 +331,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#vscode%E4%B8%8Ago%E8%87%AA%E5%8A%A8%E8%A1%A5%E5%85%A8%E9%97%AE%E9%A2%98%E5%92%8C%E8%B7%B3%E8%BD%AC%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">vscode上go自动补全问题和跳转问题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ctrl%E4%B8%8D%E8%83%BD%E8%B7%B3%E8%BD%AC"><span class="nav-number">1.1.</span> <span class="nav-text">ctrl不能跳转</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E5%8A%A8%E8%A1%A5%E5%85%A8%E5%A4%B1%E6%95%88"><span class="nav-number">1.2.</span> <span class="nav-text">自动补全失效</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
