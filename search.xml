@@ -279,6 +279,8 @@
 <p>然后在需要置顶的文章的Front-matter中加上top: true或者top数字top: 1：</p>
 <figure class="highlight js"><table><tr><td class="code"><pre><span class="line">title: 置顶</span><br><span class="line">date: <span class="number">2019</span>-<span class="number">09</span>-<span class="number">09</span> <span class="number">09</span>:<span class="number">09</span>:<span class="number">09</span></span><br><span class="line">top: <span class="literal">true</span></span><br><span class="line">top: <span class="number">1</span></span><br></pre></td></tr></table></figure>
 <p>按照数字大小依次往下置顶排序</p>
+<h4 id="问题4：博客提交"><a href="#问题4：博客提交" class="headerlink" title="问题4：博客提交"></a>问题4：博客提交</h4><p>解决：调用<code>blog_push.sh</code>是提交，<code>blog_localtest.sh</code>是在本地查看</p>
+<h4 id="问题5：blog文章中图片添加"><a href="#问题5：blog文章中图片添加" class="headerlink" title="问题5：blog文章中图片添加"></a>问题5：blog文章中图片添加</h4><p>解决：在<code>_post</code>目录下创建一个同名文件夹，放图片，在文章中插入<code>![图1](1.png)</code>。</p>
 ]]></content>
       <tags>
         <tag>零零碎碎的技术</tag>
