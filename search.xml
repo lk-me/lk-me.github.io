@@ -1,6 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【windows技术】利用go搭建纯文件http服务器，并生成dll</title>
+    <url>/2021/06/04/go%E6%90%AD%E5%BB%BAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/</url>
+    <content><![CDATA[<h1 id="利用go搭建纯文件http服务"><a href="#利用go搭建纯文件http服务" class="headerlink" title="利用go搭建纯文件http服务"></a>利用go搭建纯文件http服务</h1><p><em><strong>在windows下使用go搭建纯文件服务器，并生成标准dll导出文件。</strong></em></p>
+<span id="more"></span>
+
+<h2 id="go实现HTTP文件服务器"><a href="#go实现HTTP文件服务器" class="headerlink" title="go实现HTTP文件服务器"></a>go实现HTTP文件服务器</h2><ol>
+<li><p>利用<code>net/http</code>库文件创建<code>http</code>服务</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">serveApp</span><span class="params">(stop &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;, port <span class="keyword">int</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line"></span><br><span class="line">mux := http.NewServeMux()</span><br><span class="line">pathlist := GetLogicalDrives()<span class="comment">//获取windows卷标</span></span><br><span class="line">mux.Handle(<span class="string">&quot;/&quot;</span>, http.StripPrefix(<span class="string">&quot;/&quot;</span>, http.FileServer(http.Dir(<span class="string">&quot;/&quot;</span>))))</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> _, v := <span class="keyword">range</span> pathlist &#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;path:&quot;</span>, v)</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(v) == <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">continue</span></span><br><span class="line">	&#125;</span><br><span class="line">	Path := <span class="string">&quot;/&quot;</span> + v + (<span class="string">&quot;/&quot;</span>)</span><br><span class="line">	Dir := v + <span class="string">&quot;:&quot;</span></span><br><span class="line">	mux.Handle(strings.ToLower(Path), http.StripPrefix(strings.ToLower(Path), http.FileServer(http.Dir(strings.ToLower(Dir)))))</span><br><span class="line">	fmt.Println(<span class="string">&quot;path:&quot;</span>, Path)</span><br><span class="line">	fmt.Println(<span class="string">&quot;Dir:&quot;</span>, Dir)</span><br><span class="line">&#125;</span><br><span class="line">service := <span class="keyword">string</span>(<span class="string">&quot;:&quot;</span>) + strconv.FormatInt(<span class="keyword">int64</span>(port), <span class="number">10</span>)</span><br><span class="line"><span class="keyword">return</span> serve(service, mux, stop)</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>利用<code>syscall</code>标准系统库，遍历<code>windows</code>的磁盘卷标</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">GetLogicalDrives</span><span class="params">()</span> []<span class="title">string</span></span> &#123;</span><br><span class="line">kernel32 := syscall.MustLoadDLL(<span class="string">&quot;kernel32.dll&quot;</span>)<span class="comment">//windows系统标准库</span></span><br><span class="line">GetLogicalDrives := kernel32.MustFindProc(<span class="string">&quot;GetLogicalDrives&quot;</span>)</span><br><span class="line">n, _, _ := GetLogicalDrives.Call()</span><br><span class="line">s := FormatInt(<span class="keyword">int64</span>(n), <span class="number">2</span>)</span><br><span class="line"><span class="keyword">var</span> drives_all = []<span class="keyword">string</span>&#123;<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>, <span class="string">&quot;D&quot;</span>, <span class="string">&quot;E&quot;</span>, <span class="string">&quot;F&quot;</span>, <span class="string">&quot;G&quot;</span>, <span class="string">&quot;H&quot;</span>, <span class="string">&quot;I&quot;</span>, <span class="string">&quot;J&quot;</span>, <span class="string">&quot;K&quot;</span>, <span class="string">&quot;L&quot;</span>, <span class="string">&quot;M&quot;</span>, <span class="string">&quot;N&quot;</span>, <span class="string">&quot;O&quot;</span>, <span class="string">&quot;P&quot;</span>, <span class="string">&quot;Q&quot;</span>, <span class="string">&quot;R&quot;</span>, <span class="string">&quot;S&quot;</span>, <span class="string">&quot;T&quot;</span>, <span class="string">&quot;U&quot;</span>, <span class="string">&quot;V&quot;</span>, <span class="string">&quot;W&quot;</span>, <span class="string">&quot;X&quot;</span>, <span class="string">&quot;Y&quot;</span>, <span class="string">&quot;Z&quot;</span>&#125;</span><br><span class="line">temp := drives_all[<span class="number">0</span>:<span class="built_in">len</span>(s)]</span><br><span class="line"><span class="keyword">var</span> d []<span class="keyword">string</span></span><br><span class="line"><span class="keyword">for</span> i, v := <span class="keyword">range</span> s &#123;</span><br><span class="line">	<span class="keyword">if</span> v == <span class="number">49</span> &#123;</span><br><span class="line">		l := <span class="built_in">len</span>(s) - i - <span class="number">1</span></span><br><span class="line">		d = <span class="built_in">append</span>(d, temp[l])</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> _, v := <span class="keyword">range</span> d &#123;</span><br><span class="line">	<span class="comment">//	 drives = append(drives[i:], append([]string&#123;v&#125;, drives[:i]...)...)</span></span><br><span class="line">	fmt.Println(v)</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> d</span><br><span class="line">  &#125;  </span><br></pre></td></tr></table></figure></li>
+<li><p>利用<code>http</code>的server的停止机制，关闭http服务器</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">serve</span><span class="params">(addr <span class="keyword">string</span>, handler http.Handler, stop &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">s := http.Server&#123;</span><br><span class="line">	Addr:    addr,</span><br><span class="line">	Handler: handler,</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">	&lt;-stop <span class="comment">// wait for stop signal</span></span><br><span class="line">	s.Shutdown(context.Background()) <span class="comment">//停止服务器</span></span><br><span class="line">&#125;()</span><br><span class="line"><span class="keyword">return</span> s.ListenAndServe()</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="go导出dll标准导出文件"><a href="#go导出dll标准导出文件" class="headerlink" title="go导出dll标准导出文件"></a>go导出dll标准导出文件</h2><ol>
+<li><p>进入官网<code>https://gcc.gnu.org/install/binaries.html</code>，选择Microsoft -&gt; mingw64。安装MinGW-w64。</p>
+<p><img src="/2021/06/04/go%E6%90%AD%E5%BB%BAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/1.png" alt="图1"></p>
+<p><img src="/2021/06/04/go%E6%90%AD%E5%BB%BAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/1.png" alt="图2"></p>
+<p><img src="/2021/06/04/go%E6%90%AD%E5%BB%BAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/1.png" alt="图3"></p>
+</li>
+</ol>
+<ol start="2">
+<li><p>选择安装版本，选择32位或者64位的版本进行安装，如果你生成dll想为32为位的时候就要选择32位就是<code>i686</code></p>
+<p> <img src="/2021/06/04/go%E6%90%AD%E5%BB%BAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/1.png" alt="图4"></p>
+</li>
+<li><p>把<code>mingw32\bin</code>加入到环境变量中,<code>我的电脑-&gt;高级系统设置-&gt;环境变量</code>,在命令刚中输入<code>gcc -v</code>有版本信息则调试成功.</p>
+<p> <img src="/2021/06/04/go%E6%90%AD%E5%BB%BAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/1.png" alt="图5"></p>
+</li>
+<li><p>在go程序中在需要导出函数的头文件加入<code>//export </code>如下</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">//export stop</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">stop</span><span class="params">()</span></span> &#123;</span><br><span class="line">	log.Println(<span class="string">&quot;Stop Http!&quot;</span>)</span><br><span class="line">	<span class="built_in">close</span>(Stopch)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>运行下命令就OK,或者参考下我的博客中的<code>export.dat</code>脚本</p>
+</li>
+</ol>
+<blockquote>
+<p>go build -ldflags “-s -w” -o main.dll -buildmode=c-shared main.go</p>
+</blockquote>
+<ol start="6">
+<li>在导出的<code>.h</code>文件中我们需要把三行注释</li>
+</ol>
+<blockquote>
+<p>typedef <strong>SIZE_TYPE</strong> GoUintptr;</p>
+</blockquote>
+<blockquote>
+<p>typedef float _Complex GoComplex64;</p>
+</blockquote>
+<blockquote>
+<p>typedef double _Complex GoComplex128;</p>
+</blockquote>
+]]></content>
+      <tags>
+        <tag>windows技术</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【Linux技术分享】利用QT的clipboard库监听和设置剪切板</title>
     <url>/2021/06/02/UOS%E5%88%A9%E7%94%A8QT%E7%9B%91%E5%90%AC%E5%92%8C%E8%AE%BE%E7%BD%AE%E5%89%AA%E5%88%87%E6%9D%BF/</url>
     <content><![CDATA[<h1 id="利用QT的clipboard库监听和设置剪切板"><a href="#利用QT的clipboard库监听和设置剪切板" class="headerlink" title="利用QT的clipboard库监听和设置剪切板"></a>利用QT的clipboard库监听和设置剪切板</h1><p><em><strong>使用QT的Clipboard库，监听和设置uos剪切板变化。经过dbus接口，把uos的剪切板暴露出来，从而进行设置和监听。代码详情请看<code>https://github.com/MecryWork/uos-clipboard-manage</code></strong></em></p>
