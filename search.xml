@@ -3,7 +3,7 @@
   <entry>
     <title>【windows技术】利用go搭建纯文件http服务器，并生成dll</title>
     <url>/2021/06/04/go%E6%90%AD%E5%BB%BAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/</url>
-    <content><![CDATA[<h1 id="利用go搭建纯文件http服务"><a href="#利用go搭建纯文件http服务" class="headerlink" title="利用go搭建纯文件http服务"></a>利用go搭建纯文件http服务</h1><p><em><strong>在windows下使用go搭建纯文件服务器，并生成标准dll导出文件。</strong></em></p>
+    <content><![CDATA[<h1 id="利用go搭建纯文件http服务"><a href="#利用go搭建纯文件http服务" class="headerlink" title="利用go搭建纯文件http服务"></a>利用go搭建纯文件http服务</h1><p><em><strong>在windows下使用go搭建纯文件服务器，并生成标准dll导出文件。详细代码查看<code>https://github.com/MecryWork/go-file-system</code></strong></em></p>
 <span id="more"></span>
 
 <h2 id="go实现HTTP文件服务器"><a href="#go实现HTTP文件服务器" class="headerlink" title="go实现HTTP文件服务器"></a>go实现HTTP文件服务器</h2><ol>
