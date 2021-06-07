@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="fuse实现原理本文是对httpdirfs源码的一个学习,源码在https:&#x2F;&#x2F;github.com&#x2F;fangfufu&#x2F;httpdirfs.实现在linux系统下利用fuse技术,把http文件服务器挂载至本地路径.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Linux技术分享】Linux下fuse的实现原理">
+<meta property="og:url" content="http://example.com/2021/06/07/Linux%E4%B8%8Bfuse%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/index.html">
+<meta property="og:site_name" content="Link Mecry">
+<meta property="og:description" content="fuse实现原理本文是对httpdirfs源码的一个学习,源码在https:&#x2F;&#x2F;github.com&#x2F;fangfufu&#x2F;httpdirfs.实现在linux系统下利用fuse技术,把http文件服务器挂载至本地路径.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2021/06/07/Linux%E4%B8%8Bfuse%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/1.png">
+<meta property="article:published_time" content="2021-06-07T02:05:30.000Z">
+<meta property="article:modified_time" content="2021-06-07T08:38:15.852Z">
+<meta property="article:author" content="Mecry">
+<meta property="article:tag" content="linux技术">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2021/06/07/Linux%E4%B8%8Bfuse%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/1.png">
+
+<link rel="canonical" href="http://example.com/2021/06/07/Linux%E4%B8%8Bfuse%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Linux技术分享】Linux下fuse的实现原理 | Link Mecry</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div id="id-header-inner" class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Link Mecry</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Mecry Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/06/07/Linux%E4%B8%8Bfuse%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Mecry">
+      <meta itemprop="description" content="Welcome to see me ！">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Link Mecry">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Linux技术分享】Linux下fuse的实现原理
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-06-07 10:05:30 / 修改时间：16:38:15" itemprop="dateCreated datePublished" datetime="2021-06-07T10:05:30+08:00">2021-06-07</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="fuse实现原理"><a href="#fuse实现原理" class="headerlink" title="fuse实现原理"></a>fuse实现原理</h1><p><em><strong>本文是对httpdirfs源码的一个学习,源码在<code>https://github.com/fangfufu/httpdirfs</code>.实现在linux系统下利用fuse技术,把http文件服务器挂载至本地路径.</strong></em></p>
+<span id="more"></span>
+
+<h2 id="fuse原理"><a href="#fuse原理" class="headerlink" title="fuse原理"></a>fuse原理</h2><ol>
+<li><p>流程介绍<br><img src="/2021/06/07/Linux%E4%B8%8Bfuse%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/1.png" alt="图1"></p>
+<p> 图中可以看出,fuse和ext3,ntfs都是文件系统模块.我们使用fuse实现文件系统并挂在至/tmp/fuse上,当我们对此目录执行ls命令时,内核的fuse从vfs中获取参数,调用我们自己实现ls的函数,得到结果再从vfs返回至ls.简单来说就是<code>ls-&gt;fuse挂载文件夹-&gt;VFS-&gt;libfuse-&gt;自己实现的函数-&gt;结果返回至ls</code></p>
+</li>
+<li><p>简单demo</p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> FUSE_USE_VERSION 26</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fuse.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">ou_readdir</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* path, <span class="keyword">void</span>* buf, <span class="keyword">fuse_fill_dir_t</span> filler,</span></span></span><br><span class="line"><span class="function"><span class="params">					<span class="keyword">off_t</span> offset, struct fuse_file_info* fi)</span><span class="comment">//读取目录</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> filler(buf, <span class="string">&quot;hello-world&quot;</span>, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">ou_getattr</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* path, struct stat* st)</span><span class="comment">//获取状态</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="built_in">memset</span>(st, <span class="number">0</span>, <span class="keyword">sizeof</span>(struct stat));</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (<span class="built_in">strcmp</span>(path, <span class="string">&quot;/&quot;</span>) == <span class="number">0</span>)</span><br><span class="line">		st-&gt;st_mode = <span class="number">0755</span> | S_IFDIR;</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		st-&gt;st_mode = <span class="number">0644</span> | S_IFREG;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">fuse_operations</span> <span class="title">oufs_ops</span> =</span> &#123;<span class="comment">//fuse设置响应函数</span></span><br><span class="line">	.readdir    =   ou_readdir,</span><br><span class="line">	.getattr    =   ou_getattr,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span>* argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> fuse_main(argc, argv, &amp;oufs_ops, <span class="literal">NULL</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> cmake编译成功后会看到生成的可执行文件 fusehello。建立一个挂载点 /tmp/mnt，然后运行</p>
+<blockquote>
+<p>./fusehello /tmp/mnt<br> 成功后试试“ls /tmp/mnt”，就能看到一个文件“hello-world”。要调试的时候可以加上“-d”选项，这样就能看到 FUSE 和自己 printf 的调试输出。代码第一行指定了要使用的 FUSE API 版本。这里使用的是 2.6 版本。</p>
+</blockquote>
+</li>
+<li><p>简单demo2,实现创建/删除普通文件的功能,加了<code>ou_create</code>,和<code>ou_unlink</code>两个函数,在fuse上被调用.</p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">ou_create</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* path, <span class="keyword">mode_t</span> mode, struct fuse_file_info* fi)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">ou_entry</span>* <span class="title">o</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_node</span>* <span class="title">n</span>;</span><span class="comment">//使用链表,文件放入链表中方便删除增加</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (<span class="built_in">strlen</span>(path + <span class="number">1</span>) &gt; MAX_NAMELEN)</span><br><span class="line">		<span class="keyword">return</span> -ENAMETOOLONG;</span><br><span class="line"></span><br><span class="line">	list_for_each (n, &amp;entries) &#123;</span><br><span class="line">		o = list_entry(n, struct ou_entry, node);</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">strcmp</span>(path + <span class="number">1</span>, o-&gt;name) == <span class="number">0</span>)</span><br><span class="line">			<span class="keyword">return</span> -EEXIST;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	o = <span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(struct ou_entry));</span><br><span class="line">	<span class="built_in">strcpy</span>(o-&gt;name, path + <span class="number">1</span>); <span class="comment">/* skip leading &#x27;/&#x27; */</span></span><br><span class="line">	o-&gt;mode = mode | S_IFREG;</span><br><span class="line">	list_add_prev(&amp;o-&gt;node, &amp;entries);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">ou_unlink</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* path)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_node</span> *<span class="title">n</span>, *<span class="title">p</span>;</span></span><br><span class="line"></span><br><span class="line">	list_for_each_safe (n, p, &amp;entries) &#123;</span><br><span class="line">		<span class="class"><span class="keyword">struct</span> <span class="title">ou_entry</span>* <span class="title">o</span> =</span> list_entry(n, struct ou_entry, node);</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">strcmp</span>(path + <span class="number">1</span>, o-&gt;name) == <span class="number">0</span>) &#123;</span><br><span class="line">			__list_del(n);</span><br><span class="line">			<span class="built_in">free</span>(o);</span><br><span class="line">			<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> -ENOENT;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<ul>
+<li><strong>总结</strong>:具体还是使用的linux中的fuse的库文件,来实现我们自己的fuse文件系统,我们只需要参照<code>fuse.h</code>文件的函数指针.需要实现哪个功能,就开始自己进行实现,最后把结构体传入至fuse,就可以成功编写一个属于我们自己的文件系统了.</li>
+</ul>
+<h2 id="fuse-http的实现"><a href="#fuse-http的实现" class="headerlink" title="fuse+http的实现"></a>fuse+http的实现</h2><p><strong>利用fuse的机制,再获取http接口,实现把http文件系统的文件挂载至本机指定文件夹中,虽然此程序是用纯C编写的,但是我们已知具体实现功能,并了解部分fuse实现原理,所以我们只需要解读关键函数的实现就能大致了解实现流程</strong></p>
+<ol>
+<li><p>link.c和link.h加载http中的Link中的路径转换至磁盘本地路径.</p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">LinkTable *<span class="title">LinkTable_disk_open</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *dirn)</span><span class="comment">//从磁盘加载链接表</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">char</span> *metadirn = path_append(META_DIR, dirn);</span><br><span class="line">	<span class="keyword">char</span> *path;</span><br><span class="line">	<span class="comment">//http中的路径进行选择截取</span></span><br><span class="line">	<span class="keyword">if</span> (metadirn[strnlen(metadirn, MAX_PATH_LEN)] == <span class="string">&#x27;/&#x27;</span>) &#123;</span><br><span class="line">		path = path_append(metadirn, <span class="string">&quot;.LinkTable&quot;</span>);</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		path = path_append(metadirn, <span class="string">&quot;/.LinkTable&quot;</span>);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">//打开路径开始获取目标文件</span></span><br><span class="line">	FILE *fp = fopen(path, <span class="string">&quot;r&quot;</span>);</span><br><span class="line">	<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;path&lt;%s&gt;\n&quot;</span>,path);</span><br><span class="line"></span><br><span class="line">	<span class="built_in">free</span>(metadirn);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!fp) &#123;</span><br><span class="line">		<span class="built_in">free</span>(path);</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	LinkTable *linktbl = CALLOC(<span class="number">1</span>, <span class="keyword">sizeof</span>(LinkTable));</span><br><span class="line"></span><br><span class="line">	fread(&amp;linktbl-&gt;num, <span class="keyword">sizeof</span>(<span class="keyword">int</span>), <span class="number">1</span>, fp);</span><br><span class="line">	linktbl-&gt;links = CALLOC(linktbl-&gt;num, <span class="keyword">sizeof</span>(Link *));</span><br><span class="line">	<span class="comment">//遍历link获取所需内容,并返回</span></span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; linktbl-&gt;num; i++) &#123;</span><br><span class="line">		linktbl-&gt;links[i] = CALLOC(<span class="number">1</span>, <span class="keyword">sizeof</span>(Link));</span><br><span class="line">		fread(linktbl-&gt;links[i]-&gt;linkname, <span class="keyword">sizeof</span>(<span class="keyword">char</span>), MAX_FILENAME_LEN, fp);</span><br><span class="line">		fread(linktbl-&gt;links[i]-&gt;f_url, <span class="keyword">sizeof</span>(<span class="keyword">char</span>), MAX_PATH_LEN, fp);</span><br><span class="line">		fread(&amp;linktbl-&gt;links[i]-&gt;type, <span class="keyword">sizeof</span>(LinkType), <span class="number">1</span>, fp);</span><br><span class="line">		fread(&amp;linktbl-&gt;links[i]-&gt;content_length, <span class="keyword">sizeof</span>(<span class="keyword">size_t</span>), <span class="number">1</span>, fp);</span><br><span class="line">		fread(&amp;linktbl-&gt;links[i]-&gt;time, <span class="keyword">sizeof</span>(<span class="keyword">long</span>), <span class="number">1</span>, fp);</span><br><span class="line">		<span class="keyword">if</span> (feof(fp)) &#123;</span><br><span class="line">			<span class="comment">/* reached EOF */</span></span><br><span class="line">			<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>,</span><br><span class="line">					<span class="string">&quot;LinkTable_disk_open(): reached EOF!\n&quot;</span>);</span><br><span class="line">			LinkTable_free(linktbl);</span><br><span class="line">			LinkTable_disk_delete(dirn);</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> (ferror(fp)) &#123;</span><br><span class="line">			<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;LinkTable_disk_open(): encountered ferror!\n&quot;</span>);</span><br><span class="line">			LinkTable_free(linktbl);</span><br><span class="line">			LinkTable_disk_delete(dirn);</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> (fclose(fp)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>,</span><br><span class="line">				<span class="string">&quot;LinkTable_disk_open(): cannot close the file pointer, %s\n&quot;</span>,</span><br><span class="line">				strerror(errno));</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> linktbl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>network.c 和network.h,获取http文件服务器内容,详情请参考<code>https://curl.haxx.se/libcurl/c/threaded-ssl.html</code>这位作者也是参考此源码完成.</p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">NetworkSystem_init</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">	<span class="comment">/* ------- Global related ----------*/</span></span><br><span class="line">	<span class="comment">//初始化http的curl,如果非CURL_GLOBAL_ALL则初始化失败退出</span></span><br><span class="line">	<span class="keyword">if</span> (curl_global_init(CURL_GLOBAL_ALL)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;network_init(): curl_global_init() failed!\n&quot;</span>);</span><br><span class="line">		exit_failure();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* -------- Share related ----------*/</span></span><br><span class="line">	<span class="comment">//返回curl句柄,获取相应我curl</span></span><br><span class="line">	CURL_SHARE = curl_share_init();</span><br><span class="line">	<span class="keyword">if</span> (!(CURL_SHARE)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;network_init(): curl_share_init() failed!\n&quot;</span>);</span><br><span class="line">		exit_failure();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//给目标穿参</span></span><br><span class="line">	curl_share_setopt(CURL_SHARE, CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);</span><br><span class="line">	curl_share_setopt(CURL_SHARE, CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);</span><br><span class="line">	curl_share_setopt(CURL_SHARE, CURLSHOPT_SHARE, CURL_LOCK_DATA_SSL_SESSION);</span><br><span class="line">	<span class="comment">//thread的初始化</span></span><br><span class="line">	<span class="keyword">if</span> (pthread_mutex_init(&amp;curl_lock, <span class="literal">NULL</span>) != <span class="number">0</span>) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;network_init(): curl_lock initialisation failed!\n&quot;</span>);</span><br><span class="line">		exit_failure();</span><br><span class="line">	&#125;</span><br><span class="line">	curl_share_setopt(CURL_SHARE, CURLSHOPT_LOCKFUNC, curl_callback_lock);</span><br><span class="line">	curl_share_setopt(CURL_SHARE, CURLSHOPT_UNLOCKFUNC, curl_callback_unlock);</span><br><span class="line"></span><br><span class="line">	<span class="comment">//处理多个curl</span></span><br><span class="line">	<span class="comment">/* ------------- Multi related -----------*/</span></span><br><span class="line">	curl_multi = curl_multi_init();</span><br><span class="line">	<span class="keyword">if</span> (!curl_multi) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;network_init(): curl_multi_init() failed!\n&quot;</span>);</span><br><span class="line">		exit_failure();</span><br><span class="line">	&#125;</span><br><span class="line">	curl_multi_setopt(curl_multi, CURLMOPT_MAX_TOTAL_CONNECTIONS,</span><br><span class="line">					CONFIG.max_conns);</span><br><span class="line">	curl_multi_setopt(curl_multi, CURLMOPT_MAX_HOST_CONNECTIONS,</span><br><span class="line">					CONFIG.max_conns);</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* ------------ Initialise locks ---------*/</span></span><br><span class="line">	<span class="keyword">if</span> (pthread_mutex_init(&amp;transfer_lock, <span class="literal">NULL</span>)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>,</span><br><span class="line">				<span class="string">&quot;network_init(): transfer_lock initialisation failed!\n&quot;</span>);</span><br><span class="line">		exit_failure();</span><br><span class="line">	&#125;</span><br><span class="line">	crypto_lock_init();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>fuse_local.c和fuse_local.h,搭建本地fuse文件系统,本文上半部分已经详细介绍原理.</p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">fs_readdir</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *path, <span class="keyword">void</span> *buf, <span class="keyword">fuse_fill_dir_t</span> dir_add,<span class="keyword">off_t</span> offset, struct fuse_file_info *fi)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	(<span class="keyword">void</span>) offset;</span><br><span class="line">	(<span class="keyword">void</span>) fi;</span><br><span class="line"></span><br><span class="line">	Link *link;</span><br><span class="line">	LinkTable *linktbl;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!<span class="built_in">strcmp</span>(path, <span class="string">&quot;/&quot;</span>)) &#123;</span><br><span class="line">		linktbl = ROOT_LINK_TBL;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		linktbl = path_to_Link_LinkTable_new(path);<span class="comment">//如果非根目录,则从link中重新拉去当前目录所有文件夹,和文件从而实现文件夹的存储.缺点是要试试刷新多文件会有较高延迟</span></span><br><span class="line">		<span class="keyword">if</span>(!linktbl) &#123;</span><br><span class="line">			<span class="keyword">return</span> -ENOENT;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* start adding the links */</span></span><br><span class="line">	dir_add(buf, <span class="string">&quot;.&quot;</span>, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">	dir_add(buf, <span class="string">&quot;..&quot;</span>, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; linktbl-&gt;num; i++) &#123;</span><br><span class="line">		link = linktbl-&gt;links[i];</span><br><span class="line">		<span class="keyword">if</span> (link-&gt;type != LINK_INVALID) &#123;</span><br><span class="line">			dir_add(buf, link-&gt;linkname, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<ul>
+<li><strong>总结</strong>:通过http(curl库),和fuse(fuse库).点击当前文件夹就会从http拉去当前文件夹所有内容,从而实现了把http文件系统服务器挂在至本机磁盘中.makefile直接使用make生成可执行文件httpdirfs,然后调用如下命令即可使用<blockquote>
+<p>./httpdirfs -f –cache $URL $MOUNT_POINT</p>
+</blockquote>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/linux%E6%8A%80%E6%9C%AF/" rel="tag"># linux技术</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/06/04/go%E6%90%AD%E5%BB%BAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="prev" title="【windows技术】利用go搭建纯文件http服务器，并生成dll">
+      <i class="fa fa-chevron-left"></i> 【windows技术】利用go搭建纯文件http服务器，并生成dll
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#fuse%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">fuse实现原理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#fuse%E5%8E%9F%E7%90%86"><span class="nav-number">1.1.</span> <span class="nav-text">fuse原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#fuse-http%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.2.</span> <span class="nav-text">fuse+http的实现</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mecry"
+      src="/images/%E5%A4%B4%E5%83%8F.jpg">
+  <p class="site-author-name" itemprop="name">Mecry</p>
+  <div class="site-description" itemprop="description">Welcome to see me ！</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/MecryWork" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;MecryWork" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:Mecryhao@163.com" title="E-Mail → mailto:Mecryhao@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6036706114" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6036706114" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mecry</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>
