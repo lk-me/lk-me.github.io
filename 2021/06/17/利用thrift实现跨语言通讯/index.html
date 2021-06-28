@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="blog的搭建利用thrift的跨平台机制实现进程通讯，本机是uos系统+go语言，virtualbox是windows系统+C++，在virtualbox上增加端口转发既可实现windows与uos两者不同系统不同语言的进程通讯。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Linux技术分享】利用thrift实现跨语言通讯">
+<meta property="og:url" content="http://example.com/2021/06/17/%E5%88%A9%E7%94%A8thrift%E5%AE%9E%E7%8E%B0%E8%B7%A8%E8%AF%AD%E8%A8%80%E9%80%9A%E8%AE%AF/index.html">
+<meta property="og:site_name" content="Link Mecry">
+<meta property="og:description" content="blog的搭建利用thrift的跨平台机制实现进程通讯，本机是uos系统+go语言，virtualbox是windows系统+C++，在virtualbox上增加端口转发既可实现windows与uos两者不同系统不同语言的进程通讯。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2021/06/17/%E5%88%A9%E7%94%A8thrift%E5%AE%9E%E7%8E%B0%E8%B7%A8%E8%AF%AD%E8%A8%80%E9%80%9A%E8%AE%AF/1.png">
+<meta property="article:published_time" content="2021-06-17T08:05:30.000Z">
+<meta property="article:modified_time" content="2021-06-28T06:53:16.316Z">
+<meta property="article:author" content="Mecry">
+<meta property="article:tag" content="linux技术">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2021/06/17/%E5%88%A9%E7%94%A8thrift%E5%AE%9E%E7%8E%B0%E8%B7%A8%E8%AF%AD%E8%A8%80%E9%80%9A%E8%AE%AF/1.png">
+
+<link rel="canonical" href="http://example.com/2021/06/17/%E5%88%A9%E7%94%A8thrift%E5%AE%9E%E7%8E%B0%E8%B7%A8%E8%AF%AD%E8%A8%80%E9%80%9A%E8%AE%AF/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Linux技术分享】利用thrift实现跨语言通讯 | Link Mecry</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div id="id-header-inner" class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Link Mecry</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Mecry Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/06/17/%E5%88%A9%E7%94%A8thrift%E5%AE%9E%E7%8E%B0%E8%B7%A8%E8%AF%AD%E8%A8%80%E9%80%9A%E8%AE%AF/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Mecry">
+      <meta itemprop="description" content="Welcome to see me ！">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Link Mecry">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Linux技术分享】利用thrift实现跨语言通讯
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-06-17 16:05:30" itemprop="dateCreated datePublished" datetime="2021-06-17T16:05:30+08:00">2021-06-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-06-28 14:53:16" itemprop="dateModified" datetime="2021-06-28T14:53:16+08:00">2021-06-28</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="blog的搭建"><a href="#blog的搭建" class="headerlink" title="blog的搭建"></a>blog的搭建</h1><p><em><strong>利用thrift的跨平台机制实现进程通讯，本机是uos系统+go语言，virtualbox是windows系统+C++，在virtualbox上增加端口转发既可实现windows与uos两者不同系统不同语言的进程通讯。</strong></em></p>
+<span id="more"></span>
+
+
+<h2 id="thrift简介"><a href="#thrift简介" class="headerlink" title="thrift简介"></a>thrift简介</h2><h3 id="1-理论知识"><a href="#1-理论知识" class="headerlink" title="1. 理论知识"></a>1. 理论知识</h3><pre><code>Thrift是一种接口描述语言和二进制通讯协议，它被用来定义和创建跨语言的服务。它被当作一个远程过程调用（RPC）框架来使用，是由Facebook为“大规模跨语言服务开发”而开发的。它通过一个代码生成引擎联合了一个软件栈，来创建不同程度的、无缝的跨平台高效服务，可以使用C#、C++（基于POSIX兼容系统）、Cappuccino、Cocoa、Delphi、Erlang、Go、Haskell、Java、Node.js、OCaml、Perl、PHP、Python、Ruby和Smalltalk。虽然它以前是由Facebook开发的，但它现在是Apache软件基金会的开源项目了。该实现被描述在2007年4月的一篇由Facebook发表的技术论文中，该论文现由Apache掌管。
+</code></pre>
+<h3 id="2-注意事项"><a href="#2-注意事项" class="headerlink" title="2.注意事项"></a>2.注意事项</h3><ol>
+<li>Thrift支持的基本数据类型<ul>
+<li>byte: 有符号字节</li>
+<li>i16: 16 位有符号整数</li>
+<li>i32 : 32 位有符号整数</li>
+<li>i64: 64 位有符号整数</li>
+<li>double : 64 位浮点数</li>
+<li>string : 字符串</li>
+</ul>
+</li>
+<li>可用容器类型<ul>
+<li>list(t): 元素类型为t的有序表，容许元素重复。</li>
+<li>set(t):元素类型为t的无序表，不容许元素重复。对应c++中的set，java中的HashSet,python中的set，php中没有set，则转换为list类型。</li>
+<li>map(t,t): 键类型为t，值类型为t的kv对，键不容许重复。对用c++中的map, Java的HashMap, PHP 对应 array, Python/Ruby 的dictionary。</li>
+</ul>
+</li>
+<li>Thrift 架构（图来自于网络）<br>thrift主要用于各个服务之间的RPC通信，支持跨语言。thrift是一个典型的CS结构，客户端和服务端可以使用不同的语言开发，thrift通过IDL(Interface Description Language)来关联客户端和服务端。thrift的整体架构图如下图所示<br><img src="/2021/06/17/%E5%88%A9%E7%94%A8thrift%E5%AE%9E%E7%8E%B0%E8%B7%A8%E8%AF%AD%E8%A8%80%E9%80%9A%E8%AE%AF/1.png" alt="图1"></li>
+</ol>
+<h2 id="uos利用go实现thrift的客户端和服务端"><a href="#uos利用go实现thrift的客户端和服务端" class="headerlink" title="uos利用go实现thrift的客户端和服务端"></a>uos利用go实现thrift的客户端和服务端</h2><ol>
+<li><p>goland安装thrift包</p>
+<blockquote>
+<p>go get git.apache.org/thrift.git/lib/go/thrift<br>调用命令<code>thrift -version</code>显示版本号即安装成功。</p>
+</blockquote>
+</li>
+<li><p>下载的文件加入到<code>gopath</code>中  </p>
+</li>
+<li><p>编写属于接口的fuse.thrift的LDL文件，我本地要实现一个剪切板数据互发功能，所以接口为剪切板功能。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">namespace <span class="keyword">go</span> fuse</span><br><span class="line"> service WindowsToUos &#123;</span><br><span class="line">     <span class="comment">//windows 剪切板发送到uos</span></span><br><span class="line">     <span class="keyword">bool</span> sendCliboard(<span class="number">1</span>:i32 nType, <span class="number">2</span>:<span class="keyword">string</span> path);</span><br><span class="line">     void stop();</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> service UosToWindows&#123;</span><br><span class="line">     <span class="comment">//uos 剪切板发送到windows</span></span><br><span class="line">     <span class="keyword">bool</span> sendCliboard(<span class="number">1</span>:i32 nType, <span class="number">2</span>:<span class="keyword">string</span> path, <span class="number">3</span>:<span class="keyword">string</span> Vol);</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>在service windowstouos中，是windows为客户端，uos为服务端。在uostowindows中，是windows为服务端，uos为客户端。两者可以来回通讯。</p>
+</li>
+<li><p>运行命令，生成相关代码，目录下就会存在一个gen-go的一个代码文件夹</p>
+<blockquote>
+<p> thrift -r –gen go fuse.thrift</p>
+</blockquote>
+</li>
+<li><p>服务端接口初始化代码如下,<code>EchoServerImp</code>接口为空接口。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">  <span class="keyword">type</span> EchoServerImp <span class="keyword">struct</span> &#123;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="params">(s *Server)</span> <span class="title">ServerStart</span><span class="params">(port <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()</span><br><span class="line">transportFactory := thrift.NewTBufferedTransportFactory(<span class="number">10000000</span>)</span><br><span class="line">serverTransport, err := thrift.NewTServerSocket(<span class="string">&quot;127.0.0.1:9150&quot;</span>)</span><br><span class="line"><span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;Error!&quot;</span>, err)</span><br><span class="line">	os.Exit(<span class="number">1</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">handler := &amp;EchoServerImp&#123;&#125;</span><br><span class="line">processor := fuse.NewWindowsToUosProcessor(handler)</span><br><span class="line">server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)</span><br><span class="line">fmt.Println(<span class="string">&quot;thrift server in&quot;</span>, <span class="string">&quot;127.0.0.1:9150&quot;</span>)</span><br><span class="line">server.Serve()</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">     <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="comment">//	ListenClipboard()</span></span><br><span class="line">     &#125;()</span><br><span class="line">     ctxT, cancelFunc = context.WithCancel(context.Background())</span><br><span class="line">     sev := &amp;Server&#123;&#125;</span><br><span class="line">     sev.ServerStart(<span class="number">8192</span>)</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>在服务端时，需要把LDL的函数实现，不然会报错，逻辑实现代码如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">  <span class="function"><span class="keyword">func</span> <span class="params">(e *EchoServerImp)</span> <span class="title">Stop</span><span class="params">(ctx context.Context)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">logger.Info(<span class="string">&quot;Revice Stop!!!&quot;</span>)</span><br><span class="line">stop()</span><br><span class="line"><span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>客户端接口初始化代码如下。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">  <span class="keyword">type</span> Manager <span class="keyword">struct</span> &#123;</span><br><span class="line">clipboard <span class="comment">// interface com.deepin.ListenClipboard</span></span><br><span class="line">proxy.Object</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">type</span> ClipboardService <span class="keyword">struct</span> &#123;</span><br><span class="line">     loginManager   *Manager</span><br><span class="line">     sessionSigLoop *dbusutil.SignalLoop</span><br><span class="line">     service        *dbusutil.Service</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">ListenClipboard</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">     <span class="keyword">var</span> cb ClipboardService</span><br><span class="line">     <span class="comment">//注册剪切板dbus信号</span></span><br><span class="line">     sessionBus, err := dbus.SessionBus()</span><br><span class="line">     <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        logger.Warning(<span class="string">&quot;failed to register clipboard changed signal:&quot;</span>, err)</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">     &#125;</span><br><span class="line">     cb.loginManager = NewCBManager(sessionBus)</span><br><span class="line">     cb.sessionSigLoop = dbusutil.NewSignalLoop(sessionBus, <span class="number">10</span>)</span><br><span class="line">     cb.sessionSigLoop.Start()</span><br><span class="line">     cb.loginManager.InitSignalExt(cb.sessionSigLoop, <span class="literal">true</span>)</span><br><span class="line"></span><br><span class="line">     <span class="comment">//绑定剪切板变化dbus信号</span></span><br><span class="line">     <span class="comment">//_, err = cb.loginManager.ConnectClipboardChange()qqq+</span></span><br><span class="line">     <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        logger.Warning(<span class="string">&quot;failed to connect clipboard changed signal:&quot;</span>, err)</span><br><span class="line">        <span class="keyword">return</span> err </span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>客户端调用服务端代码如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cb.loginManager.SendCliboardToWindows(clipboardType, clipboardData, vol)</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="windows利用C-实现thrift的客户端和服务端"><a href="#windows利用C-实现thrift的客户端和服务端" class="headerlink" title="windows利用C++实现thrift的客户端和服务端"></a>windows利用C++实现thrift的客户端和服务端</h2><h2 id="利用virtualbox的端口转发机制，实现windows和uos互相通讯"><a href="#利用virtualbox的端口转发机制，实现windows和uos互相通讯" class="headerlink" title="利用virtualbox的端口转发机制，实现windows和uos互相通讯"></a>利用virtualbox的端口转发机制，实现windows和uos互相通讯</h2>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/linux%E6%8A%80%E6%9C%AF/" rel="tag"># linux技术</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/06/07/Linux%E4%B8%8Bfuse%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/" rel="prev" title="【Linux技术分享】Linux下fuse的实现原理">
+      <i class="fa fa-chevron-left"></i> 【Linux技术分享】Linux下fuse的实现原理
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/06/28/UOS%E4%B8%8B%E5%AE%9E%E7%8E%B0%E9%94%AE%E7%9B%98%E4%BA%8B%E4%BB%B6%E6%8D%95%E6%8D%89/" rel="next" title="【Linux技术分享】UOS下实现键盘事件捕捉">
+      【Linux技术分享】UOS下实现键盘事件捕捉 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#blog%E7%9A%84%E6%90%AD%E5%BB%BA"><span class="nav-number">1.</span> <span class="nav-text">blog的搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#thrift%E7%AE%80%E4%BB%8B"><span class="nav-number">1.1.</span> <span class="nav-text">thrift简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86"><span class="nav-number">1.1.1.</span> <span class="nav-text">1. 理论知识</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-number">1.1.2.</span> <span class="nav-text">2.注意事项</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#uos%E5%88%A9%E7%94%A8go%E5%AE%9E%E7%8E%B0thrift%E7%9A%84%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%92%8C%E6%9C%8D%E5%8A%A1%E7%AB%AF"><span class="nav-number">1.2.</span> <span class="nav-text">uos利用go实现thrift的客户端和服务端</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#windows%E5%88%A9%E7%94%A8C-%E5%AE%9E%E7%8E%B0thrift%E7%9A%84%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%92%8C%E6%9C%8D%E5%8A%A1%E7%AB%AF"><span class="nav-number">1.3.</span> <span class="nav-text">windows利用C++实现thrift的客户端和服务端</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A9%E7%94%A8virtualbox%E7%9A%84%E7%AB%AF%E5%8F%A3%E8%BD%AC%E5%8F%91%E6%9C%BA%E5%88%B6%EF%BC%8C%E5%AE%9E%E7%8E%B0windows%E5%92%8Cuos%E4%BA%92%E7%9B%B8%E9%80%9A%E8%AE%AF"><span class="nav-number">1.4.</span> <span class="nav-text">利用virtualbox的端口转发机制，实现windows和uos互相通讯</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mecry"
+      src="/images/%E5%A4%B4%E5%83%8F.jpg">
+  <p class="site-author-name" itemprop="name">Mecry</p>
+  <div class="site-description" itemprop="description">Welcome to see me ！</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/MecryWork" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;MecryWork" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:Mecryhao@163.com" title="E-Mail → mailto:Mecryhao@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6036706114" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6036706114" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mecry</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>

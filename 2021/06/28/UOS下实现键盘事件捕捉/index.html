@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在UOS系统下实现键盘的捕捉在UOS系统下监听和触发键盘的事件，具体代码参考https:&#x2F;&#x2F;github.com&#x2F;MecryWork&#x2F;hotkey。参考博文https:&#x2F;&#x2F;www.jianshu.com&#x2F;p&#x2F;927fc573d081">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Linux技术分享】UOS下实现键盘事件捕捉">
+<meta property="og:url" content="http://example.com/2021/06/28/UOS%E4%B8%8B%E5%AE%9E%E7%8E%B0%E9%94%AE%E7%9B%98%E4%BA%8B%E4%BB%B6%E6%8D%95%E6%8D%89/index.html">
+<meta property="og:site_name" content="Link Mecry">
+<meta property="og:description" content="在UOS系统下实现键盘的捕捉在UOS系统下监听和触发键盘的事件，具体代码参考https:&#x2F;&#x2F;github.com&#x2F;MecryWork&#x2F;hotkey。参考博文https:&#x2F;&#x2F;www.jianshu.com&#x2F;p&#x2F;927fc573d081">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-06-28T07:05:30.000Z">
+<meta property="article:modified_time" content="2021-06-28T08:45:29.616Z">
+<meta property="article:author" content="Mecry">
+<meta property="article:tag" content="技术分享">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2021/06/28/UOS%E4%B8%8B%E5%AE%9E%E7%8E%B0%E9%94%AE%E7%9B%98%E4%BA%8B%E4%BB%B6%E6%8D%95%E6%8D%89/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Linux技术分享】UOS下实现键盘事件捕捉 | Link Mecry</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div id="id-header-inner" class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Link Mecry</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Mecry Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/06/28/UOS%E4%B8%8B%E5%AE%9E%E7%8E%B0%E9%94%AE%E7%9B%98%E4%BA%8B%E4%BB%B6%E6%8D%95%E6%8D%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Mecry">
+      <meta itemprop="description" content="Welcome to see me ！">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Link Mecry">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Linux技术分享】UOS下实现键盘事件捕捉
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-06-28 15:05:30 / 修改时间：16:45:29" itemprop="dateCreated datePublished" datetime="2021-06-28T15:05:30+08:00">2021-06-28</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="在UOS系统下实现键盘的捕捉"><a href="#在UOS系统下实现键盘的捕捉" class="headerlink" title="在UOS系统下实现键盘的捕捉"></a>在UOS系统下实现键盘的捕捉</h1><p><em><strong>在UOS系统下监听和触发键盘的事件，具体代码参考<code>https://github.com/MecryWork/hotkey</code>。参考博文<code>https://www.jianshu.com/p/927fc573d081</code></strong></em></p>
+<span id="more"></span>
+<h2 id="dev-input目录简介"><a href="#dev-input目录简介" class="headerlink" title="/dev/input目录简介"></a>/dev/input目录简介</h2><ol>
+<li><p>首先linux是所有操作都是已文件形式处理，这个是真理。在我们输入键盘鼠标时，linux系统中记录都放在<code>/dev/input</code>目录下。我们<code>ls</code>下此目录可以看见绝大部分的事件处理</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">crw-rw----  1 root input 13, 65 6月  28 13:04 event1</span><br><span class="line">crw-rw----  1 root input 13, 74 6月  28 13:04 event10</span><br><span class="line">crw-rw----  1 root input 13, 75 6月  28 13:04 event11</span><br><span class="line">crw-rw----  1 root input 13, 76 6月  28 13:04 event12</span><br><span class="line">crw-rw----  1 root input 13, 77 6月  28 13:04 event13</span><br><span class="line">crw-rw----  1 root input 13, 66 6月  28 13:04 event2</span><br><span class="line">crw-rw----  1 root input 13, 67 6月  28 13:04 event3</span><br><span class="line">crw-rw----  1 root input 13, 68 6月  28 13:04 event4</span><br><span class="line">crw-rw----  1 root input 13, 69 6月  28 13:04 event5</span><br><span class="line">crw-rw----  1 root input 13, 70 6月  28 13:04 event6</span><br><span class="line">crw-rw----  1 root input 13, 71 6月  28 13:04 event7</span><br><span class="line">crw-rw----  1 root input 13, 72 6月  28 13:04 event8</span><br><span class="line">crw-rw----  1 root input 13, 73 6月  28 13:04 event9</span><br></pre></td></tr></table></figure></li>
+<li><p>使用<code>cat /proc/bus/input/devices</code>可以查看每一个event的具体操作，里面的H就是对应的时间操作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">I: Bus&#x3D;0000 Vendor&#x3D;0000 Product&#x3D;0000 Version&#x3D;0000</span><br><span class="line">N: Name&#x3D;&quot;HDA ATI HDMI HDMI&#x2F;DP,pcm&#x3D;3&quot;</span><br><span class="line">P: Phys&#x3D;ALSA</span><br><span class="line">S: Sysfs&#x3D;&#x2F;devices&#x2F;pci0000:00&#x2F;0000:00:01.0&#x2F;0000:01:00.1&#x2F;sound&#x2F;card1&#x2F;input11</span><br><span class="line">U: Uniq&#x3D;</span><br><span class="line">H: Handlers&#x3D;event8 </span><br><span class="line">B: PROP&#x3D;0</span><br><span class="line">B: EV&#x3D;21</span><br><span class="line">B: SW&#x3D;140</span><br><span class="line"></span><br><span class="line">I: Bus&#x3D;0000 Vendor&#x3D;0000 Product&#x3D;0000 Version&#x3D;0000</span><br><span class="line">N: Name&#x3D;&quot;HDA Intel PCH Rear Mic&quot;</span><br><span class="line">P: Phys&#x3D;ALSA</span><br><span class="line">S: Sysfs&#x3D;&#x2F;devices&#x2F;pci0000:00&#x2F;0000:00:1f.3&#x2F;sound&#x2F;card0&#x2F;input12</span><br><span class="line">U: Uniq&#x3D;</span><br><span class="line">H: Handlers&#x3D;event9 </span><br><span class="line">B: PROP&#x3D;0</span><br><span class="line">B: EV&#x3D;21</span><br><span class="line">B: SW&#x3D;10</span><br><span class="line"></span><br><span class="line">I: Bus&#x3D;0000 Vendor&#x3D;0000 Product&#x3D;0000 Version&#x3D;0000</span><br><span class="line">N: Name&#x3D;&quot;HDA Intel PCH Front Mic&quot;</span><br><span class="line">P: Phys&#x3D;ALSA</span><br><span class="line">S: Sysfs&#x3D;&#x2F;devices&#x2F;pci0000:00&#x2F;0000:00:1f.3&#x2F;sound&#x2F;card0&#x2F;input13</span><br><span class="line">U: Uniq&#x3D;</span><br><span class="line">H: Handlers&#x3D;event10 </span><br><span class="line">B: PROP&#x3D;0</span><br><span class="line">B: EV&#x3D;21</span><br><span class="line">B: SW&#x3D;10</span><br></pre></td></tr></table></figure>
+<h2 id="input-h-文件"><a href="#input-h-文件" class="headerlink" title="input.h 文件"></a>input.h 文件</h2></li>
+<li><p>在<code>linux/input.h</code>文件中定义了<code>event</code>时间输入数据的结构图，该结构图的定义如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">input_event</span> &#123;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">time</span>;</span> </span><br><span class="line"> __u16 type;</span><br><span class="line"> __u16 code;</span><br><span class="line"> __s32 value;</span><br><span class="line"> &#125;;</span><br><span class="line"></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span></span></span><br><span class="line"><span class="class"> &#123;</span></span><br><span class="line"> <span class="keyword">__time_t</span> tv_sec;        <span class="comment">/* Seconds.  */</span></span><br><span class="line"> <span class="keyword">__suseconds_t</span> tv_usec;  <span class="comment">/* Microseconds.  */</span></span><br><span class="line"> &#125;;</span><br></pre></td></tr></table></figure>
+<p> type，指事件类型，常见的事件类型有：</p>
+<p> EV_KEY，按键事件，键盘的按键，鼠标的左键右键等；</p>
+<p> EV_REL，相对坐标，主要用于鼠标的移动事件；</p>
+<p> EV_ABS，绝对坐标，主要用于触摸屏的移动事件。</p>
+<p> code 事件代码，当事件类型为EV_KEY时，该代码为设备键盘代码，在input.h文件中以KEY_开头定义；</p>
+<p> value 事件的值，当事件类型代码是EV_KEY时，按键操作值为1，释放操作值为0，事件类型代码为EV_REL是，value为正数值和负数值分别代表连个不同方向的值。</p>
+</li>
+</ol>
+<h2 id="监听键盘事件"><a href="#监听键盘事件" class="headerlink" title="监听键盘事件"></a>监听键盘事件</h2><ol>
+<li>利用<code>input_event</code>结构体读取键盘事件 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> retval;</span><br><span class="line">fd_set readfds;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">tv</span>;</span></span><br><span class="line"><span class="keyword">int</span> fd = open(dev, O_RDONLY);</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">input_event</span> <span class="title">event</span>;</span></span><br><span class="line"><span class="keyword">if</span> (fd &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    perror(dev);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">    FD_ZERO(&amp;readfds);</span><br><span class="line">    FD_SET(fd, &amp;readfds);</span><br><span class="line">    tv.tv_sec = timeout;<span class="comment">//设置超时时间</span></span><br><span class="line">    tv.tv_usec = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> ((retval = select(fd + <span class="number">1</span>, &amp;readfds, <span class="literal">NULL</span>, <span class="literal">NULL</span>, &amp;tv)) == <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (read(fd, &amp;event, <span class="keyword">sizeof</span>(event)) == <span class="keyword">sizeof</span>(event)) &#123;</span><br><span class="line">            <span class="keyword">if</span> (event.type == EV_KEY) &#123;</span><br><span class="line">                <span class="keyword">if</span> (event.value == <span class="number">0</span> || event.value == <span class="number">1</span>) <span class="comment">//根据value的值判断按下松开&#123;                       </span></span><br><span class="line">                    <span class="built_in">printf</span>(<span class="string">&quot;key %d %s\n&quot;</span>, event.code, event.value ? <span class="string">&quot;Pressed&quot;</span> : <span class="string">&quot;Released&quot;</span>);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;type=%x %d %d\n&quot;</span>, event.type, event.code, event.value);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">close(fd);</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="传入键盘事件"><a href="#传入键盘事件" class="headerlink" title="传入键盘事件"></a>传入键盘事件</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1.</span> 利用`input_event`+`write`对键盘事件进行写入</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">simulate_key</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">int</span> kval)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">input_event</span> <span class="title">event</span>;</span></span><br><span class="line">        gettimeofday(&amp;event.time, <span class="number">0</span>);</span><br><span class="line">        <span class="comment">//按下kval键</span></span><br><span class="line">        event.type = EV_KEY;</span><br><span class="line">        event.value = <span class="number">1</span>;</span><br><span class="line">        event.code = kval;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        <span class="comment">//同步，也就是把它报告给系统</span></span><br><span class="line">        event.type = EV_SYN;</span><br><span class="line">        event.value = <span class="number">0</span>;</span><br><span class="line">        event.code = SYN_REPORT;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        <span class="built_in">memset</span>(&amp;event, <span class="number">0</span>, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        gettimeofday(&amp;event.time, <span class="number">0</span>);</span><br><span class="line">        <span class="comment">//松开kval键</span></span><br><span class="line">        event.type = EV_KEY;</span><br><span class="line">        event.value = <span class="number">0</span>;</span><br><span class="line">        event.code = kval;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        <span class="comment">//同步，也就是把它报告给系统</span></span><br><span class="line">        event.type = EV_SYN;</span><br><span class="line">        event.value = <span class="number">0</span>;</span><br><span class="line">        event.code = SYN_REPORT;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%8A%80%E6%9C%AF%E5%88%86%E4%BA%AB/" rel="tag"># 技术分享</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/06/17/%E5%88%A9%E7%94%A8thrift%E5%AE%9E%E7%8E%B0%E8%B7%A8%E8%AF%AD%E8%A8%80%E9%80%9A%E8%AE%AF/" rel="prev" title="【Linux技术分享】利用thrift实现跨语言通讯">
+      <i class="fa fa-chevron-left"></i> 【Linux技术分享】利用thrift实现跨语言通讯
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9C%A8UOS%E7%B3%BB%E7%BB%9F%E4%B8%8B%E5%AE%9E%E7%8E%B0%E9%94%AE%E7%9B%98%E7%9A%84%E6%8D%95%E6%8D%89"><span class="nav-number">1.</span> <span class="nav-text">在UOS系统下实现键盘的捕捉</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#dev-input%E7%9B%AE%E5%BD%95%E7%AE%80%E4%BB%8B"><span class="nav-number">1.1.</span> <span class="nav-text">&#x2F;dev&#x2F;input目录简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#input-h-%E6%96%87%E4%BB%B6"><span class="nav-number">1.2.</span> <span class="nav-text">input.h 文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%91%E5%90%AC%E9%94%AE%E7%9B%98%E4%BA%8B%E4%BB%B6"><span class="nav-number">1.3.</span> <span class="nav-text">监听键盘事件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%A0%E5%85%A5%E9%94%AE%E7%9B%98%E4%BA%8B%E4%BB%B6"><span class="nav-number">1.4.</span> <span class="nav-text">传入键盘事件</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mecry"
+      src="/images/%E5%A4%B4%E5%83%8F.jpg">
+  <p class="site-author-name" itemprop="name">Mecry</p>
+  <div class="site-description" itemprop="description">Welcome to see me ！</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/MecryWork" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;MecryWork" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:Mecryhao@163.com" title="E-Mail → mailto:Mecryhao@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6036706114" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6036706114" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mecry</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>
