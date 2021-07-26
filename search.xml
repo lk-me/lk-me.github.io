@@ -232,26 +232,36 @@
       </tags>
   </entry>
   <entry>
-    <title>【问题解决】解决UOS文管磁盘显示</title>
-    <url>/2021/05/19/%E9%9A%90%E8%97%8F%E7%A3%81%E7%9B%98/</url>
-    <content><![CDATA[<h1 id="UOS挂载磁盘不显示"><a href="#UOS挂载磁盘不显示" class="headerlink" title="UOS挂载磁盘不显示"></a>UOS挂载磁盘不显示</h1><p><em><strong>修改配置文件，实现UOS文管不显示已挂载磁盘。</strong></em></p>
+    <title>【问题解决】解决UOS部分问题</title>
+    <url>/2021/05/19/%E8%A7%A3%E5%86%B3UOS%E9%83%A8%E5%88%86%E9%97%AE%E9%A2%98/</url>
+    <content><![CDATA[<h1 id="解决UOS部分问题"><a href="#解决UOS部分问题" class="headerlink" title="解决UOS部分问题"></a>解决UOS部分问题</h1><ul>
+<li>修改配置文件，实现UOS文管不显示已挂载磁盘。</li>
+<li>解决扩展屏时,dock栏来回跳转</li>
+</ul>
 <span id="more"></span>
-
-<p>问题描述：</p>
-<p>多个磁盘在文管显示，其实都是零碎的挂载没什么用，现在要想开机把他隐藏。<br><img src="/2021/05/19/%E9%9A%90%E8%97%8F%E7%A3%81%E7%9B%98/1.png" alt="图1"></p>
+<h2 id="1-UOS挂载磁盘不显示"><a href="#1-UOS挂载磁盘不显示" class="headerlink" title="1. UOS挂载磁盘不显示"></a>1. UOS挂载磁盘不显示</h2><p>问题描述：</p>
+<p>多个磁盘在文管显示，其实都是零碎的挂载没什么用，现在要想开机把他隐藏。<br><img src="/2021/05/19/%E8%A7%A3%E5%86%B3UOS%E9%83%A8%E5%88%86%E9%97%AE%E9%A2%98/1.png" alt="图1"></p>
 <p>解决方案1：</p>
 <ul>
-<li>可以在/lib/udev/rules.d/80-udisks2.rules 里面加入<code>ENV&#123;ID_fS_TYPE&#125;==&quot;squashfs&quot; ENV&#123;UDISKS_IGNORE&#125;=&quot;1&quot;</code><img src="/2021/05/19/%E9%9A%90%E8%97%8F%E7%A3%81%E7%9B%98/2.png" alt="图2">  </li>
-<li>/etc/udev/rules.d下面如果有80-udisks2.rules这个文件，刚刚的修改没有意义，大家把这个文件改个名字即可：/etc/udev/rules.d/80-udisks2-install.rules。这是老版本bug<img src="/2021/05/19/%E9%9A%90%E8%97%8F%E7%A3%81%E7%9B%98/3.png" alt="图3">  </li>
+<li><p>可以在/lib/udev/rules.d/80-udisks2.rules 里面加入<code>ENV&#123;ID_fS_TYPE&#125;==&quot;squashfs&quot; ENV&#123;UDISKS_IGNORE&#125;=&quot;1&quot;</code></p>
+<p><img src="/2021/05/19/%E8%A7%A3%E5%86%B3UOS%E9%83%A8%E5%88%86%E9%97%AE%E9%A2%98/2.png" alt="图2"></p>
+</li>
+<li><p>/etc/udev/rules.d下面如果有80-udisks2.rules这个文件，刚刚的修改没有意义，大家把这个文件改个名字即可：/etc/udev/rules.d/80-udisks2-install.rules。这是老版本bug</p>
+<p><img src="/2021/05/19/%E8%A7%A3%E5%86%B3UOS%E9%83%A8%E5%88%86%E9%97%AE%E9%A2%98/3.png" alt="图3"></p>
+</li>
 </ul>
 <p>解决方案2：</p>
 <ul>
 <li>我遇见的是fusemount挂载，想在文管隐藏，当我挂载到<code>/tmp</code>目录下任何一个文件夹下文管就不显示了。</li>
 </ul>
-<p><img src="/2021/05/19/%E9%9A%90%E8%97%8F%E7%A3%81%E7%9B%98/4.png" alt="图4">  </p>
+<p><img src="/2021/05/19/%E8%A7%A3%E5%86%B3UOS%E9%83%A8%E5%88%86%E9%97%AE%E9%A2%98/4.png" alt="图4"></p>
+<h2 id="2-扩展屏幕dock来回跳转"><a href="#2-扩展屏幕dock来回跳转" class="headerlink" title="2. 扩展屏幕dock来回跳转"></a>2. 扩展屏幕dock来回跳转</h2><p>解决方案:</p>
+<blockquote>
+<p>gsettings set com.deepin.dde.dock.mainwindow only-show-primary true</p>
+</blockquote>
 ]]></content>
       <tags>
-        <tag>问题解决</tag>
+        <tag>问题解决汇总</tag>
       </tags>
   </entry>
   <entry>
