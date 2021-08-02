@@ -29,9 +29,9 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://example.com/2021/06/17/%E5%88%A9%E7%94%A8thrift%E5%AE%9E%E7%8E%B0%E8%B7%A8%E8%AF%AD%E8%A8%80%E9%80%9A%E8%AE%AF/1.png">
 <meta property="article:published_time" content="2021-06-17T08:05:30.000Z">
-<meta property="article:modified_time" content="2021-06-28T06:53:16.000Z">
+<meta property="article:modified_time" content="2021-08-02T01:06:33.867Z">
 <meta property="article:author" content="Mecry">
-<meta property="article:tag" content="linux技术">
+<meta property="article:tag" content="Linux技术分享">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/2021/06/17/%E5%88%A9%E7%94%A8thrift%E5%AE%9E%E7%8E%B0%E8%B7%A8%E8%AF%AD%E8%A8%80%E9%80%9A%E8%AE%AF/1.png">
 
@@ -222,7 +222,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-06-28 14:53:16" itemprop="dateModified" datetime="2021-06-28T14:53:16+08:00">2021-06-28</time>
+                <time title="修改时间：2021-08-02 09:06:33" itemprop="dateModified" datetime="2021-08-02T09:06:33+08:00">2021-08-02</time>
               </span>
 
           
@@ -258,6 +258,8 @@
 <li>map(t,t): 键类型为t，值类型为t的kv对，键不容许重复。对用c++中的map, Java的HashMap, PHP 对应 array, Python/Ruby 的dictionary。</li>
 </ul>
 </li>
+</ol>
+<ol start="3">
 <li>Thrift 架构（图来自于网络）<br>thrift主要用于各个服务之间的RPC通信，支持跨语言。thrift是一个典型的CS结构，客户端和服务端可以使用不同的语言开发，thrift通过IDL(Interface Description Language)来关联客户端和服务端。thrift的整体架构图如下图所示<br><img src="/2021/06/17/%E5%88%A9%E7%94%A8thrift%E5%AE%9E%E7%8E%B0%E8%B7%A8%E8%AF%AD%E8%A8%80%E9%80%9A%E8%AE%AF/1.png" alt="图1"></li>
 </ol>
 <h2 id="uos利用go实现thrift的客户端和服务端"><a href="#uos利用go实现thrift的客户端和服务端" class="headerlink" title="uos利用go实现thrift的客户端和服务端"></a>uos利用go实现thrift的客户端和服务端</h2><ol>
@@ -266,7 +268,7 @@
 <p>go get git.apache.org/thrift.git/lib/go/thrift<br>调用命令<code>thrift -version</code>显示版本号即安装成功。</p>
 </blockquote>
 </li>
-<li><p>下载的文件加入到<code>gopath</code>中  </p>
+<li><p>下载的文件加入到<code>gopath</code>中</p>
 </li>
 <li><p>编写属于接口的fuse.thrift的LDL文件，我本地要实现一个剪切板数据互发功能，所以接口为剪切板功能。</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">namespace <span class="keyword">go</span> fuse</span><br><span class="line"> service WindowsToUos &#123;</span><br><span class="line">     <span class="comment">//windows 剪切板发送到uos</span></span><br><span class="line">     <span class="keyword">bool</span> sendCliboard(<span class="number">1</span>:i32 nType, <span class="number">2</span>:<span class="keyword">string</span> path);</span><br><span class="line">     void stop();</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> service UosToWindows&#123;</span><br><span class="line">     <span class="comment">//uos 剪切板发送到windows</span></span><br><span class="line">     <span class="keyword">bool</span> sendCliboard(<span class="number">1</span>:i32 nType, <span class="number">2</span>:<span class="keyword">string</span> path, <span class="number">3</span>:<span class="keyword">string</span> Vol);</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
@@ -282,7 +284,7 @@
 <li><p>在服务端时，需要把LDL的函数实现，不然会报错，逻辑实现代码如下</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">  <span class="function"><span class="keyword">func</span> <span class="params">(e *EchoServerImp)</span> <span class="title">Stop</span><span class="params">(ctx context.Context)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">logger.Info(<span class="string">&quot;Revice Stop!!!&quot;</span>)</span><br><span class="line">stop()</span><br><span class="line"><span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></li>
 <li><p>客户端接口初始化代码如下。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">  <span class="keyword">type</span> Manager <span class="keyword">struct</span> &#123;</span><br><span class="line">clipboard <span class="comment">// interface com.deepin.ListenClipboard</span></span><br><span class="line">proxy.Object</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">type</span> ClipboardService <span class="keyword">struct</span> &#123;</span><br><span class="line">     loginManager   *Manager</span><br><span class="line">     sessionSigLoop *dbusutil.SignalLoop</span><br><span class="line">     service        *dbusutil.Service</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">ListenClipboard</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">     <span class="keyword">var</span> cb ClipboardService</span><br><span class="line">     <span class="comment">//注册剪切板dbus信号</span></span><br><span class="line">     sessionBus, err := dbus.SessionBus()</span><br><span class="line">     <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        logger.Warning(<span class="string">&quot;failed to register clipboard changed signal:&quot;</span>, err)</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">     &#125;</span><br><span class="line">     cb.loginManager = NewCBManager(sessionBus)</span><br><span class="line">     cb.sessionSigLoop = dbusutil.NewSignalLoop(sessionBus, <span class="number">10</span>)</span><br><span class="line">     cb.sessionSigLoop.Start()</span><br><span class="line">     cb.loginManager.InitSignalExt(cb.sessionSigLoop, <span class="literal">true</span>)</span><br><span class="line"></span><br><span class="line">     <span class="comment">//绑定剪切板变化dbus信号</span></span><br><span class="line">     <span class="comment">//_, err = cb.loginManager.ConnectClipboardChange()qqq+</span></span><br><span class="line">     <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        logger.Warning(<span class="string">&quot;failed to connect clipboard changed signal:&quot;</span>, err)</span><br><span class="line">        <span class="keyword">return</span> err </span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></li>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">  <span class="keyword">type</span> Manager <span class="keyword">struct</span> &#123;</span><br><span class="line">clipboard <span class="comment">// interface com.deepin.ListenClipboard</span></span><br><span class="line">proxy.Object</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">type</span> ClipboardService <span class="keyword">struct</span> &#123;</span><br><span class="line">     loginManager   *Manager</span><br><span class="line">     sessionSigLoop *dbusutil.SignalLoop</span><br><span class="line">     service        *dbusutil.Service</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">ListenClipboard</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">     <span class="keyword">var</span> cb ClipboardService</span><br><span class="line">     <span class="comment">//注册剪切板dbus信号</span></span><br><span class="line">     sessionBus, err := dbus.SessionBus()</span><br><span class="line">     <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        logger.Warning(<span class="string">&quot;failed to register clipboard changed signal:&quot;</span>, err)</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">     &#125;</span><br><span class="line">     cb.loginManager = NewCBManager(sessionBus)</span><br><span class="line">     cb.sessionSigLoop = dbusutil.NewSignalLoop(sessionBus, <span class="number">10</span>)</span><br><span class="line">     cb.sessionSigLoop.Start()</span><br><span class="line">     cb.loginManager.InitSignalExt(cb.sessionSigLoop, <span class="literal">true</span>)</span><br><span class="line"></span><br><span class="line">     <span class="comment">//绑定剪切板变化dbus信号</span></span><br><span class="line">     <span class="comment">//_, err = cb.loginManager.ConnectClipboardChange()qqq+</span></span><br><span class="line">     <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        logger.Warning(<span class="string">&quot;failed to connect clipboard changed signal:&quot;</span>, err)</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></li>
 <li><p>客户端调用服务端代码如下</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cb.loginManager.SendCliboardToWindows(clipboardType, clipboardData, vol)</span><br></pre></td></tr></table></figure></li>
 </ol>
@@ -295,7 +297,7 @@
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/linux%E6%8A%80%E6%9C%AF/" rel="tag"># linux技术</a>
+              <a href="/tags/Linux%E6%8A%80%E6%9C%AF%E5%88%86%E4%BA%AB/" rel="tag"># Linux技术分享</a>
           </div>
 
         
@@ -385,12 +387,12 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-count">11</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">标签</span>
       </div>
   </nav>
