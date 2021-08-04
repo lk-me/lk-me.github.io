@@ -304,10 +304,10 @@
     <content><![CDATA[<h1 id="vscode上go自动补全问题和跳转问题"><a href="#vscode上go自动补全问题和跳转问题" class="headerlink" title="vscode上go自动补全问题和跳转问题"></a>vscode上go自动补全问题和跳转问题</h1><p><em><strong>在UOS环境下用vscode，不能跳转和自动补全。</strong></em></p>
 <span id="more"></span>
 <h2 id="ctrl不能跳转"><a href="#ctrl不能跳转" class="headerlink" title="ctrl不能跳转"></a>ctrl不能跳转</h2><p>解决：</p>
-<ol>
-<li>settings-&gt;搜索 use language server</li>
-</ol>
-<p>-&gt;Go: Use Language Server 改为非选中状态,就可以跳转了,这里是重点,重点.必须的要更改。<br>2. 设置搜索Docs Tool，把 Docs Tool改成gogetdoc或者guru试试，我的用guru就可以。</p>
+<ul>
+<li>settings-&gt;搜索 use language server-&gt;Go: Use Language Server 改为非选中状态,就可以跳转了,这里是重点,重点.必须的要更改。</li>
+<li>设置搜索Docs Tool，把 Docs Tool改成gogetdoc或者guru试试，我的用guru就可以。</li>
+</ul>
 <h2 id="自动补全失效"><a href="#自动补全失效" class="headerlink" title="自动补全失效"></a>自动补全失效</h2><p>解决：<br>在升级到 1.11后， go加入了go module这一特性， 支持相对路径的导入包，这样在$GOPATH之外的地方也可以进行项目开发。</p>
 <ol>
 <li>但是vscode中很多插件只能工作在 $GOPATH下， 其中最重要的代码智能提示也是如此代码提示主要由 github.com/mdemsky/gocode 这个模块负责， 为了支持go module， 要使用新的gocode模块，项目地址为 github.com/stamblerre/gocode， 为了更新插件</li>
