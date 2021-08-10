@@ -159,7 +159,7 @@
   <entry>
     <title>【windows技术】利用go搭建纯文件http服务器，并生成dll</title>
     <url>/2021/06/04/go%E6%90%AD%E5%BB%BAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/</url>
-    <content><![CDATA[<h1 id="利用go搭建纯文件http服务"><a href="#利用go搭建纯文件http服务" class="headerlink" title="利用go搭建纯文件http服务"></a>利用go搭建纯文件http服务</h1><p><em><strong>在windows下使用go搭建纯文件服务器，并生成标准dll导出文件。详细代码查看<code>https://github.com/MecryWork/go-file-system</code></strong></em></p>
+    <content><![CDATA[<h1 id="利用go搭建纯文件http服务"><a href="#利用go搭建纯文件http服务" class="headerlink" title="利用go搭建纯文件http服务"></a>利用go搭建纯文件http服务</h1><p><em><strong>在windows下使用go搭建纯文件服务器，并生成标准dll导出文件。</strong></em></p>
 <span id="more"></span>
 
 <h2 id="go实现HTTP文件服务器"><a href="#go实现HTTP文件服务器" class="headerlink" title="go实现HTTP文件服务器"></a>go实现HTTP文件服务器</h2><ol>
@@ -212,7 +212,7 @@
   <entry>
     <title>【Linux技术分享】利用QT的clipboard库监听和设置剪切板</title>
     <url>/2021/06/02/UOS%E5%88%A9%E7%94%A8QT%E7%9B%91%E5%90%AC%E5%92%8C%E8%AE%BE%E7%BD%AE%E5%89%AA%E5%88%87%E6%9D%BF/</url>
-    <content><![CDATA[<h1 id="利用QT的clipboard库监听和设置剪切板"><a href="#利用QT的clipboard库监听和设置剪切板" class="headerlink" title="利用QT的clipboard库监听和设置剪切板"></a>利用QT的clipboard库监听和设置剪切板</h1><p><em><strong>使用QT的Clipboard库，监听和设置uos剪切板变化。经过dbus接口，把uos的剪切板暴露出来，从而进行设置和监听。代码详情请看<code>https://github.com/MecryWork/uos-clipboard-manage</code></strong></em></p>
+    <content><![CDATA[<h1 id="利用QT的clipboard库监听和设置剪切板"><a href="#利用QT的clipboard库监听和设置剪切板" class="headerlink" title="利用QT的clipboard库监听和设置剪切板"></a>利用QT的clipboard库监听和设置剪切板</h1><p>***使用QT的Clipboard库，监听和设置uos剪切板变化。经过dbus接口，把uos的剪切板暴露出来，从而进行设置和监听</p>
 <span id="more"></span>
 
 <h2 id="dbus的创建"><a href="#dbus的创建" class="headerlink" title="dbus的创建"></a>dbus的创建</h2><ol>
