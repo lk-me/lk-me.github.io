@@ -84,6 +84,20 @@
       </tags>
   </entry>
   <entry>
+    <title>【Linux技术分享】利用C++实现链表</title>
+    <url>/2021/06/28/%E9%93%BE%E8%A1%A8%E5%9F%BA%E7%A1%80%E7%90%86%E8%A7%A3/</url>
+    <content><![CDATA[<h1 id="利用C-实现链表基础代码"><a href="#利用C-实现链表基础代码" class="headerlink" title="利用C++实现链表基础代码"></a>利用C++实现链表基础代码</h1><p><em><strong>利用C++实现链表和CString<code>https://github.com/MecryWork/listapp</code>。</strong></em></p>
+<span id="more"></span>
+<h2 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h2><ol>
+<li>实现增删改查插入</li>
+<li>CString实现深拷贝</li>
+</ol>
+]]></content>
+      <tags>
+        <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【Linux技术分享】UOS下实现键盘事件捕捉</title>
     <url>/2021/06/28/UOS%E4%B8%8B%E5%AE%9E%E7%8E%B0%E9%94%AE%E7%9B%98%E4%BA%8B%E4%BB%B6%E6%8D%95%E6%8D%89/</url>
     <content><![CDATA[<h1 id="在UOS系统下实现键盘的捕捉"><a href="#在UOS系统下实现键盘的捕捉" class="headerlink" title="在UOS系统下实现键盘的捕捉"></a>在UOS系统下实现键盘的捕捉</h1><p><em><strong>在UOS系统下监听和触发键盘的事件，具体代码参考<code>https://github.com/MecryWork/hotkey</code>。参考博文<code>https://www.jianshu.com/p/927fc573d081</code></strong></em></p>
