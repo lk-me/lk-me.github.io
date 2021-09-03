@@ -1,6 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【Linux技术分享】cgo传入二级字符串指针</title>
+    <url>/2021/09/03/%E5%85%B3%E4%BA%8Ecgo%E7%9A%84%E4%BA%8C%E7%BA%A7%E6%8C%87%E9%92%88/</url>
+    <content><![CDATA[<h1 id="cgo实现字符串切片传入c代码中"><a href="#cgo实现字符串切片传入c代码中" class="headerlink" title="cgo实现字符串切片传入c代码中"></a>cgo实现字符串切片传入c代码中</h1><p><em><strong>go实现字符串切片传入c代码中，让c识别为二级指针，能够顺利进行字符串的偏移读写</strong></em></p>
+<span id="more"></span>
+
+<h2 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h2><p>想通过go给C代码传入一个二级指针，然后在C中进行读取，本来以为是很简单的事情，但是发现go的string和c++的不太一样，C的代码如下</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">fill_2d_array</span><span class="params">(<span class="keyword">char</span> **arr, <span class="keyword">int</span> columeSize)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">char</span> szBuf[<span class="number">4</span>][<span class="number">255</span>];</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>;i &lt; <span class="number">4</span>;i++) &#123;</span><br><span class="line">		<span class="built_in">strcpy</span>(szBuf[i], arr[i]);</span><br><span class="line">		<span class="built_in">printf</span>(<span class="string">&quot;buf:%s\n&quot;</span>, szBuf[i]);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="第一次转换的写法"><a href="#第一次转换的写法" class="headerlink" title="第一次转换的写法"></a>第一次转换的写法</h3><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">byteToC</span><span class="params">(list []<span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	dirs := <span class="built_in">make</span>([][]<span class="keyword">byte</span>, <span class="number">4</span>)</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">4</span>; i++ &#123;</span><br><span class="line">		dirs[i] = <span class="built_in">make</span>([]<span class="keyword">byte</span>, <span class="number">4</span>)</span><br><span class="line">		dirs[i] = []<span class="keyword">byte</span>(list[i])</span><br><span class="line">		fmt.Println(<span class="string">&quot;list:&quot;</span>, list[i])</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	C.fill_2d_array((**C.char)(unsafe.Pointer(&amp;dirs[<span class="number">0</span>][<span class="number">0</span>])), C.<span class="keyword">int</span>(<span class="number">5</span>))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>把切片转成byte传入C的代码中，但是在C代码输出的时候直接输出直接崩溃，如果按照字节处理<code>strcpy((char*)(arr+0*sizeof(char)*columeSize), &quot;hello&quot;);</code>类似这种处理，但是在C中输出的时候，字符串会或多或少，不能正常输出。</p>
+<p>根因分析：之前我写过go转C++的dll，导出头文件关于GoString的定义为</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> GO_CGO_GOSTRING_TYPEDEF</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span> <span class="keyword">const</span> <span class="keyword">char</span>* p; <span class="keyword">ptrdiff_t</span> n; &#125; _GoString_;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>这边我直接输出了<code>printf(&quot;%s&quot;,goString.p);</code>，然后是一串很长的字符串，详情看如何生成dll的请移步<code>http://linkmecry.cn/2021/06/04/go%E6%90%AD%E5%BB%BAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/</code>，这边判断gostring中的p在转换的时候没有保存’\0’，意思就是没有结束符，把后面的东西全部都输出了</p>
+<h3 id="第二次转换的写法"><a href="#第二次转换的写法" class="headerlink" title="第二次转换的写法"></a>第二次转换的写法</h3><p>问题找到了，只需要把’\0’在传入的时候传过去就OK，于是放弃转byte的转换方法，改用C.char*.</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">charToC</span><span class="params">(list []<span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	nameunits := <span class="built_in">make</span>([]*C.char, <span class="built_in">len</span>(list))</span><br><span class="line">	<span class="keyword">for</span> i, _ := <span class="keyword">range</span> list &#123;</span><br><span class="line">		nameunits[i] = C.CString(list[i])</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	C.fill_2d_array((**C.char)(unsafe.Pointer(&amp;nameunits[<span class="number">0</span>])), C.<span class="keyword">int</span>(<span class="number">4</span>))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出正常圆满完成任务</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">buf:1111</span><br><span class="line">buf:2222</span><br><span class="line">buf:3333</span><br><span class="line">buf:4444</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>go</category>
+      </categories>
+      <tags>
+        <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【Linux技术分享】利用C++实现链表</title>
     <url>/2021/09/03/%E9%93%BE%E8%A1%A8%E5%9F%BA%E7%A1%80%E7%90%86%E8%A7%A3/</url>
     <content><![CDATA[<h1 id="利用C-实现链表基础代码"><a href="#利用C-实现链表基础代码" class="headerlink" title="利用C++实现链表基础代码"></a>利用C++实现链表基础代码</h1><p><em><strong>利用C++实现链表和CString<code>https://github.com/MecryWork/listapp</code>。</strong></em></p>
