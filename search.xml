@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【Linux技术分享】利用C++实现链表</title>
+    <url>/2021/09/03/%E9%93%BE%E8%A1%A8%E5%9F%BA%E7%A1%80%E7%90%86%E8%A7%A3/</url>
+    <content><![CDATA[<h1 id="利用C-实现链表基础代码"><a href="#利用C-实现链表基础代码" class="headerlink" title="利用C++实现链表基础代码"></a>利用C++实现链表基础代码</h1><p><em><strong>利用C++实现链表和CString<code>https://github.com/MecryWork/listapp</code>。</strong></em></p>
+<span id="more"></span>
+<h2 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h2><ol>
+<li>实现增删改查插入</li>
+<li>CString实现深拷贝</li>
+</ol>
+]]></content>
+      <tags>
+        <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【Linux技术分享】Valgrind检测内存泄露的学习和使用</title>
     <url>/2021/08/17/Valgrind%E5%AD%A6%E4%B9%A0%E5%8F%8A%E4%BD%BF%E7%94%A8/</url>
     <content><![CDATA[<h1 id="Valgrind的学习和使用"><a href="#Valgrind的学习和使用" class="headerlink" title="Valgrind的学习和使用"></a>Valgrind的学习和使用</h1><p><em><strong>Valgrind 是一个 GPL 系统，用于调试和分析 Linux 程序。使用 Valgrind 的 工具，可以自动检测许多内存管理和线程错误。</strong></em></p>
@@ -81,20 +95,6 @@
 ]]></content>
       <tags>
         <tag>读书有感</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>【Linux技术分享】利用C++实现链表</title>
-    <url>/2021/06/28/%E9%93%BE%E8%A1%A8%E5%9F%BA%E7%A1%80%E7%90%86%E8%A7%A3/</url>
-    <content><![CDATA[<h1 id="利用C-实现链表基础代码"><a href="#利用C-实现链表基础代码" class="headerlink" title="利用C++实现链表基础代码"></a>利用C++实现链表基础代码</h1><p><em><strong>利用C++实现链表和CString<code>https://github.com/MecryWork/listapp</code>。</strong></em></p>
-<span id="more"></span>
-<h2 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h2><ol>
-<li>实现增删改查插入</li>
-<li>CString实现深拷贝</li>
-</ol>
-]]></content>
-      <tags>
-        <tag>Linux技术分享</tag>
       </tags>
   </entry>
   <entry>
