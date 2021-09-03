@@ -10,6 +10,9 @@
 <li>CString实现深拷贝</li>
 </ol>
 ]]></content>
+      <categories>
+        <category>C++</category>
+      </categories>
       <tags>
         <tag>Linux技术分享</tag>
       </tags>
@@ -70,6 +73,9 @@
 
 <p>释放未定义的四个字节</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x3D;&#x3D;27268&#x3D;&#x3D; Invalid free() &#x2F; delete &#x2F; delete[] &#x2F; realloc()</span><br><span class="line">&#x3D;&#x3D;27268&#x3D;&#x3D;    at 0x48369AB: free (vg_replace_malloc.c:530)</span><br><span class="line">&#x3D;&#x3D;27268&#x3D;&#x3D;    by 0x401173: func (in &#x2F;home&#x2F;mecry&#x2F;dde-c&#x2F;metho&#x2F;metho2&#x2F;main)</span><br><span class="line">&#x3D;&#x3D;27268&#x3D;&#x3D;    by 0x401184: main (in &#x2F;home&#x2F;mecry&#x2F;dde-c&#x2F;metho&#x2F;metho2&#x2F;main)</span><br><span class="line">&#x3D;&#x3D;27268&#x3D;&#x3D;  Address 0x4a31040 is 0 bytes inside a block of size 4 free&#39;d</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>C</category>
+      </categories>
       <tags>
         <tag>Linux技术分享</tag>
       </tags>
@@ -93,6 +99,9 @@
 <li>我可不喜欢什么事都清楚地知道结局，有条不紊地逐次达标，那也太乏味了。多一分远见，就少一分刺激。如果我知道下一步，每一步会碰到什么，产生什么后果，我立刻就没兴趣活了。——王朔《一半是火焰一半是海水》</li>
 </ul>
 ]]></content>
+      <categories>
+        <category>阅读</category>
+      </categories>
       <tags>
         <tag>读书有感</tag>
       </tags>
@@ -123,6 +132,9 @@
 <li>利用<code>input_event</code>结构体读取键盘事件 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">int</span> retval;</span><br><span class="line">fd_set readfds;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">tv</span>;</span></span><br><span class="line"><span class="keyword">int</span> fd = open(dev, O_RDONLY);</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">input_event</span> <span class="title">event</span>;</span></span><br><span class="line"><span class="keyword">if</span> (fd &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    perror(dev);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">    FD_ZERO(&amp;readfds);</span><br><span class="line">    FD_SET(fd, &amp;readfds);</span><br><span class="line">    tv.tv_sec = timeout;<span class="comment">//设置超时时间</span></span><br><span class="line">    tv.tv_usec = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> ((retval = select(fd + <span class="number">1</span>, &amp;readfds, <span class="literal">NULL</span>, <span class="literal">NULL</span>, &amp;tv)) == <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (read(fd, &amp;event, <span class="keyword">sizeof</span>(event)) == <span class="keyword">sizeof</span>(event)) &#123;</span><br><span class="line">            <span class="keyword">if</span> (event.type == EV_KEY) &#123;</span><br><span class="line">                <span class="keyword">if</span> (event.value == <span class="number">0</span> || event.value == <span class="number">1</span>) <span class="comment">//根据value的值判断按下松开&#123;</span></span><br><span class="line">                    <span class="built_in">printf</span>(<span class="string">&quot;key %d %s\n&quot;</span>, event.code, event.value ? <span class="string">&quot;Pressed&quot;</span> : <span class="string">&quot;Released&quot;</span>);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;type=%x %d %d\n&quot;</span>, event.type, event.code, event.value);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">close(fd);</span><br></pre></td></tr></table></figure></li>
 </ol>
 <h2 id="传入键盘事件"><a href="#传入键盘事件" class="headerlink" title="传入键盘事件"></a>传入键盘事件</h2><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="number">1.</span> 利用`input_event`+`write`对键盘事件进行写入</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">simulate_key</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">int</span> kval)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">input_event</span> <span class="title">event</span>;</span></span><br><span class="line">        gettimeofday(&amp;event.time, <span class="number">0</span>);</span><br><span class="line">        <span class="comment">//按下kval键</span></span><br><span class="line">        event.type = EV_KEY;</span><br><span class="line">        event.value = <span class="number">1</span>;</span><br><span class="line">        event.code = kval;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        <span class="comment">//同步，也就是把它报告给系统</span></span><br><span class="line">        event.type = EV_SYN;</span><br><span class="line">        event.value = <span class="number">0</span>;</span><br><span class="line">        event.code = SYN_REPORT;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        <span class="built_in">memset</span>(&amp;event, <span class="number">0</span>, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        gettimeofday(&amp;event.time, <span class="number">0</span>);</span><br><span class="line">        <span class="comment">//松开kval键</span></span><br><span class="line">        event.type = EV_KEY;</span><br><span class="line">        event.value = <span class="number">0</span>;</span><br><span class="line">        event.code = kval;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        <span class="comment">//同步，也就是把它报告给系统</span></span><br><span class="line">        event.type = EV_SYN;</span><br><span class="line">        event.value = <span class="number">0</span>;</span><br><span class="line">        event.code = SYN_REPORT;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>C</category>
+      </categories>
       <tags>
         <tag>Linux技术分享</tag>
       </tags>
@@ -183,6 +195,9 @@
 <figure class="highlight go"><table><tr><td class="code"><pre><span class="line">cb.loginManager.SendCliboardToWindows(clipboardType, clipboardData, vol)</span><br></pre></td></tr></table></figure></li>
 </ol>
 <h2 id="windows利用C-实现thrift的客户端和服务端"><a href="#windows利用C-实现thrift的客户端和服务端" class="headerlink" title="windows利用C++实现thrift的客户端和服务端"></a>windows利用C++实现thrift的客户端和服务端</h2><h2 id="利用virtualbox的端口转发机制，实现windows和uos互相通讯"><a href="#利用virtualbox的端口转发机制，实现windows和uos互相通讯" class="headerlink" title="利用virtualbox的端口转发机制，实现windows和uos互相通讯"></a>利用virtualbox的端口转发机制，实现windows和uos互相通讯</h2>]]></content>
+      <categories>
+        <category>go</category>
+      </categories>
       <tags>
         <tag>Linux技术分享</tag>
       </tags>
@@ -226,6 +241,9 @@
 </li>
 </ul>
 ]]></content>
+      <categories>
+        <category>C</category>
+      </categories>
       <tags>
         <tag>Linux技术分享</tag>
       </tags>
@@ -279,6 +297,9 @@
 <p>typedef double _Complex GoComplex128;</p>
 </blockquote>
 ]]></content>
+      <categories>
+        <category>go</category>
+      </categories>
       <tags>
         <tag>windows技术</tag>
       </tags>
@@ -335,6 +356,9 @@
 <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">QString CopiedFile;</span><br><span class="line">QString UrlList;</span><br><span class="line"><span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;set clipboard data as file:&quot;</span> &lt;&lt; clipboardData;</span><br><span class="line">QStringList clipboardList = clipboardData.<span class="built_in">split</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line"><span class="keyword">for</span> (QString path : clipboardList) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!path.<span class="built_in">isEmpty</span>()) &#123;</span><br><span class="line">        CopiedFile = CopiedFile + <span class="string">&quot;copy\nfile://&quot;</span> + path;</span><br><span class="line">        UrlList = UrlList + <span class="string">&quot;file://&quot;</span> + path + <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (CopiedFile.<span class="built_in">size</span>() == <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;clipboard path is empty&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line">QMimeData *newMimeData = <span class="keyword">new</span> <span class="built_in">QMimeData</span>();</span><br><span class="line">newMimeData-&gt;<span class="built_in">setData</span>(<span class="string">&quot;x-special/gnome-copied-files&quot;</span>,</span><br><span class="line">                     <span class="built_in">QByteArray</span>(CopiedFile.<span class="built_in">toStdString</span>().<span class="built_in">c_str</span>()));</span><br><span class="line">newMimeData-&gt;<span class="built_in">setData</span>(<span class="string">&quot;text/uri-list&quot;</span>, <span class="built_in">QByteArray</span>(UrlList.<span class="built_in">toStdString</span>().<span class="built_in">c_str</span>()));</span><br><span class="line">m_clipBoard-&gt;<span class="built_in">clear</span>();</span><br><span class="line">m_clipBoard-&gt;<span class="built_in">setMimeData</span>(newMimeData);</span><br></pre></td></tr></table></figure></li>
 </ul>
 ]]></content>
+      <categories>
+        <category>C++</category>
+      </categories>
       <tags>
         <tag>Linux技术分享</tag>
       </tags>
@@ -368,6 +392,9 @@
 <p>gsettings set com.deepin.dde.dock.mainwindow only-show-primary true</p>
 </blockquote>
 ]]></content>
+      <categories>
+        <category>问题解决</category>
+      </categories>
       <tags>
         <tag>问题解决</tag>
       </tags>
@@ -399,6 +426,9 @@
 </ol>
 <p>到此， Vscode智能提示就可以正常工作了</p>
 ]]></content>
+      <categories>
+        <category>问题解决</category>
+      </categories>
       <tags>
         <tag>问题解决</tag>
       </tags>
@@ -458,6 +488,9 @@
 </ul>
 <p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/16.png" alt="图16"></p>
 ]]></content>
+      <categories>
+        <category>阅读</category>
+      </categories>
       <tags>
         <tag>读书有感</tag>
       </tags>
@@ -631,6 +664,9 @@
 <h4 id="问题4：博客提交"><a href="#问题4：博客提交" class="headerlink" title="问题4：博客提交"></a>问题4：博客提交</h4><p>解决：调用<code>blog_push.sh</code>是提交，<code>blog_localtest.sh</code>是在本地查看</p>
 <h4 id="问题5：blog文章中图片添加"><a href="#问题5：blog文章中图片添加" class="headerlink" title="问题5：blog文章中图片添加"></a>问题5：blog文章中图片添加</h4><p>解决：在<code>_post</code>目录下创建一个同名文件夹，放图片，在文章中插入<code>![图1](1.png)</code>。</p>
 ]]></content>
+      <categories>
+        <category>问题解决</category>
+      </categories>
       <tags>
         <tag>问题解决</tag>
       </tags>
