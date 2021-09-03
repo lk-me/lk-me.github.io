@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>【Linux技术分享】cgo传入二级字符串指针</title>
+    <title>【Linux技术分享】cgo传入二级指针</title>
     <url>/2021/09/03/%E5%85%B3%E4%BA%8Ecgo%E7%9A%84%E4%BA%8C%E7%BA%A7%E6%8C%87%E9%92%88/</url>
     <content><![CDATA[<h1 id="cgo实现字符串切片传入c代码中"><a href="#cgo实现字符串切片传入c代码中" class="headerlink" title="cgo实现字符串切片传入c代码中"></a>cgo实现字符串切片传入c代码中</h1><p><em><strong>go实现字符串切片传入c代码中，让c识别为二级指针，能够顺利进行字符串的偏移读写</strong></em></p>
 <span id="more"></span>
