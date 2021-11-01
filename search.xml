@@ -1,6 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【Linux技术分享】X11学习（一）</title>
+    <url>/2021/10/26/X11%E5%AD%A6%E4%B9%A0%EF%BC%88%E4%B8%80%EF%BC%89/</url>
+    <content><![CDATA[<h1 id="X11基础学习（一）"><a href="#X11基础学习（一）" class="headerlink" title="X11基础学习（一）"></a>X11基础学习（一）</h1><p><em><strong>基本窗口创建。官方文档链接<a href="http://mech.math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html">http://mech.math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html</a>.</strong></em></p>
+<span id="more"></span>
+
+<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><ol>
+<li><p>X11是什么</p>
+<p> X提供了GUI一个在unix系统下基本框架，可以绘图，移动窗口，显示窗口，与鼠标键盘一系列的交互。当前X已经更新到第11版所以简称为X11协议。与其类似的可以参考Wayland</p>
+</li>
+</ol>
+<h2 id="窗口的初始化"><a href="#窗口的初始化" class="headerlink" title="窗口的初始化"></a>窗口的初始化</h2><ol>
+<li><p>XOpenDisplay</p>
+<p> func：Display *XOpenDisplay(char *display_name);</p>
+<p> 作用：打开指定X的服务器，返回一个关于服务器的display结构体。参数传入为NULL则是本机环境，如果是局域网地址则可以通过:来隔开，hostname:number.screen_number</p>
+<p> 例子：</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">Display *display = XOpenDisplay(<span class="literal">NULL</span>); <span class="comment">//本机环境</span></span><br><span class="line">XOpenDisplay(<span class="string">&quot;192.168.0.12:0&quot;</span>);			<span class="comment">//局域网</span></span><br></pre></td></tr></table></figure></li>
+<li><p>XCreateSimpleWindow</p>
+<p> func: Window XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes)</p>
+<p> 作用：创建一个简单窗口并返回一个窗口句柄</p>
+<p> 例子：</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">Windows win = XCreateSimpleWindow(dpy, root, <span class="number">0</span>, <span class="number">0</span>, width, height, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0xFFFF7700</span>);<span class="comment">//窗口创建</span></span><br></pre></td></tr></table></figure></li>
+<li><p>XSelectInput</p>
+<p> func: int XSelectInput(Display *display, Window w, long event_mask);</p>
+<p> 作用： 选择窗口所需要监听的事件，第三个参数就是传入事件。否则X就不监听窗口的任何事件。</p>
+<p> 例子：</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">XSelectInput(xfc-&gt;display, xfc-&gt;window, KeyPressMask);</span><br></pre></td></tr></table></figure></li>
+<li><p>XMapWindow</p>
+<p> func: XMapWindow(Display *display, Window w);</p>
+<p> 作用： 关联并映射子窗口让其能同步获取事件和显示。</p>
+<p> 例子：</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">XMapWindow(xfc-&gt;display, xfc-&gt;window);      <span class="comment">//关联窗口并显示</span></span><br></pre></td></tr></table></figure>
+<h2 id="窗口事件处理"><a href="#窗口事件处理" class="headerlink" title="窗口事件处理"></a>窗口事件处理</h2></li>
+<li><p>XNextEvent</p>
+<p> func: XNextEvent(Display *display, XEvent)</p>
+<p> 作用： 从事件队列获取下一个事件，如果队列为空则刷新缓存直到获取下一个事件。</p>
+<p> 例子：</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">XEvent event = &#123;<span class="number">0</span>&#125;; <span class="comment">//X的事件</span></span><br><span class="line">      XNextEvent(xfc-&gt;display, &amp;event);<span class="comment">//拉取窗口事件</span></span><br><span class="line">      <span class="built_in">printf</span>(<span class="string">&quot;event:%d\n&quot;</span>,event.type);</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="简单窗口的创建"><a href="#简单窗口的创建" class="headerlink" title="简单窗口的创建"></a>简单窗口的创建</h2><p>main.c：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;X11/Xlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">	Display *d;</span><br><span class="line">	Window w;</span><br><span class="line">	XEvent e;</span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">char</span> *msg = <span class="string">&quot;Hello, World!&quot;</span>;</span><br><span class="line">	<span class="keyword">int</span> s;</span><br><span class="line"></span><br><span class="line">	d = XOpenDisplay(<span class="literal">NULL</span>);</span><br><span class="line">	<span class="keyword">if</span> (d == <span class="literal">NULL</span>) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;Cannot open display\n&quot;</span>);</span><br><span class="line">		<span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	s = DefaultScreen(d);</span><br><span class="line">	w = XCreateSimpleWindow(d, RootWindow(d, s), <span class="number">10</span>, <span class="number">10</span>, <span class="number">100</span>, <span class="number">100</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0xFFFF7700</span>);</span><br><span class="line">	XSelectInput(d, w, ExposureMask | KeyPressMask);</span><br><span class="line">	XMapWindow(d, w);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">		XNextEvent(d, &amp;e);</span><br><span class="line">		<span class="keyword">if</span> (e.type == Expose) &#123;</span><br><span class="line">			XFillRectangle(d, w, DefaultGC(d, s), <span class="number">20</span>, <span class="number">20</span>, <span class="number">10</span>, <span class="number">10</span>);</span><br><span class="line">			XDrawString(d, w, DefaultGC(d, s), <span class="number">10</span>, <span class="number">50</span>, msg, <span class="built_in">strlen</span>(msg));</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> (e.type == KeyPress)</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	XCloseDisplay(d);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>X11学习</category>
+      </categories>
+      <tags>
+        <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【windows技术】go的http服务器响应实现</title>
     <url>/2021/10/09/go%E7%9A%84http%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%93%8D%E5%BA%94%E5%AE%9E%E7%8E%B0/</url>
     <content><![CDATA[<h1 id="go实现服务器响应客户端操作"><a href="#go实现服务器响应客户端操作" class="headerlink" title="go实现服务器响应客户端操作"></a>go实现服务器响应客户端操作</h1><p><em><strong>利用go实现服务器响应客户端各种操作</strong></em></p>
