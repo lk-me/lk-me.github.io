@@ -1,43 +1,129 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>【Linux技术分享】Linux下fuse的实现原理</title>
-    <url>/2021/06/07/Linux%E4%B8%8Bfuse%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/</url>
-    <content><![CDATA[<h1 id="fuse实现原理"><a href="#fuse实现原理" class="headerlink" title="fuse实现原理"></a>fuse实现原理</h1><p><em><strong>本文是对httpdirfs源码的一个学习,源码在<code>https://github.com/fangfufu/httpdirfs</code>.实现在linux系统下利用fuse技术,把http文件服务器挂载至本地路径.</strong></em></p>
+    <title>【读书有感】摘要《人生十大法则》</title>
+    <url>/2021/12/06/%E4%BA%BA%E7%94%9F%E5%8D%81%E5%A4%A7%E6%B3%95%E5%88%99/</url>
+    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p><em><strong>如果你的生活不尽如人意，试着说真话;如果你拼命地坚持某种意识或者沉迷于虚无主义，试着说真话;如果你感到脆弱、无用、绝望和困惑，试着说真话。</strong></em></p>
 <span id="more"></span>
 
-<h2 id="fuse原理"><a href="#fuse原理" class="headerlink" title="fuse原理"></a>fuse原理</h2><ol>
-<li><p>流程介绍<br><img src="/2021/06/07/Linux%E4%B8%8Bfuse%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/1.png" alt="图1"></p>
-<p> 图中可以看出,fuse和ext3,ntfs都是文件系统模块.我们使用fuse实现文件系统并挂在至/tmp/fuse上,当我们对此目录执行ls命令时,内核的fuse从vfs中获取参数,调用我们自己实现ls的函数,得到结果再从vfs返回至ls.简单来说就是<code>ls-&gt;fuse挂载文件夹-&gt;VFS-&gt;libfuse-&gt;自己实现的函数-&gt;结果返回至ls</code>,demo的源码在<code>https://github.com/MecryWork/Learn-C-to-implement-fuse</code></p>
+<h2 id="猴子"><a href="#猴子" class="headerlink" title="猴子"></a>猴子</h2><p>如果你想捕捉猴子，你需要找一个大的窄口瓶，瓶子口刚好可以让猴子的手正好伸进去。然后把瓶子装些石头，直到猴子无法拎起来，并且把食物放在瓶子中。猴子过来就会抓起瓶子的食物，但是因为握着食物，无法将手从瓶子抽出来，除非他选择放手，猴子肯定不会这么做，于是捕捉者就可以大摇大摆的把猴子抓起来。</p>
+<h2 id="猛犸象"><a href="#猛犸象" class="headerlink" title="猛犸象"></a>猛犸象</h2><p>人类在捕捉猛犸象的时候吃不完的部分会留下来存储今后使用，一开始时候是偶然价值但是人们逐渐发现了这一举动的价值，就会产生一个概念：虽然我现在想把所有食物都吃掉，但是如果省下来一部分可以保证下次不会挨饿，这种概念升级：我没法吃掉整条猛犸象，我也不能存储，但我可以把我的食物都分出去可以保证下次我挨饿的时候会有人照顾我。</p>
+<h2 id="摘抄"><a href="#摘抄" class="headerlink" title="摘抄"></a>摘抄</h2><ul>
+<li><p>我应该如何使自己变得更强大?不要撒说或做你都夷的事情。我应该如何使自己变得更高尚?只遵照你心灵的旨意行事。</p>
 </li>
-<li><p>简单demo</p>
- <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> FUSE_USE_VERSION 26</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fuse.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> ou_re        <span class="title">addir</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* path, <span class="keyword">void</span>* buf, <span class="keyword">fuse_fill_dir_t</span> filler,</span></span></span><br><span class="line"><span class="function"><span class="params">					<span class="keyword">off_t</span> offset, struct fuse_file_info* fi)</span><span class="comment">//读取目录</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> filler(buf, <span class="string">&quot;hello-world&quot;</span>, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">ou_getattr</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* path, struct stat* st)</span><span class="comment">//获取状态</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="built_in">memset</span>(st, <span class="number">0</span>, <span class="keyword">sizeof</span>(struct stat));</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (<span class="built_in">strcmp</span>(path, <span class="string">&quot;/&quot;</span>) == <span class="number">0</span>)</span><br><span class="line">		st-&gt;st_mode = <span class="number">0755</span> | S_IFDIR;</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		st-&gt;st_mode = <span class="number">0644</span> | S_IFREG;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">fuse_operations</span> <span class="title">oufs_ops</span> =</span> &#123;<span class="comment">//fuse设置响应函数</span></span><br><span class="line">	.readdir    =   ou_readdir,</span><br><span class="line">	.getattr    =   ou_getattr,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span>* argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> fuse_main(argc, argv, &amp;oufs_ops, <span class="literal">NULL</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p> cmake编译成功后会看到生成的可执行文件 fusehello。建立一个挂载点 /tmp/mnt，然后运行</p>
-<blockquote>
-<p>./fusehello /tmp/mnt<br> 成功后试试“ls /tmp/mnt”，就能看到一个文件“hello-world”。要调试的时候可以加上“-d”选项，这样就能看到 FUSE 和自己 printf 的调试输出。代码第一行指定了要使用的 FUSE API 版本。这里使用的是 2.6 版本。</p>
-</blockquote>
+<li><p>找应该如何面对最辣手的问题?将它们视为通向人生之道的大门。</p>
 </li>
-<li><p>简单demo2,实现创建/删除普通文件的功能,加了<code>ou_create</code>,和<code>ou_unlink</code>两个函数,在fuse上被调用.</p>
- <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">ou_create</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* path, <span class="keyword">mode_t</span> mode, struct fuse_file_info* fi)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">ou_entry</span>* <span class="title">o</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_node</span>* <span class="title">n</span>;</span><span class="comment">//使用链表,文件放入链表中方便删除增加</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (<span class="built_in">strlen</span>(path + <span class="number">1</span>) &gt; MAX_NAMELEN)</span><br><span class="line">		<span class="keyword">return</span> -ENAMETOOLONG;</span><br><span class="line"></span><br><span class="line">	list_for_each (n, &amp;entries) &#123;</span><br><span class="line">		o = list_entry(n, struct ou_entry, node);</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">strcmp</span>(path + <span class="number">1</span>, o-&gt;name) == <span class="number">0</span>)</span><br><span class="line">			<span class="keyword">return</span> -EEXIST;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	o = <span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(struct ou_entry));</span><br><span class="line">	<span class="built_in">strcpy</span>(o-&gt;name, path + <span class="number">1</span>); <span class="comment">/* skip leading &#x27;/&#x27; */</span></span><br><span class="line">	o-&gt;mode = mode | S_IFREG;</span><br><span class="line">	list_add_prev(&amp;o-&gt;node, &amp;entries);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">ou_unlink</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* path)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_node</span> *<span class="title">n</span>, *<span class="title">p</span>;</span></span><br><span class="line"></span><br><span class="line">	list_for_each_safe (n, p, &amp;entries) &#123;</span><br><span class="line">		<span class="class"><span class="keyword">struct</span> <span class="title">ou_entry</span>* <span class="title">o</span> =</span> list_entry(n, struct ou_entry, node);</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">strcmp</span>(path + <span class="number">1</span>, o-&gt;name) == <span class="number">0</span>) &#123;</span><br><span class="line">			__list_del(n);</span><br><span class="line">			<span class="built_in">free</span>(o);</span><br><span class="line">			<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> -ENOENT;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-</ol>
-<ul>
-<li><strong>总结</strong>:具体还是使用的linux中的fuse的库文件,来实现我们自己的fuse文件系统,我们只需要参照<code>fuse.h</code>文件的函数指针.需要实现哪个功能,就开始自己进行实现,最后把结构体传入至fuse,就可以成功编写一个属于我们自己的文件系统了.</li>
+<li><p>我应该如何帮助落魄的人?用正确的示范来鼓舞他，使他重新振作起来。</p>
+</li>
+<li><p>当众人皆醉我独醒时应该做什么?坚定勇敢地说出事实的真相。</p>
+</li>
+<li><p>我们意识得到自己的无助、局限和死亡，也可以感受到疼痛、自厌、羞耻和恐惧。我们知道什么会让我们痛苦，如何让我们痛苦，甚至怎样让别人痛苦</p>
+</li>
+<li><p>人们天生喜欢秩序，在秩序中人们可以做长远打算，感到稳定、平静和自信，因此我们都倾向于留在熟悉的地方，坚持已有的思想观念。</p>
+</li>
+<li><p>如果你的生活不尽如人意，试着说真话;如果你拼命地坚持某种意识或者沉迷于虚无主义，试着说真话;如果你感到脆弱、无用、绝望和困惑，试着说真话。</p>
+</li>
 </ul>
-<h2 id="fuse-http的实现"><a href="#fuse-http的实现" class="headerlink" title="fuse+http的实现"></a>fuse+http的实现</h2><p><strong>利用fuse的机制,再获取http接口,实现把http文件系统的文件挂载至本机指定文件夹中,虽然此程序是用纯C编写的,但是我们已知具体实现功能,并了解部分fuse实现原理,所以我们只需要解读关键函数的实现就能大致了解实现流程</strong></p>
+]]></content>
+      <categories>
+        <category>阅读</category>
+      </categories>
+      <tags>
+        <tag>读书有感</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>【Linux技术分享】X11学习（一）</title>
+    <url>/2021/10/26/X11%E5%AD%A6%E4%B9%A0%EF%BC%88%E4%B8%80%EF%BC%89/</url>
+    <content><![CDATA[<h1 id="X11基础学习（一）"><a href="#X11基础学习（一）" class="headerlink" title="X11基础学习（一）"></a>X11基础学习（一）</h1><p><em><strong>基本窗口创建。官方文档链接<a href="http://mech.math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html">http://mech.math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html</a>.</strong></em></p>
+<span id="more"></span>
+
+<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><ol>
+<li><p>X11是什么</p>
+<p> X提供了GUI一个在unix系统下基本框架，可以绘图，移动窗口，显示窗口，与鼠标键盘一系列的交互。当前X已经更新到第11版所以简称为X11协议。与其类似的可以参考Wayland</p>
+</li>
+</ol>
+<h2 id="窗口的初始化"><a href="#窗口的初始化" class="headerlink" title="窗口的初始化"></a>窗口的初始化</h2><ol>
+<li><p>XOpenDisplay</p>
+<p> func：Display *XOpenDisplay(char *display_name);</p>
+<p> 作用：打开指定X的服务器，返回一个关于服务器的display结构体。参数传入为NULL则是本机环境，如果是局域网地址则可以通过:来隔开，hostname:number.screen_number</p>
+<p> 例子：</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">Display *display = XOpenDisplay(<span class="literal">NULL</span>); <span class="comment">//本机环境</span></span><br><span class="line">XOpenDisplay(<span class="string">&quot;192.168.0.12:0&quot;</span>);			<span class="comment">//局域网</span></span><br></pre></td></tr></table></figure></li>
+<li><p>XCreateSimpleWindow</p>
+<p> func: Window XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes)</p>
+<p> 作用：创建一个简单窗口并返回一个窗口句柄</p>
+<p> 例子：</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">Windows win = XCreateSimpleWindow(dpy, root, <span class="number">0</span>, <span class="number">0</span>, width, height, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0xFFFF7700</span>);<span class="comment">//窗口创建</span></span><br></pre></td></tr></table></figure></li>
+<li><p>XSelectInput</p>
+<p> func: int XSelectInput(Display *display, Window w, long event_mask);</p>
+<p> 作用： 选择窗口所需要监听的事件，第三个参数就是传入事件。否则X就不监听窗口的任何事件。</p>
+<p> 例子：</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">XSelectInput(xfc-&gt;display, xfc-&gt;window, KeyPressMask);</span><br></pre></td></tr></table></figure></li>
+<li><p>XMapWindow</p>
+<p> func: XMapWindow(Display *display, Window w);</p>
+<p> 作用： 关联并映射子窗口让其能同步获取事件和显示。</p>
+<p> 例子：</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">XMapWindow(xfc-&gt;display, xfc-&gt;window);      <span class="comment">//关联窗口并显示</span></span><br></pre></td></tr></table></figure>
+<h2 id="窗口事件处理"><a href="#窗口事件处理" class="headerlink" title="窗口事件处理"></a>窗口事件处理</h2></li>
+<li><p>XNextEvent</p>
+<p> func: XNextEvent(Display *display, XEvent)</p>
+<p> 作用： 从事件队列获取下一个事件，如果队列为空则刷新缓存直到获取下一个事件。</p>
+<p> 例子：</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">XEvent event = &#123;<span class="number">0</span>&#125;; <span class="comment">//X的事件</span></span><br><span class="line">      XNextEvent(xfc-&gt;display, &amp;event);<span class="comment">//拉取窗口事件</span></span><br><span class="line">      <span class="built_in">printf</span>(<span class="string">&quot;event:%d\n&quot;</span>,event.type);</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="简单窗口的创建"><a href="#简单窗口的创建" class="headerlink" title="简单窗口的创建"></a>简单窗口的创建</h2><p>main.c：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;X11/Xlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">	Display *d;</span><br><span class="line">	Window w;</span><br><span class="line">	XEvent e;</span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">char</span> *msg = <span class="string">&quot;Hello, World!&quot;</span>;</span><br><span class="line">	<span class="keyword">int</span> s;</span><br><span class="line"></span><br><span class="line">	d = XOpenDisplay(<span class="literal">NULL</span>);</span><br><span class="line">	<span class="keyword">if</span> (d == <span class="literal">NULL</span>) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;Cannot open display\n&quot;</span>);</span><br><span class="line">		<span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	s = DefaultScreen(d);</span><br><span class="line">	w = XCreateSimpleWindow(d, RootWindow(d, s), <span class="number">10</span>, <span class="number">10</span>, <span class="number">100</span>, <span class="number">100</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0xFFFF7700</span>);</span><br><span class="line">	XSelectInput(d, w, ExposureMask | KeyPressMask);</span><br><span class="line">	XMapWindow(d, w);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">		XNextEvent(d, &amp;e);</span><br><span class="line">		<span class="keyword">if</span> (e.type == Expose) &#123;</span><br><span class="line">			XFillRectangle(d, w, DefaultGC(d, s), <span class="number">20</span>, <span class="number">20</span>, <span class="number">10</span>, <span class="number">10</span>);</span><br><span class="line">			XDrawString(d, w, DefaultGC(d, s), <span class="number">10</span>, <span class="number">50</span>, msg, <span class="built_in">strlen</span>(msg));</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> (e.type == KeyPress)</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	XCloseDisplay(d);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>X11学习</category>
+      </categories>
+      <tags>
+        <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>【windows技术】go的http服务器响应实现</title>
+    <url>/2021/10/09/go%E7%9A%84http%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%93%8D%E5%BA%94%E5%AE%9E%E7%8E%B0/</url>
+    <content><![CDATA[<h1 id="go实现服务器响应客户端操作"><a href="#go实现服务器响应客户端操作" class="headerlink" title="go实现服务器响应客户端操作"></a>go实现服务器响应客户端操作</h1><p><em><strong>利用go实现服务器响应客户端各种操作</strong></em></p>
+<span id="more"></span>
+<h2 id="前期调研"><a href="#前期调研" class="headerlink" title="前期调研"></a>前期调研</h2><p>在go开发官方文档<code>https://pkg.go.dev/net/http</code>发现了针对http服务器响应和对http客户端对服务器请求的说明，本文参考此说明开始编写。</p>
+<h2 id="go服务器响应"><a href="#go服务器响应" class="headerlink" title="go服务器响应"></a>go服务器响应</h2><p><em>ListenAndServe starts an HTTP server with a given address and handler. The handler is usually nil, which means to use DefaultServeMux. Handle and HandleFunc add handlers to DefaultServeMux:</em></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">http.Handle(<span class="string">&quot;/foo&quot;</span>, fooHandler)</span><br><span class="line"></span><br><span class="line">http.HandleFunc(<span class="string">&quot;/bar&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	fmt.Fprintf(w, <span class="string">&quot;Hello, %q&quot;</span>, html.EscapeString(r.URL.Path))</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line">log.Fatal(http.ListenAndServe(<span class="string">&quot;:8080&quot;</span>, <span class="literal">nil</span>))</span><br></pre></td></tr></table></figure>
+
+<p>开发文档意思是在http服务器添加handle来响应客户端不同请求操作即可，事例函数中有两个参数需要注意:</p>
+<p><code>ResponseWriter 是处理器用来创建 HTTP 响应的接口，其源码结构如下所示：</code></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> ResponseWriter <span class="keyword">interface</span> &#123;</span><br><span class="line">   <span class="comment">// 用于设置/获取所有响应头信息</span></span><br><span class="line">    Header() Header</span><br><span class="line">   <span class="comment">// 用于写入数据到响应实体</span></span><br><span class="line">    Write([]<span class="keyword">byte</span>) (<span class="keyword">int</span>, error)</span><br><span class="line">   <span class="comment">// 用于设置响应状态码</span></span><br><span class="line">    WriteHeader(statusCode <span class="keyword">int</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>Request是用来解析请求头和请求体，其源码结构如下：</code></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Request <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">//指定请求内容例如DELETE，POST，GET</span></span><br><span class="line">    Method <span class="keyword">string</span></span><br><span class="line">	<span class="comment">//指定要请求的 URI（对于服务器请求）或要访问的 URL（用于客户请求</span></span><br><span class="line">    URL *url.URL</span><br><span class="line">	<span class="comment">//服务器协议版本</span></span><br><span class="line">    Proto      <span class="keyword">string</span> <span class="comment">// &quot;HTTP/1.0&quot;</span></span><br><span class="line">    ProtoMajor <span class="keyword">int</span>    <span class="comment">// 1</span></span><br><span class="line">    ProtoMinor <span class="keyword">int</span>    <span class="comment">// 0</span></span><br><span class="line">	<span class="comment">//包含服务端收到或者由客户端发送的 HTTP 请求头</span></span><br><span class="line">    Header Header</span><br><span class="line"></span><br><span class="line">    Body io.ReadCloser</span><br><span class="line"></span><br><span class="line">    GetBody <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="params">(io.ReadCloser, error)</span></span></span><br><span class="line"></span><br><span class="line">    ContentLength <span class="keyword">int64</span></span><br><span class="line"></span><br><span class="line">    TransferEncoding []<span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">    Close <span class="keyword">bool</span></span><br><span class="line"></span><br><span class="line">    Host <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">    Form url.Values</span><br><span class="line"></span><br><span class="line">    PostForm url.Values</span><br><span class="line"></span><br><span class="line">    MultipartForm *multipart.Form</span><br><span class="line"></span><br><span class="line">    Trailer Header</span><br><span class="line"></span><br><span class="line">    RemoteAddr <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">    RequestURI <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">    TLS *tls.ConnectionState</span><br><span class="line"></span><br><span class="line">    Cancel &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">    Response *Response</span><br><span class="line"></span><br><span class="line">    ctx context.Context</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这边主要使用的就是request结构体前几个对象就可以实现了，具体的其他对象详细说明可以看下<code>request.go</code>源码</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;net/http&quot;</span></span><br><span class="line">    <span class="string">&quot;fmt&quot;</span></span><br><span class="line">    <span class="string">&quot;os&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    mux := http.NewServeMux()</span><br><span class="line">    fs := http.FileServer(http.Dir(<span class="string">&quot;/home/mecry/tmp/&quot;</span>))</span><br><span class="line">    mux.Handle(<span class="string">&quot;/&quot;</span>, <span class="built_in">delete</span>(<span class="string">&quot;/home/mecry/tmp/&quot;</span>, fs))</span><br><span class="line">    http.ListenAndServe(<span class="string">&quot;localhost:8888&quot;</span>, mux)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">delete</span> <span class="params">(dirprefix <span class="keyword">string</span>, next http.Handler)</span> <span class="title">http</span>.<span class="title">Handler</span></span> &#123;</span><br><span class="line">    <span class="keyword">return</span> http.HandlerFunc(<span class="function"><span class="keyword">func</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">        <span class="keyword">if</span> r.Method == <span class="string">&quot;DELETE&quot;</span> &#123;</span><br><span class="line">            path := dirprefix+r.URL.String()</span><br><span class="line">            fmt.Println(<span class="string">&quot;delete path:&quot;</span>, path)</span><br><span class="line">            os.Remove(path)</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">        next.ServeHTTP(w, r)</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>go</category>
+      </categories>
+      <tags>
+        <tag>windows技术</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>【Linux技术分享】利用fuse实现简单文件系统</title>
+    <url>/2021/09/16/%E5%88%A9%E7%94%A8fuse%E5%AE%9E%E7%8E%B0%E7%AE%80%E5%8D%95%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/</url>
+    <content><![CDATA[<h1 id="fuse实现原理"><a href="#fuse实现原理" class="headerlink" title="fuse实现原理"></a>fuse实现原理</h1><p><em><strong><a href="http://linkmecry.cn/2021/06/07/Linux%E4%B8%8Bfuse%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/">fuse原理</a></strong></em></p>
+<span id="more"></span>
+
+<h2 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h2><p>周末抽了两个半天，看了下之前写的fuse总结，和之前用的httpdirfs项目中fuse实现,自己做了一个fuse的小程序，主要是对二级指针的深层次应用，源码路径<code>https://github.com/MecryWork/fuselocal</code>,功能如下</p>
 <ol>
-<li><p>link.c和link.h加载http中的Link中的路径转换至磁盘本地路径.</p>
- <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function">LinkTable *<span class="title">LinkTable_disk_open</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *dirn)</span><span class="comment">//从磁盘加载链接表</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">char</span> *metadirn = path_append(META_DIR, dirn);</span><br><span class="line">	<span class="keyword">char</span> *path;</span><br><span class="line">	<span class="comment">//http中的路径进行选择截取</span></span><br><span class="line">	<span class="keyword">if</span> (metadirn[strnlen(metadirn, MAX_PATH_LEN)] == <span class="string">&#x27;/&#x27;</span>) &#123;</span><br><span class="line">		path = path_append(metadirn, <span class="string">&quot;.LinkTable&quot;</span>);</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		path = path_append(metadirn, <span class="string">&quot;/.LinkTable&quot;</span>);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">//打开路径开始获取目标文件</span></span><br><span class="line">	FILE *fp = fopen(path, <span class="string">&quot;r&quot;</span>);</span><br><span class="line">	<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;path&lt;%s&gt;\n&quot;</span>,path);</span><br><span class="line"></span><br><span class="line">	<span class="built_in">free</span>(metadirn);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!fp) &#123;</span><br><span class="line">		<span class="built_in">free</span>(path);</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	LinkTable *linktbl = CALLOC(<span class="number">1</span>, <span class="keyword">sizeof</span>(LinkTable));</span><br><span class="line"></span><br><span class="line">	fread(&amp;linktbl-&gt;num, <span class="keyword">sizeof</span>(<span class="keyword">int</span>), <span class="number">1</span>, fp);</span><br><span class="line">	linktbl-&gt;links = CALLOC(linktbl-&gt;num, <span class="keyword">sizeof</span>(Link *));</span><br><span class="line">	<span class="comment">//遍历link获取所需内容,并返回</span></span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; linktbl-&gt;num; i++) &#123;</span><br><span class="line">		linktbl-&gt;links[i] = CALLOC(<span class="number">1</span>, <span class="keyword">sizeof</span>(Link));</span><br><span class="line">		fread(linktbl-&gt;links[i]-&gt;linkname, <span class="keyword">sizeof</span>(<span class="keyword">char</span>), MAX_FILENAME_LEN, fp);</span><br><span class="line">		fread(linktbl-&gt;links[i]-&gt;f_url, <span class="keyword">sizeof</span>(<span class="keyword">char</span>), MAX_PATH_LEN, fp);</span><br><span class="line">		fread(&amp;linktbl-&gt;links[i]-&gt;type, <span class="keyword">sizeof</span>(LinkType), <span class="number">1</span>, fp);</span><br><span class="line">		fread(&amp;linktbl-&gt;links[i]-&gt;content_length, <span class="keyword">sizeof</span>(<span class="keyword">size_t</span>), <span class="number">1</span>, fp);</span><br><span class="line">		fread(&amp;linktbl-&gt;links[i]-&gt;time, <span class="keyword">sizeof</span>(<span class="keyword">long</span>), <span class="number">1</span>, fp);</span><br><span class="line">		<span class="keyword">if</span> (feof(fp)) &#123;</span><br><span class="line">			<span class="comment">/* reached EOF */</span></span><br><span class="line">			<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>,</span><br><span class="line">					<span class="string">&quot;LinkTable_disk_open(): reached EOF!\n&quot;</span>);</span><br><span class="line">			LinkTable_free(linktbl);</span><br><span class="line">			LinkTable_disk_delete(dirn);</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> (ferror(fp)) &#123;</span><br><span class="line">			<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;LinkTable_disk_open(): encountered ferror!\n&quot;</span>);</span><br><span class="line">			LinkTable_free(linktbl);</span><br><span class="line">			LinkTable_disk_delete(dirn);</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> (fclose(fp)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>,</span><br><span class="line">				<span class="string">&quot;LinkTable_disk_open(): cannot close the file pointer, %s\n&quot;</span>,</span><br><span class="line">				strerror(errno));</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> linktbl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li><p>network.c 和network.h,获取http文件服务器内容,详情请参考<code>https://curl.haxx.se/libcurl/c/threaded-ssl.html</code>这位作者也是参考此源码完成.</p>
- <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">NetworkSystem_init</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">	<span class="comment">/* ------- Global related ----------*/</span></span><br><span class="line">	<span class="comment">//初始化http的curl,如果非CURL_GLOBAL_ALL则初始化失败退出</span></span><br><span class="line">	<span class="keyword">if</span> (curl_global_init(CURL_GLOBAL_ALL)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;network_init(): curl_global_init() failed!\n&quot;</span>);</span><br><span class="line">		exit_failure();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* -------- Share related ----------*/</span></span><br><span class="line">	<span class="comment">//返回curl句柄,获取相应我curl</span></span><br><span class="line">	CURL_SHARE = curl_share_init();</span><br><span class="line">	<span class="keyword">if</span> (!(CURL_SHARE)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;network_init(): curl_share_init() failed!\n&quot;</span>);</span><br><span class="line">		exit_failure();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//给目标穿参</span></span><br><span class="line">	curl_share_setopt(CURL_SHARE, CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);</span><br><span class="line">	curl_share_setopt(CURL_SHARE, CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);</span><br><span class="line">	curl_share_setopt(CURL_SHARE, CURLSHOPT_SHARE, CURL_LOCK_DATA_SSL_SESSION);</span><br><span class="line">	<span class="comment">//thread的初始化</span></span><br><span class="line">	<span class="keyword">if</span> (pthread_mutex_init(&amp;curl_lock, <span class="literal">NULL</span>) != <span class="number">0</span>) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;network_init(): curl_lock initialisation failed!\n&quot;</span>);</span><br><span class="line">		exit_failure();</span><br><span class="line">	&#125;</span><br><span class="line">	curl_share_setopt(CURL_SHARE, CURLSHOPT_LOCKFUNC, curl_callback_lock);</span><br><span class="line">	curl_share_setopt(CURL_SHARE, CURLSHOPT_UNLOCKFUNC, curl_callback_unlock);</span><br><span class="line"></span><br><span class="line">	<span class="comment">//处理多个curl</span></span><br><span class="line">	<span class="comment">/* ------------- Multi related -----------*/</span></span><br><span class="line">	curl_multi = curl_multi_init();</span><br><span class="line">	<span class="keyword">if</span> (!curl_multi) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;network_init(): curl_multi_init() failed!\n&quot;</span>);</span><br><span class="line">		exit_failure();</span><br><span class="line">	&#125;</span><br><span class="line">	curl_multi_setopt(curl_multi, CURLMOPT_MAX_TOTAL_CONNECTIONS,</span><br><span class="line">					CONFIG.max_conns);</span><br><span class="line">	curl_multi_setopt(curl_multi, CURLMOPT_MAX_HOST_CONNECTIONS,</span><br><span class="line">					CONFIG.max_conns);</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* ------------ Initialise locks ---------*/</span></span><br><span class="line">	<span class="keyword">if</span> (pthread_mutex_init(&amp;transfer_lock, <span class="literal">NULL</span>)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>,</span><br><span class="line">				<span class="string">&quot;network_init(): transfer_lock initialisation failed!\n&quot;</span>);</span><br><span class="line">		exit_failure();</span><br><span class="line">	&#125;</span><br><span class="line">	crypto_lock_init();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li><p>fuse_local.c和fuse_local.h,搭建本地fuse文件系统,本文上半部分已经详细介绍原理.</p>
- <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">fs_readdir</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *path, <span class="keyword">void</span> *buf, <span class="keyword">fuse_fill_dir_t</span> dir_add,<span class="keyword">off_t</span> offset, struct fuse_file_info *fi)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	(<span class="keyword">void</span>) offset;</span><br><span class="line">	(<span class="keyword">void</span>) fi;</span><br><span class="line"></span><br><span class="line">	Link *link;</span><br><span class="line">	LinkTable *linktbl;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!<span class="built_in">strcmp</span>(path, <span class="string">&quot;/&quot;</span>)) &#123;</span><br><span class="line">		linktbl = ROOT_LINK_TBL;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		linktbl = path_to_Link_LinkTable_new(path);<span class="comment">//如果非根目录,则从link中重新拉去当前目录所有文件夹,和文件从而实现文件夹的存储.缺点是要试试刷新多文件会有较高延迟</span></span><br><span class="line">		<span class="keyword">if</span>(!linktbl) &#123;</span><br><span class="line">			<span class="keyword">return</span> -ENOENT;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* start adding the links */</span></span><br><span class="line">	dir_add(buf, <span class="string">&quot;.&quot;</span>, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">	dir_add(buf, <span class="string">&quot;..&quot;</span>, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; linktbl-&gt;num; i++) &#123;</span><br><span class="line">		link = linktbl-&gt;links[i];</span><br><span class="line">		<span class="keyword">if</span> (link-&gt;type != LINK_INVALID) &#123;</span><br><span class="line">			dir_add(buf, link-&gt;linkname, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>实现多层次的文件和文件夹创建，重命名，删除</li>
 </ol>
-<ul>
-<li><strong>总结</strong>:通过http(curl库),和fuse(fuse库).点击当前文件夹就会从http拉去当前文件夹所有内容,从而实现了把http文件系统服务器挂在至本机磁盘中.makefile直接使用make生成可执行文件httpdirfs,然后调用如下命令即可使用<blockquote>
-<p>./httpdirfs -f –cache $URL $MOUNT_POINT</p>
-</blockquote>
+<p>待实现：</p>
+<ol>
+<li><p>文件的写入和读取（后期和服务器文件关联一下，本机的文件写入和读取有一些鸡肋）</p>
 </li>
-</ul>
+<li><p>合理的日志系统</p>
+</li>
+<li><p>文件创建的时间细节需要补充</p>
+</li>
+</ol>
 ]]></content>
       <categories>
         <category>Linux利用fuse实现文件系统</category>
@@ -47,31 +133,45 @@
       </tags>
   </entry>
   <entry>
-    <title>【Linux技术分享】UOS下实现键盘事件捕捉</title>
-    <url>/2021/06/28/UOS%E4%B8%8B%E5%AE%9E%E7%8E%B0%E9%94%AE%E7%9B%98%E4%BA%8B%E4%BB%B6%E6%8D%95%E6%8D%89/</url>
-    <content><![CDATA[<h1 id="在UOS系统下实现键盘的捕捉"><a href="#在UOS系统下实现键盘的捕捉" class="headerlink" title="在UOS系统下实现键盘的捕捉"></a>在UOS系统下实现键盘的捕捉</h1><p><em><strong>在UOS系统下监听和触发键盘的事件，具体代码参考<code>https://github.com/MecryWork/hotkey</code>。参考博文<code>https://www.jianshu.com/p/927fc573d081</code></strong></em></p>
+    <title>【Linux技术分享】cgo传入二级指针</title>
+    <url>/2021/09/03/%E5%85%B3%E4%BA%8Ecgo%E7%9A%84%E4%BA%8C%E7%BA%A7%E6%8C%87%E9%92%88/</url>
+    <content><![CDATA[<h1 id="cgo实现字符串切片传入c代码中"><a href="#cgo实现字符串切片传入c代码中" class="headerlink" title="cgo实现字符串切片传入c代码中"></a>cgo实现字符串切片传入c代码中</h1><p><em><strong>go实现字符串切片传入c代码中，让c识别为二级指针，能够顺利进行字符串的偏移读写</strong></em></p>
 <span id="more"></span>
 
-<h2 id="dev-input目录简介"><a href="#dev-input目录简介" class="headerlink" title="/dev/input目录简介"></a>/dev/input目录简介</h2><ol>
-<li><p>首先linux是所有操作都是已文件形式处理，这个是真理。在我们输入键盘鼠标时，linux系统中记录都放在<code>/dev/input</code>目录下。我们<code>ls</code>下此目录可以看见绝大部分的事件处理</p>
- <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">crw-rw----  1 root input 13, 65 6月  28 13:04 event1</span><br><span class="line">crw-rw----  1 root input 13, 74 6月  28 13:04 event10</span><br><span class="line">crw-rw----  1 root input 13, 75 6月  28 13:04 event11</span><br><span class="line">crw-rw----  1 root input 13, 76 6月  28 13:04 event12</span><br><span class="line">crw-rw----  1 root input 13, 77 6月  28 13:04 event13</span><br><span class="line">crw-rw----  1 root input 13, 66 6月  28 13:04 event2</span><br><span class="line">crw-rw----  1 root input 13, 67 6月  28 13:04 event3</span><br><span class="line">crw-rw----  1 root input 13, 68 6月  28 13:04 event4</span><br><span class="line">crw-rw----  1 root input 13, 69 6月  28 13:04 event5</span><br><span class="line">crw-rw----  1 root input 13, 70 6月  28 13:04 event6</span><br><span class="line">crw-rw----  1 root input 13, 71 6月  28 13:04 event7</span><br><span class="line">crw-rw----  1 root input 13, 72 6月  28 13:04 event8</span><br><span class="line">crw-rw----  1 root input 13, 73 6月  28 13:04 event9</span><br></pre></td></tr></table></figure></li>
-<li><p>使用<code>cat /proc/bus/input/devices</code>可以查看每一个event的具体操作，里面的H就是对应的时间操作。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">I: Bus&#x3D;0000 Vendor&#x3D;0000 Product&#x3D;0000 Version&#x3D;0000</span><br><span class="line">N: Name&#x3D;&quot;HDA ATI HDMI HDMI&#x2F;DP,pcm&#x3D;3&quot;</span><br><span class="line">P: Phys&#x3D;ALSA</span><br><span class="line">S: Sysfs&#x3D;&#x2F;devices&#x2F;pci0000:00&#x2F;0000:00:01.0&#x2F;0000:01:00.1&#x2F;sound&#x2F;card1&#x2F;input11</span><br><span class="line">U: Uniq&#x3D;</span><br><span class="line">H: Handlers&#x3D;event8</span><br><span class="line">B: PROP&#x3D;0</span><br><span class="line">B: EV&#x3D;21</span><br><span class="line">B: SW&#x3D;140</span><br><span class="line"></span><br><span class="line">I: Bus&#x3D;0000 Vendor&#x3D;0000 Product&#x3D;0000 Version&#x3D;0000</span><br><span class="line">N: Name&#x3D;&quot;HDA Intel PCH Rear Mic&quot;</span><br><span class="line">P: Phys&#x3D;ALSA</span><br><span class="line">S: Sysfs&#x3D;&#x2F;devices&#x2F;pci0000:00&#x2F;0000:00:1f.3&#x2F;sound&#x2F;card0&#x2F;input12</span><br><span class="line">U: Uniq&#x3D;</span><br><span class="line">H: Handlers&#x3D;event9</span><br><span class="line">B: PROP&#x3D;0</span><br><span class="line">B: EV&#x3D;21</span><br><span class="line">B: SW&#x3D;10</span><br><span class="line"></span><br><span class="line">I: Bus&#x3D;0000 Vendor&#x3D;0000 Product&#x3D;0000 Version&#x3D;0000</span><br><span class="line">N: Name&#x3D;&quot;HDA Intel PCH Front Mic&quot;</span><br><span class="line">P: Phys&#x3D;ALSA</span><br><span class="line">S: Sysfs&#x3D;&#x2F;devices&#x2F;pci0000:00&#x2F;0000:00:1f.3&#x2F;sound&#x2F;card0&#x2F;input13</span><br><span class="line">U: Uniq&#x3D;</span><br><span class="line">H: Handlers&#x3D;event10</span><br><span class="line">B: PROP&#x3D;0</span><br><span class="line">B: EV&#x3D;21</span><br><span class="line">B: SW&#x3D;10</span><br></pre></td></tr></table></figure>
-<h2 id="input-h-文件"><a href="#input-h-文件" class="headerlink" title="input.h 文件"></a>input.h 文件</h2></li>
-<li><p>在<code>linux/input.h</code>文件中定义了<code>event</code>时间输入数据的结构图，该结构图的定义如下：</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">input_event</span> &#123;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">time</span>;</span></span><br><span class="line"> __u16 type;</span><br><span class="line"> __u16 code;</span><br><span class="line"> __s32 value;</span><br><span class="line"> &#125;;</span><br><span class="line"></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span></span></span><br><span class="line"><span class="class"> &#123;</span></span><br><span class="line"> <span class="keyword">__time_t</span> tv_sec;        <span class="comment">/* Seconds.  */</span></span><br><span class="line"> <span class="keyword">__suseconds_t</span> tv_usec;  <span class="comment">/* Microseconds.  */</span></span><br><span class="line"> &#125;;</span><br></pre></td></tr></table></figure>
-<p> type，指事件类型，常见的事件类型有：</p>
-<p> EV_KEY，按键事件，键盘的按键，鼠标的左键右键等；</p>
-<p> EV_REL，相对坐标，主要用于鼠标的移动事件；</p>
-<p> EV_ABS，绝对坐标，主要用于触摸屏的移动事件。</p>
-<p> code 事件代码，当事件类型为EV_KEY时，该代码为设备键盘代码，在input.h文件中以KEY_开头定义；</p>
-<p> value 事件的值，当事件类型代码是EV_KEY时，按键操作值为1，释放操作值为0，事件类型代码为EV_REL是，value为正数值和负数值分别代表连个不同方向的值。</p>
-</li>
+<h2 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h2><p>想通过go给C代码传入一个二级指针，然后在C中进行读取，本来以为是很简单的事情，但是发现go的string和c++的不太一样，C的代码如下</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">fill_2d_array</span><span class="params">(<span class="keyword">char</span> **arr, <span class="keyword">int</span> columeSize)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">char</span> szBuf[<span class="number">4</span>][<span class="number">255</span>];</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>;i &lt; <span class="number">4</span>;i++) &#123;</span><br><span class="line">		<span class="built_in">strcpy</span>(szBuf[i], arr[i]);</span><br><span class="line">		<span class="built_in">printf</span>(<span class="string">&quot;buf:%s\n&quot;</span>, szBuf[i]);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="第一次转换的写法"><a href="#第一次转换的写法" class="headerlink" title="第一次转换的写法"></a>第一次转换的写法</h3><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">byteToC</span><span class="params">(list []<span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	dirs := <span class="built_in">make</span>([][]<span class="keyword">byte</span>, <span class="number">4</span>)</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">4</span>; i++ &#123;</span><br><span class="line">		dirs[i] = <span class="built_in">make</span>([]<span class="keyword">byte</span>, <span class="number">4</span>)</span><br><span class="line">		dirs[i] = []<span class="keyword">byte</span>(list[i])</span><br><span class="line">		fmt.Println(<span class="string">&quot;list:&quot;</span>, list[i])</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	C.fill_2d_array((**C.char)(unsafe.Pointer(&amp;dirs[<span class="number">0</span>][<span class="number">0</span>])), C.<span class="keyword">int</span>(<span class="number">5</span>))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>把切片转成byte传入C的代码中，但是在C代码输出的时候直接输出直接崩溃，如果按照字节处理<code>strcpy((char*)(arr+0*sizeof(char)*columeSize), &quot;hello&quot;);</code>类似这种处理，但是在C中输出的时候，字符串会或多或少，不能正常输出。</p>
+<p>根因分析：之前我写过go转C++的dll，导出头文件关于GoString的定义为</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> GO_CGO_GOSTRING_TYPEDEF</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span> <span class="keyword">const</span> <span class="keyword">char</span>* p; <span class="keyword">ptrdiff_t</span> n; &#125; _GoString_;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>这边我直接输出了<code>printf(&quot;%s&quot;,goString.p);</code>，然后是一串很长的字符串，详情看如何生成dll的请移步<a href="http://linkmecry.cn/2021/06/04/go%E6%90%AD%E5%BB%BAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/">利用go搭建纯文件http服务器，并生成dll</a>，这边判断gostring中的p在转换的时候没有保存’\0’，意思就是没有结束符，把后面的东西全部都输出了</p>
+<h3 id="第二次转换的写法"><a href="#第二次转换的写法" class="headerlink" title="第二次转换的写法"></a>第二次转换的写法</h3><p>问题找到了，只需要把’\0’在传入的时候传过去就OK，于是放弃转byte的转换方法，改用C.char*.</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">charToC</span><span class="params">(list []<span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	nameunits := <span class="built_in">make</span>([]*C.char, <span class="built_in">len</span>(list))</span><br><span class="line">	<span class="keyword">for</span> i, _ := <span class="keyword">range</span> list &#123;</span><br><span class="line">		nameunits[i] = C.CString(list[i])</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	C.fill_2d_array((**C.char)(unsafe.Pointer(&amp;nameunits[<span class="number">0</span>])), C.<span class="keyword">int</span>(<span class="number">4</span>))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出正常圆满完成任务</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">buf:1111</span><br><span class="line">buf:2222</span><br><span class="line">buf:3333</span><br><span class="line">buf:4444</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>go</category>
+      </categories>
+      <tags>
+        <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>【Linux技术分享】利用C++实现链表</title>
+    <url>/2021/09/03/%E9%93%BE%E8%A1%A8%E5%9F%BA%E7%A1%80%E7%90%86%E8%A7%A3/</url>
+    <content><![CDATA[<h1 id="利用C-实现链表基础代码"><a href="#利用C-实现链表基础代码" class="headerlink" title="利用C++实现链表基础代码"></a>利用C++实现链表基础代码</h1><p><em><strong>利用C++实现链表和CString<code>https://github.com/MecryWork/listapp</code>。</strong></em></p>
+<span id="more"></span>
+<h2 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h2><ol>
+<li>实现增删改查插入</li>
+<li>CString实现深拷贝</li>
 </ol>
-<h2 id="监听键盘事件"><a href="#监听键盘事件" class="headerlink" title="监听键盘事件"></a>监听键盘事件</h2><ol>
-<li>利用<code>input_event</code>结构体读取键盘事件 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">int</span> retval;</span><br><span class="line">fd_set readfds;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">tv</span>;</span></span><br><span class="line"><span class="keyword">int</span> fd = open(dev, O_RDONLY);</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">input_event</span> <span class="title">event</span>;</span></span><br><span class="line"><span class="keyword">if</span> (fd &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    perror(dev);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">    FD_ZERO(&amp;readfds);</span><br><span class="line">    FD_SET(fd, &amp;readfds);</span><br><span class="line">    tv.tv_sec = timeout;<span class="comment">//设置超时时间</span></span><br><span class="line">    tv.tv_usec = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> ((retval = select(fd + <span class="number">1</span>, &amp;readfds, <span class="literal">NULL</span>, <span class="literal">NULL</span>, &amp;tv)) == <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (read(fd, &amp;event, <span class="keyword">sizeof</span>(event)) == <span class="keyword">sizeof</span>(event)) &#123;</span><br><span class="line">            <span class="keyword">if</span> (event.type == EV_KEY) &#123;</span><br><span class="line">                <span class="keyword">if</span> (event.value == <span class="number">0</span> || event.value == <span class="number">1</span>) <span class="comment">//根据value的值判断按下松开&#123;</span></span><br><span class="line">                    <span class="built_in">printf</span>(<span class="string">&quot;key %d %s\n&quot;</span>, event.code, event.value ? <span class="string">&quot;Pressed&quot;</span> : <span class="string">&quot;Released&quot;</span>);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;type=%x %d %d\n&quot;</span>, event.type, event.code, event.value);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">close(fd);</span><br></pre></td></tr></table></figure></li>
-</ol>
-<h2 id="传入键盘事件"><a href="#传入键盘事件" class="headerlink" title="传入键盘事件"></a>传入键盘事件</h2><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="number">1.</span> 利用`input_event`+`write`对键盘事件进行写入</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">simulate_key</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">int</span> kval)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">input_event</span> <span class="title">event</span>;</span></span><br><span class="line">        gettimeofday(&amp;event.time, <span class="number">0</span>);</span><br><span class="line">        <span class="comment">//按下kval键</span></span><br><span class="line">        event.type = EV_KEY;</span><br><span class="line">        event.value = <span class="number">1</span>;</span><br><span class="line">        event.code = kval;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        <span class="comment">//同步，也就是把它报告给系统</span></span><br><span class="line">        event.type = EV_SYN;</span><br><span class="line">        event.value = <span class="number">0</span>;</span><br><span class="line">        event.code = SYN_REPORT;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        <span class="built_in">memset</span>(&amp;event, <span class="number">0</span>, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        gettimeofday(&amp;event.time, <span class="number">0</span>);</span><br><span class="line">        <span class="comment">//松开kval键</span></span><br><span class="line">        event.type = EV_KEY;</span><br><span class="line">        event.value = <span class="number">0</span>;</span><br><span class="line">        event.code = kval;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        <span class="comment">//同步，也就是把它报告给系统</span></span><br><span class="line">        event.type = EV_SYN;</span><br><span class="line">        event.value = <span class="number">0</span>;</span><br><span class="line">        event.code = SYN_REPORT;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>]]></content>
+]]></content>
+      <categories>
+        <category>C++</category>
+      </categories>
       <tags>
         <tag>Linux技术分享</tag>
       </tags>
@@ -137,150 +237,168 @@
       </tags>
   </entry>
   <entry>
-    <title>【Linux技术分享】利用QT的clipboard库监听和设置剪切板</title>
-    <url>/2021/06/02/UOS%E5%88%A9%E7%94%A8QT%E7%9B%91%E5%90%AC%E5%92%8C%E8%AE%BE%E7%BD%AE%E5%89%AA%E5%88%87%E6%9D%BF/</url>
-    <content><![CDATA[<h1 id="利用QT的clipboard库监听和设置剪切板"><a href="#利用QT的clipboard库监听和设置剪切板" class="headerlink" title="利用QT的clipboard库监听和设置剪切板"></a>利用QT的clipboard库监听和设置剪切板</h1><p>***使用QT的Clipboard库，监听和设置uos剪切板变化。经过dbus接口，把uos的剪切板暴露出来，从而进行设置和监听</p>
+    <title>【读书有感】谈谈《王朔的短篇小说》</title>
+    <url>/2021/08/01/%E7%8E%8B%E6%9C%94%E7%9A%84%E7%9F%AD%E7%AF%87/</url>
+    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p><em><strong>打败你自己的只有你自己，其他人只能使你强大</strong></em></p>
 <span id="more"></span>
 
-<h2 id="dbus的创建"><a href="#dbus的创建" class="headerlink" title="dbus的创建"></a>dbus的创建</h2><ol>
-<li>在C++头文件定义<code>Q_SLOTS</code>,和<code>Q_SIGNALS</code></li>
-</ol>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Clipboard</span> :</span> <span class="keyword">public</span> QObject</span><br><span class="line">&#123;</span><br><span class="line">    Q_OBJECT</span><br><span class="line">    <span class="built_in">Q_CLASSINFO</span>(<span class="string">&quot;D-Bus Interface&quot;</span>, <span class="string">&quot;com.deepin.ListenClipboard&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">Clipboard</span><span class="params">(QObject *parent = <span class="literal">nullptr</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> Q_SLOTS:</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">SetDataToCB</span><span class="params">(<span class="keyword">const</span> QString &amp;clipboardData, <span class="keyword">const</span> <span class="keyword">int</span> nType)</span></span>;</span><br><span class="line"></span><br><span class="line">Q_SIGNALS:</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">ClipboardChanged</span><span class="params">(<span class="keyword">const</span> QString &amp;pathlist, <span class="keyword">const</span> <span class="keyword">int</span> nType)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<ol start="2">
-<li>创建导出dbus接口的xml文件</li>
-</ol>
-<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE <span class="meta-keyword">node</span> <span class="meta-keyword">PUBLIC</span> <span class="meta-string">&quot;-//freedesktop//DTD D-BUS Object Introspection 1.0//EN&quot;</span> <span class="meta-string">&quot;http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">node</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">interface</span> <span class="attr">name</span>=<span class="string">&quot;com.deepin.ListenClipboard&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">signal</span> <span class="attr">name</span>=<span class="string">&quot;ClipboardChanged&quot;</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">arg</span> <span class="attr">name</span>=<span class="string">&quot;str&quot;</span> <span class="attr">type</span>=<span class="string">&quot;s&quot;</span> <span class="attr">direction</span>=<span class="string">&quot;out&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">arg</span> <span class="attr">name</span>=<span class="string">&quot;nType&quot;</span> <span class="attr">type</span>=<span class="string">&quot;i&quot;</span> <span class="attr">direction</span>=<span class="string">&quot;out&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">signal</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">method</span> <span class="attr">name</span>=<span class="string">&quot;SetClipboardData&quot;</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">arg</span> <span class="attr">name</span>=<span class="string">&quot;str&quot;</span> <span class="attr">type</span>=<span class="string">&quot;s&quot;</span> <span class="attr">direction</span>=<span class="string">&quot;in&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">arg</span> <span class="attr">name</span>=<span class="string">&quot;nType&quot;</span> <span class="attr">type</span>=<span class="string">&quot;i&quot;</span> <span class="attr">direction</span>=<span class="string">&quot;in&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">method</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">interface</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">node</span>&gt;</span></span><br></pre></td></tr></table></figure>
-
-<ol start="3">
-<li>使用工具生成适配器类</li>
-</ol>
-<p><code>qdbusxml2cpp com.deepin.ListenClipboard.xml -i  com.deepin.ListenClipboard.xml -a widgetadaptor</code></p>
-<ol start="4">
-<li> 安装适配器将Widget类中的方法导出<code>DemoAdaptor adaptor(&amp;w);</code></li>
-</ol>
-<h2 id="剪切板监听"><a href="#剪切板监听" class="headerlink" title="剪切板监听"></a>剪切板监听</h2><ol>
-<li>调用<code>connect</code>，把自己的<code>func</code>和<code>cilpboard</code>变化连接一起 <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">Clipboard::CheckDataToCb</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">connect</span>(m_clipBoard, &amp;QClipboard::dataChanged, <span class="keyword">this</span>, &amp;Clipboard::ListenDataToCB);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li>获取文件图片和文字</li>
-</ol>
+<p>在我18年时特别迷姜文的电影和他的采访，电影是期期不落，采访的没被封的基本上都看过了，在姜文的侧面熏陶下间接的知道了王朔这个人，知道他也是一名《顽主》。从此便记下了想闲下来找他的几篇小说瞅瞅，不想一拖就是两年，说实话还是挺讽刺的上学的时候没时间看上班了为了生活还，为了充实所谓的精神世界对他的小说狂买了一通，没想到竟爱不释手。看完之后，真没想这本竟是90年代的小说，大为通透。其中大部分的小说都拍成了电影，没拍的说明不能拍或者是现在不让放了。只能引用他自己采访的一句话，<strong>我对写作是有天赋的，是生来就会不需要灵感</strong></p>
+<h3 id="动物凶猛"><a href="#动物凶猛" class="headerlink" title="动物凶猛"></a>动物凶猛</h3><p>动物凶猛是被姜文改编为<code>阳光灿烂下的日子</code>，我是先看的电影再读的小说，所以在读这个时候是一边回忆我看电影的角色剧情，一边代入进小说，想<code>米兰</code>是<code>宁静</code>那样的丰满吗到底（笑），年轻的时候总是对异性抱有幻想，到底<code>马小军</code>和<code>米兰</code>发生了这么多故事么？还是都是臆想？我倒是觉得马小军自己一半臆想一半真事，他自己都说不清到底发生了什么，我觉得他对米兰的爱慕是真的，对自己的胆怯也是真的，他哪有这个胆子拿着刀去捅<code>刘忆苦</code>,只不过是在自己16，7岁认识了想<code>米兰</code>这样的性感的人儿，自己发生的幻想，对年轻女生的青少年爱情的憧憬。</p>
+<h3 id="顽主"><a href="#顽主" class="headerlink" title="顽主"></a>顽主</h3><p>一看开头我就想起来了葛优的翻拍，还不止翻拍一次10年后还整了一个私人定制，不过我还是觉得第一次拍的顽主是最好的，那个经典的3T公司，为人排忧解难，刚改革开放新一代年轻人不知道干什么，在现有的生活中挣扎想混的有意义，却又不想干正事（笑），搁现在你不得为生活拼搏。3T公司是给小人物一个大人物的梦，可是之后呢，小人物还是得为自己的阶级而奋斗，所有表象,皆为虚妄，只不过是还是常常要做梦，让自己充实，如果不做梦岂不是当现实的努力，生活这么苦，跟个熟透的苦瓜一样，又苦又老，有时候还是得做做梦安慰安慰自己。</p>
+<h3 id="过把瘾就死"><a href="#过把瘾就死" class="headerlink" title="过把瘾就死"></a>过把瘾就死</h3><p>杜梅想要一轰轰烈烈的爱情，想作着来，方言不明白，我也不明白，所以我不理解也不评价，只能说文字很有张力，杜梅很绝望</p>
+<h3 id="一半是火焰一半是海水"><a href="#一半是火焰一半是海水" class="headerlink" title="一半是火焰一半是海水"></a>一半是火焰一半是海水</h3><p>简单的讲这个就是一个玩仙人跳的渣男，骗炮一个清纯的大学生，大学生对他不离不弃直到自杀，渣男被抓进监狱然后出狱之后幡然醒悟的故事，俗味到掉牙的老套故事。王朔在描述绝望的时候是令人窒息的，很容易把自己带入，俗套的故事不俗套的文字描述，只能说是值得一看。</p>
+<h3 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h3><p>他的短篇小说太多了，我一买就买了三本合集，之后的有时间再写吧</p>
 <ul>
-<li><p>图片</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">QImage img = qvariant_cast&lt;QImage&gt;(strMimeData-&gt;<span class="built_in">imageData</span>());</span><br><span class="line">QByteArray imageArray;</span><br><span class="line">QBuffer buffer;</span><br><span class="line">buffer.<span class="built_in">open</span>(QIODevice::WriteOnly);</span><br><span class="line">img.<span class="built_in">save</span>(&amp;buffer, <span class="string">&quot;PNG&quot;</span>);</span><br><span class="line">imageArray.<span class="built_in">append</span>(buffer.<span class="built_in">data</span>());</span><br></pre></td></tr></table></figure></li>
-<li><p>文字</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">QString strText = strMimeData-&gt;<span class="built_in">text</span>();</span><br><span class="line"><span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;clipboard text received:&quot;</span> &lt;&lt; strText;</span><br></pre></td></tr></table></figure></li>
-<li><p>文件</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">QString strFileList;</span><br><span class="line">QList&lt;QUrl&gt; cbUrls = strMimeData-&gt;<span class="built_in">urls</span>();</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; cbUrls.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">    QString strFile = cbUrls.<span class="built_in">at</span>(i).<span class="built_in">toLocalFile</span>();</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">isFusePath</span>(strFile) || <span class="number">0</span> == strFile.<span class="built_in">size</span>()) &#123;</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    strFileList += strFile + <span class="string">&quot;\n&amp;t&quot;</span>; <span class="comment">// windows约定文件路径分隔符</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;clipboard file received:&quot;</span> &lt;&lt; strFileList;</span><br></pre></td></tr></table></figure></li>
-</ul>
-<ol start="3">
-<li><p>发送数据至<code>Q_SIGNALS</code></p>
- <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function">emit <span class="title">ClipboardChanged</span><span class="params">(strClipboardData,<span class="keyword">static_cast</span>&lt;<span class="keyword">int</span>&gt;(nType))</span></span>;</span><br></pre></td></tr></table></figure>
-<h2 id="剪贴板设置"><a href="#剪贴板设置" class="headerlink" title="剪贴板设置"></a>剪贴板设置</h2></li>
-<li><p>使用dbus绑定接口<code>SetDataToCB</code></p>
- <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">QMetaObject::<span class="built_in">invokeMethod</span>(<span class="built_in">parent</span>(), <span class="string">&quot;SetDataToCB&quot;</span>, <span class="built_in">Q_ARG</span>(QString, path),<span class="built_in">Q_ARG</span>(<span class="keyword">const</span> <span class="keyword">int</span>,nType));</span><br></pre></td></tr></table></figure></li>
-<li><p>设置文件图片和文字</p>
-</li>
-</ol>
-<ul>
-<li><p>图片</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">QImage img;</span><br><span class="line">QByteArray arr_base64 = clipboardData.<span class="built_in">toLatin1</span>();</span><br><span class="line">img.<span class="built_in">loadFromData</span>(QByteArray::<span class="built_in">fromBase64</span>(arr_base64));</span><br><span class="line">m_clipBoard-&gt;<span class="built_in">setImage</span>(img);</span><br><span class="line"><span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;set clipboard data as Image&quot;</span>;</span><br></pre></td></tr></table></figure></li>
-<li><p>文字</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">m_clipBoard-&gt;<span class="built_in">setText</span>(clipboardData);</span><br><span class="line"><span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;set clipboard data as text:&quot;</span> &lt;&lt; clipboardData;</span><br></pre></td></tr></table></figure></li>
-<li><p>文件</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">QString CopiedFile;</span><br><span class="line">QString UrlList;</span><br><span class="line"><span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;set clipboard data as file:&quot;</span> &lt;&lt; clipboardData;</span><br><span class="line">QStringList clipboardList = clipboardData.<span class="built_in">split</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line"><span class="keyword">for</span> (QString path : clipboardList) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!path.<span class="built_in">isEmpty</span>()) &#123;</span><br><span class="line">        CopiedFile = CopiedFile + <span class="string">&quot;copy\nfile://&quot;</span> + path;</span><br><span class="line">        UrlList = UrlList + <span class="string">&quot;file://&quot;</span> + path + <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (CopiedFile.<span class="built_in">size</span>() == <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;clipboard path is empty&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line">QMimeData *newMimeData = <span class="keyword">new</span> <span class="built_in">QMimeData</span>();</span><br><span class="line">newMimeData-&gt;<span class="built_in">setData</span>(<span class="string">&quot;x-special/gnome-copied-files&quot;</span>,</span><br><span class="line">                     <span class="built_in">QByteArray</span>(CopiedFile.<span class="built_in">toStdString</span>().<span class="built_in">c_str</span>()));</span><br><span class="line">newMimeData-&gt;<span class="built_in">setData</span>(<span class="string">&quot;text/uri-list&quot;</span>, <span class="built_in">QByteArray</span>(UrlList.<span class="built_in">toStdString</span>().<span class="built_in">c_str</span>()));</span><br><span class="line">m_clipBoard-&gt;<span class="built_in">clear</span>();</span><br><span class="line">m_clipBoard-&gt;<span class="built_in">setMimeData</span>(newMimeData);</span><br></pre></td></tr></table></figure></li>
+<li>不要把心爱的东西放在身边,除非有一天你有能力保护它。——王朔《动物凶猛》</li>
+<li>人都是顽固不化和自以为是的,相安无事的唯一办法就是欺骗。——王朔《动物凶猛》</li>
+<li>越聊我们越觉得我们相识纯属偶然，有太多的因素可以使我们失之交臂。纯粹一念之差，邂逅了，认识了，关系进一步发展了。在此之前，我们能活到与对方相识都是侥幸。疾病、车祸以及种种意外始终威胁、伴随着我们，还有那些危险的人们。——王朔《过把瘾就死》</li>
+<li>我可不喜欢什么事都清楚地知道结局，有条不紊地逐次达标，那也太乏味了。多一分远见，就少一分刺激。如果我知道下一步，每一步会碰到什么，产生什么后果，我立刻就没兴趣活了。——王朔《一半是火焰一半是海水》</li>
 </ul>
 ]]></content>
       <categories>
-        <category>C++</category>
+        <category>阅读</category>
+      </categories>
+      <tags>
+        <tag>读书有感</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>【Linux技术分享】UOS下实现键盘事件捕捉</title>
+    <url>/2021/06/28/UOS%E4%B8%8B%E5%AE%9E%E7%8E%B0%E9%94%AE%E7%9B%98%E4%BA%8B%E4%BB%B6%E6%8D%95%E6%8D%89/</url>
+    <content><![CDATA[<h1 id="在UOS系统下实现键盘的捕捉"><a href="#在UOS系统下实现键盘的捕捉" class="headerlink" title="在UOS系统下实现键盘的捕捉"></a>在UOS系统下实现键盘的捕捉</h1><p><em><strong>在UOS系统下监听和触发键盘的事件，具体代码参考<code>https://github.com/MecryWork/hotkey</code>。参考博文<code>https://www.jianshu.com/p/927fc573d081</code></strong></em></p>
+<span id="more"></span>
+
+<h2 id="dev-input目录简介"><a href="#dev-input目录简介" class="headerlink" title="/dev/input目录简介"></a>/dev/input目录简介</h2><ol>
+<li><p>首先linux是所有操作都是已文件形式处理，这个是真理。在我们输入键盘鼠标时，linux系统中记录都放在<code>/dev/input</code>目录下。我们<code>ls</code>下此目录可以看见绝大部分的事件处理</p>
+ <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">crw-rw----  1 root input 13, 65 6月  28 13:04 event1</span><br><span class="line">crw-rw----  1 root input 13, 74 6月  28 13:04 event10</span><br><span class="line">crw-rw----  1 root input 13, 75 6月  28 13:04 event11</span><br><span class="line">crw-rw----  1 root input 13, 76 6月  28 13:04 event12</span><br><span class="line">crw-rw----  1 root input 13, 77 6月  28 13:04 event13</span><br><span class="line">crw-rw----  1 root input 13, 66 6月  28 13:04 event2</span><br><span class="line">crw-rw----  1 root input 13, 67 6月  28 13:04 event3</span><br><span class="line">crw-rw----  1 root input 13, 68 6月  28 13:04 event4</span><br><span class="line">crw-rw----  1 root input 13, 69 6月  28 13:04 event5</span><br><span class="line">crw-rw----  1 root input 13, 70 6月  28 13:04 event6</span><br><span class="line">crw-rw----  1 root input 13, 71 6月  28 13:04 event7</span><br><span class="line">crw-rw----  1 root input 13, 72 6月  28 13:04 event8</span><br><span class="line">crw-rw----  1 root input 13, 73 6月  28 13:04 event9</span><br></pre></td></tr></table></figure></li>
+<li><p>使用<code>cat /proc/bus/input/devices</code>可以查看每一个event的具体操作，里面的H就是对应的时间操作。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">I: Bus&#x3D;0000 Vendor&#x3D;0000 Product&#x3D;0000 Version&#x3D;0000</span><br><span class="line">N: Name&#x3D;&quot;HDA ATI HDMI HDMI&#x2F;DP,pcm&#x3D;3&quot;</span><br><span class="line">P: Phys&#x3D;ALSA</span><br><span class="line">S: Sysfs&#x3D;&#x2F;devices&#x2F;pci0000:00&#x2F;0000:00:01.0&#x2F;0000:01:00.1&#x2F;sound&#x2F;card1&#x2F;input11</span><br><span class="line">U: Uniq&#x3D;</span><br><span class="line">H: Handlers&#x3D;event8</span><br><span class="line">B: PROP&#x3D;0</span><br><span class="line">B: EV&#x3D;21</span><br><span class="line">B: SW&#x3D;140</span><br><span class="line"></span><br><span class="line">I: Bus&#x3D;0000 Vendor&#x3D;0000 Product&#x3D;0000 Version&#x3D;0000</span><br><span class="line">N: Name&#x3D;&quot;HDA Intel PCH Rear Mic&quot;</span><br><span class="line">P: Phys&#x3D;ALSA</span><br><span class="line">S: Sysfs&#x3D;&#x2F;devices&#x2F;pci0000:00&#x2F;0000:00:1f.3&#x2F;sound&#x2F;card0&#x2F;input12</span><br><span class="line">U: Uniq&#x3D;</span><br><span class="line">H: Handlers&#x3D;event9</span><br><span class="line">B: PROP&#x3D;0</span><br><span class="line">B: EV&#x3D;21</span><br><span class="line">B: SW&#x3D;10</span><br><span class="line"></span><br><span class="line">I: Bus&#x3D;0000 Vendor&#x3D;0000 Product&#x3D;0000 Version&#x3D;0000</span><br><span class="line">N: Name&#x3D;&quot;HDA Intel PCH Front Mic&quot;</span><br><span class="line">P: Phys&#x3D;ALSA</span><br><span class="line">S: Sysfs&#x3D;&#x2F;devices&#x2F;pci0000:00&#x2F;0000:00:1f.3&#x2F;sound&#x2F;card0&#x2F;input13</span><br><span class="line">U: Uniq&#x3D;</span><br><span class="line">H: Handlers&#x3D;event10</span><br><span class="line">B: PROP&#x3D;0</span><br><span class="line">B: EV&#x3D;21</span><br><span class="line">B: SW&#x3D;10</span><br></pre></td></tr></table></figure>
+<h2 id="input-h-文件"><a href="#input-h-文件" class="headerlink" title="input.h 文件"></a>input.h 文件</h2></li>
+<li><p>在<code>linux/input.h</code>文件中定义了<code>event</code>时间输入数据的结构图，该结构图的定义如下：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">input_event</span> &#123;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">time</span>;</span></span><br><span class="line"> __u16 type;</span><br><span class="line"> __u16 code;</span><br><span class="line"> __s32 value;</span><br><span class="line"> &#125;;</span><br><span class="line"></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span></span></span><br><span class="line"><span class="class"> &#123;</span></span><br><span class="line"> <span class="keyword">__time_t</span> tv_sec;        <span class="comment">/* Seconds.  */</span></span><br><span class="line"> <span class="keyword">__suseconds_t</span> tv_usec;  <span class="comment">/* Microseconds.  */</span></span><br><span class="line"> &#125;;</span><br></pre></td></tr></table></figure>
+<p> type，指事件类型，常见的事件类型有：</p>
+<p> EV_KEY，按键事件，键盘的按键，鼠标的左键右键等；</p>
+<p> EV_REL，相对坐标，主要用于鼠标的移动事件；</p>
+<p> EV_ABS，绝对坐标，主要用于触摸屏的移动事件。</p>
+<p> code 事件代码，当事件类型为EV_KEY时，该代码为设备键盘代码，在input.h文件中以KEY_开头定义；</p>
+<p> value 事件的值，当事件类型代码是EV_KEY时，按键操作值为1，释放操作值为0，事件类型代码为EV_REL是，value为正数值和负数值分别代表连个不同方向的值。</p>
+</li>
+</ol>
+<h2 id="监听键盘事件"><a href="#监听键盘事件" class="headerlink" title="监听键盘事件"></a>监听键盘事件</h2><ol>
+<li>利用<code>input_event</code>结构体读取键盘事件 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">int</span> retval;</span><br><span class="line">fd_set readfds;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">tv</span>;</span></span><br><span class="line"><span class="keyword">int</span> fd = open(dev, O_RDONLY);</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">input_event</span> <span class="title">event</span>;</span></span><br><span class="line"><span class="keyword">if</span> (fd &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    perror(dev);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">    FD_ZERO(&amp;readfds);</span><br><span class="line">    FD_SET(fd, &amp;readfds);</span><br><span class="line">    tv.tv_sec = timeout;<span class="comment">//设置超时时间</span></span><br><span class="line">    tv.tv_usec = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> ((retval = select(fd + <span class="number">1</span>, &amp;readfds, <span class="literal">NULL</span>, <span class="literal">NULL</span>, &amp;tv)) == <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (read(fd, &amp;event, <span class="keyword">sizeof</span>(event)) == <span class="keyword">sizeof</span>(event)) &#123;</span><br><span class="line">            <span class="keyword">if</span> (event.type == EV_KEY) &#123;</span><br><span class="line">                <span class="keyword">if</span> (event.value == <span class="number">0</span> || event.value == <span class="number">1</span>) <span class="comment">//根据value的值判断按下松开&#123;</span></span><br><span class="line">                    <span class="built_in">printf</span>(<span class="string">&quot;key %d %s\n&quot;</span>, event.code, event.value ? <span class="string">&quot;Pressed&quot;</span> : <span class="string">&quot;Released&quot;</span>);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;type=%x %d %d\n&quot;</span>, event.type, event.code, event.value);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">close(fd);</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="传入键盘事件"><a href="#传入键盘事件" class="headerlink" title="传入键盘事件"></a>传入键盘事件</h2><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="number">1.</span> 利用`input_event`+`write`对键盘事件进行写入</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">simulate_key</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">int</span> kval)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">input_event</span> <span class="title">event</span>;</span></span><br><span class="line">        gettimeofday(&amp;event.time, <span class="number">0</span>);</span><br><span class="line">        <span class="comment">//按下kval键</span></span><br><span class="line">        event.type = EV_KEY;</span><br><span class="line">        event.value = <span class="number">1</span>;</span><br><span class="line">        event.code = kval;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        <span class="comment">//同步，也就是把它报告给系统</span></span><br><span class="line">        event.type = EV_SYN;</span><br><span class="line">        event.value = <span class="number">0</span>;</span><br><span class="line">        event.code = SYN_REPORT;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        <span class="built_in">memset</span>(&amp;event, <span class="number">0</span>, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        gettimeofday(&amp;event.time, <span class="number">0</span>);</span><br><span class="line">        <span class="comment">//松开kval键</span></span><br><span class="line">        event.type = EV_KEY;</span><br><span class="line">        event.value = <span class="number">0</span>;</span><br><span class="line">        event.code = kval;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">        <span class="comment">//同步，也就是把它报告给系统</span></span><br><span class="line">        event.type = EV_SYN;</span><br><span class="line">        event.value = <span class="number">0</span>;</span><br><span class="line">        event.code = SYN_REPORT;</span><br><span class="line">        write(fd, &amp;event, <span class="keyword">sizeof</span>(event));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>]]></content>
+      <tags>
+        <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>【Linux技术分享】利用thrift实现跨语言通讯</title>
+    <url>/2021/06/17/%E5%88%A9%E7%94%A8thrift%E5%AE%9E%E7%8E%B0%E8%B7%A8%E8%AF%AD%E8%A8%80%E9%80%9A%E8%AE%AF/</url>
+    <content><![CDATA[<h1 id="blog的搭建"><a href="#blog的搭建" class="headerlink" title="blog的搭建"></a>blog的搭建</h1><p><em><strong>利用thrift的跨平台机制实现进程通讯，本机是uos系统+go语言，virtualbox是windows系统+C++，在virtualbox上增加端口转发既可实现windows与uos两者不同系统不同语言的进程通讯。</strong></em></p>
+<span id="more"></span>
+
+
+<h2 id="thrift简介"><a href="#thrift简介" class="headerlink" title="thrift简介"></a>thrift简介</h2><h3 id="1-理论知识"><a href="#1-理论知识" class="headerlink" title="1. 理论知识"></a>1. 理论知识</h3><pre><code>Thrift是一种接口描述语言和二进制通讯协议，它被用来定义和创建跨语言的服务。它被当作一个远程过程调用（RPC）框架来使用，是由Facebook为“大规模跨语言服务开发”而开发的。它通过一个代码生成引擎联合了一个软件栈，来创建不同程度的、无缝的跨平台高效服务，可以使用C#、C++（基于POSIX兼容系统）、Cappuccino、Cocoa、Delphi、Erlang、Go、Haskell、Java、Node.js、OCaml、Perl、PHP、Python、Ruby和Smalltalk。虽然它以前是由Facebook开发的，但它现在是Apache软件基金会的开源项目了。该实现被描述在2007年4月的一篇由Facebook发表的技术论文中，该论文现由Apache掌管。
+</code></pre>
+<h3 id="2-注意事项"><a href="#2-注意事项" class="headerlink" title="2.注意事项"></a>2.注意事项</h3><ol>
+<li>Thrift支持的基本数据类型<ul>
+<li>byte: 有符号字节</li>
+<li>i16: 16 位有符号整数</li>
+<li>i32 : 32 位有符号整数</li>
+<li>i64: 64 位有符号整数</li>
+<li>double : 64 位浮点数</li>
+<li>string : 字符串</li>
+</ul>
+</li>
+<li>可用容器类型<ul>
+<li>list(t): 元素类型为t的有序表，容许元素重复。</li>
+<li>set(t):元素类型为t的无序表，不容许元素重复。对应c++中的set，java中的HashSet,python中的set，php中没有set，则转换为list类型。</li>
+<li>map(t,t): 键类型为t，值类型为t的kv对，键不容许重复。对用c++中的map, Java的HashMap, PHP 对应 array, Python/Ruby 的dictionary。</li>
+</ul>
+</li>
+</ol>
+<ol start="3">
+<li>Thrift 架构（图来自于网络）<br>thrift主要用于各个服务之间的RPC通信，支持跨语言。thrift是一个典型的CS结构，客户端和服务端可以使用不同的语言开发，thrift通过IDL(Interface Description Language)来关联客户端和服务端。thrift的整体架构图如下图所示<br><img src="/2021/06/17/%E5%88%A9%E7%94%A8thrift%E5%AE%9E%E7%8E%B0%E8%B7%A8%E8%AF%AD%E8%A8%80%E9%80%9A%E8%AE%AF/1.png" alt="图1"></li>
+</ol>
+<h2 id="uos利用go实现thrift的客户端和服务端"><a href="#uos利用go实现thrift的客户端和服务端" class="headerlink" title="uos利用go实现thrift的客户端和服务端"></a>uos利用go实现thrift的客户端和服务端</h2><ol>
+<li><p>goland安装thrift包</p>
+<blockquote>
+<p>go get git.apache.org/thrift.git/lib/go/thrift<br>调用命令<code>thrift -version</code>显示版本号即安装成功。</p>
+</blockquote>
+</li>
+<li><p>下载的文件加入到<code>gopath</code>中</p>
+</li>
+<li><p>编写属于接口的fuse.thrift的LDL文件，我本地要实现一个剪切板数据互发功能，所以接口为剪切板功能。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">namespace <span class="keyword">go</span> fuse</span><br><span class="line"> service WindowsToUos &#123;</span><br><span class="line">     <span class="comment">//windows 剪切板发送到uos</span></span><br><span class="line">     <span class="keyword">bool</span> sendCliboard(<span class="number">1</span>:i32 nType, <span class="number">2</span>:<span class="keyword">string</span> path);</span><br><span class="line">     void stop();</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> service UosToWindows&#123;</span><br><span class="line">     <span class="comment">//uos 剪切板发送到windows</span></span><br><span class="line">     <span class="keyword">bool</span> sendCliboard(<span class="number">1</span>:i32 nType, <span class="number">2</span>:<span class="keyword">string</span> path, <span class="number">3</span>:<span class="keyword">string</span> Vol);</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>在service windowstouos中，是windows为客户端，uos为服务端。在uostowindows中，是windows为服务端，uos为客户端。两者可以来回通讯。</p>
+</li>
+<li><p>运行命令，生成相关代码，目录下就会存在一个gen-go的一个代码文件夹</p>
+<blockquote>
+<p> thrift -r –gen go fuse.thrift</p>
+</blockquote>
+</li>
+<li><p>服务端接口初始化代码如下,<code>EchoServerImp</code>接口为空接口。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">  <span class="keyword">type</span> EchoServerImp <span class="keyword">struct</span> &#123;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="params">(s *Server)</span> <span class="title">ServerStart</span><span class="params">(port <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()</span><br><span class="line">transportFactory := thrift.NewTBufferedTransportFactory(<span class="number">10000000</span>)</span><br><span class="line">serverTransport, err := thrift.NewTServerSocket(<span class="string">&quot;127.0.0.1:9150&quot;</span>)</span><br><span class="line"><span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;Error!&quot;</span>, err)</span><br><span class="line">	os.Exit(<span class="number">1</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">handler := &amp;EchoServerImp&#123;&#125;</span><br><span class="line">processor := fuse.NewWindowsToUosProcessor(handler)</span><br><span class="line">server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)</span><br><span class="line">fmt.Println(<span class="string">&quot;thrift server in&quot;</span>, <span class="string">&quot;127.0.0.1:9150&quot;</span>)</span><br><span class="line">server.Serve()</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">     <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="comment">//	ListenClipboard()</span></span><br><span class="line">     &#125;()</span><br><span class="line">     ctxT, cancelFunc = context.WithCancel(context.Background())</span><br><span class="line">     sev := &amp;Server&#123;&#125;</span><br><span class="line">     sev.ServerStart(<span class="number">8192</span>)</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>在服务端时，需要把LDL的函数实现，不然会报错，逻辑实现代码如下</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">  <span class="function"><span class="keyword">func</span> <span class="params">(e *EchoServerImp)</span> <span class="title">Stop</span><span class="params">(ctx context.Context)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">logger.Info(<span class="string">&quot;Revice Stop!!!&quot;</span>)</span><br><span class="line">stop()</span><br><span class="line"><span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>客户端接口初始化代码如下。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">  <span class="keyword">type</span> Manager <span class="keyword">struct</span> &#123;</span><br><span class="line">clipboard <span class="comment">// interface com.deepin.ListenClipboard</span></span><br><span class="line">proxy.Object</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">type</span> ClipboardService <span class="keyword">struct</span> &#123;</span><br><span class="line">     loginManager   *Manager</span><br><span class="line">     sessionSigLoop *dbusutil.SignalLoop</span><br><span class="line">     service        *dbusutil.Service</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">ListenClipboard</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">     <span class="keyword">var</span> cb ClipboardService</span><br><span class="line">     <span class="comment">//注册剪切板dbus信号</span></span><br><span class="line">     sessionBus, err := dbus.SessionBus()</span><br><span class="line">     <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        logger.Warning(<span class="string">&quot;failed to register clipboard changed signal:&quot;</span>, err)</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">     &#125;</span><br><span class="line">     cb.loginManager = NewCBManager(sessionBus)</span><br><span class="line">     cb.sessionSigLoop = dbusutil.NewSignalLoop(sessionBus, <span class="number">10</span>)</span><br><span class="line">     cb.sessionSigLoop.Start()</span><br><span class="line">     cb.loginManager.InitSignalExt(cb.sessionSigLoop, <span class="literal">true</span>)</span><br><span class="line"></span><br><span class="line">     <span class="comment">//绑定剪切板变化dbus信号</span></span><br><span class="line">     <span class="comment">//_, err = cb.loginManager.ConnectClipboardChange()qqq+</span></span><br><span class="line">     <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        logger.Warning(<span class="string">&quot;failed to connect clipboard changed signal:&quot;</span>, err)</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>客户端调用服务端代码如下</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">cb.loginManager.SendCliboardToWindows(clipboardType, clipboardData, vol)</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="windows利用C-实现thrift的客户端和服务端"><a href="#windows利用C-实现thrift的客户端和服务端" class="headerlink" title="windows利用C++实现thrift的客户端和服务端"></a>windows利用C++实现thrift的客户端和服务端</h2><h2 id="利用virtualbox的端口转发机制，实现windows和uos互相通讯"><a href="#利用virtualbox的端口转发机制，实现windows和uos互相通讯" class="headerlink" title="利用virtualbox的端口转发机制，实现windows和uos互相通讯"></a>利用virtualbox的端口转发机制，实现windows和uos互相通讯</h2>]]></content>
+      <categories>
+        <category>go</category>
       </categories>
       <tags>
         <tag>Linux技术分享</tag>
       </tags>
   </entry>
   <entry>
-    <title>【Linux技术分享】X11学习（一）</title>
-    <url>/2021/10/26/X11%E5%AD%A6%E4%B9%A0%EF%BC%88%E4%B8%80%EF%BC%89/</url>
-    <content><![CDATA[<h1 id="X11基础学习（一）"><a href="#X11基础学习（一）" class="headerlink" title="X11基础学习（一）"></a>X11基础学习（一）</h1><p><em><strong>基本窗口创建。官方文档链接<a href="http://mech.math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html">http://mech.math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html</a>.</strong></em></p>
+    <title>【Linux技术分享】Linux下fuse的实现原理</title>
+    <url>/2021/06/07/Linux%E4%B8%8Bfuse%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/</url>
+    <content><![CDATA[<h1 id="fuse实现原理"><a href="#fuse实现原理" class="headerlink" title="fuse实现原理"></a>fuse实现原理</h1><p><em><strong>本文是对httpdirfs源码的一个学习,源码在<code>https://github.com/fangfufu/httpdirfs</code>.实现在linux系统下利用fuse技术,把http文件服务器挂载至本地路径.</strong></em></p>
 <span id="more"></span>
 
-<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><ol>
-<li><p>X11是什么</p>
-<p> X提供了GUI一个在unix系统下基本框架，可以绘图，移动窗口，显示窗口，与鼠标键盘一系列的交互。当前X已经更新到第11版所以简称为X11协议。与其类似的可以参考Wayland</p>
+<h2 id="fuse原理"><a href="#fuse原理" class="headerlink" title="fuse原理"></a>fuse原理</h2><ol>
+<li><p>流程介绍<br><img src="/2021/06/07/Linux%E4%B8%8Bfuse%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/1.png" alt="图1"></p>
+<p> 图中可以看出,fuse和ext3,ntfs都是文件系统模块.我们使用fuse实现文件系统并挂在至/tmp/fuse上,当我们对此目录执行ls命令时,内核的fuse从vfs中获取参数,调用我们自己实现ls的函数,得到结果再从vfs返回至ls.简单来说就是<code>ls-&gt;fuse挂载文件夹-&gt;VFS-&gt;libfuse-&gt;自己实现的函数-&gt;结果返回至ls</code>,demo的源码在<code>https://github.com/MecryWork/Learn-C-to-implement-fuse</code></p>
 </li>
+<li><p>简单demo</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> FUSE_USE_VERSION 26</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fuse.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> ou_re        <span class="title">addir</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* path, <span class="keyword">void</span>* buf, <span class="keyword">fuse_fill_dir_t</span> filler,</span></span></span><br><span class="line"><span class="function"><span class="params">					<span class="keyword">off_t</span> offset, struct fuse_file_info* fi)</span><span class="comment">//读取目录</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> filler(buf, <span class="string">&quot;hello-world&quot;</span>, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">ou_getattr</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* path, struct stat* st)</span><span class="comment">//获取状态</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="built_in">memset</span>(st, <span class="number">0</span>, <span class="keyword">sizeof</span>(struct stat));</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (<span class="built_in">strcmp</span>(path, <span class="string">&quot;/&quot;</span>) == <span class="number">0</span>)</span><br><span class="line">		st-&gt;st_mode = <span class="number">0755</span> | S_IFDIR;</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		st-&gt;st_mode = <span class="number">0644</span> | S_IFREG;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">fuse_operations</span> <span class="title">oufs_ops</span> =</span> &#123;<span class="comment">//fuse设置响应函数</span></span><br><span class="line">	.readdir    =   ou_readdir,</span><br><span class="line">	.getattr    =   ou_getattr,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span>* argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> fuse_main(argc, argv, &amp;oufs_ops, <span class="literal">NULL</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> cmake编译成功后会看到生成的可执行文件 fusehello。建立一个挂载点 /tmp/mnt，然后运行</p>
+<blockquote>
+<p>./fusehello /tmp/mnt<br> 成功后试试“ls /tmp/mnt”，就能看到一个文件“hello-world”。要调试的时候可以加上“-d”选项，这样就能看到 FUSE 和自己 printf 的调试输出。代码第一行指定了要使用的 FUSE API 版本。这里使用的是 2.6 版本。</p>
+</blockquote>
+</li>
+<li><p>简单demo2,实现创建/删除普通文件的功能,加了<code>ou_create</code>,和<code>ou_unlink</code>两个函数,在fuse上被调用.</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">ou_create</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* path, <span class="keyword">mode_t</span> mode, struct fuse_file_info* fi)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">ou_entry</span>* <span class="title">o</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_node</span>* <span class="title">n</span>;</span><span class="comment">//使用链表,文件放入链表中方便删除增加</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (<span class="built_in">strlen</span>(path + <span class="number">1</span>) &gt; MAX_NAMELEN)</span><br><span class="line">		<span class="keyword">return</span> -ENAMETOOLONG;</span><br><span class="line"></span><br><span class="line">	list_for_each (n, &amp;entries) &#123;</span><br><span class="line">		o = list_entry(n, struct ou_entry, node);</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">strcmp</span>(path + <span class="number">1</span>, o-&gt;name) == <span class="number">0</span>)</span><br><span class="line">			<span class="keyword">return</span> -EEXIST;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	o = <span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(struct ou_entry));</span><br><span class="line">	<span class="built_in">strcpy</span>(o-&gt;name, path + <span class="number">1</span>); <span class="comment">/* skip leading &#x27;/&#x27; */</span></span><br><span class="line">	o-&gt;mode = mode | S_IFREG;</span><br><span class="line">	list_add_prev(&amp;o-&gt;node, &amp;entries);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">ou_unlink</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* path)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_node</span> *<span class="title">n</span>, *<span class="title">p</span>;</span></span><br><span class="line"></span><br><span class="line">	list_for_each_safe (n, p, &amp;entries) &#123;</span><br><span class="line">		<span class="class"><span class="keyword">struct</span> <span class="title">ou_entry</span>* <span class="title">o</span> =</span> list_entry(n, struct ou_entry, node);</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">strcmp</span>(path + <span class="number">1</span>, o-&gt;name) == <span class="number">0</span>) &#123;</span><br><span class="line">			__list_del(n);</span><br><span class="line">			<span class="built_in">free</span>(o);</span><br><span class="line">			<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> -ENOENT;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
 </ol>
-<h2 id="窗口的初始化"><a href="#窗口的初始化" class="headerlink" title="窗口的初始化"></a>窗口的初始化</h2><ol>
-<li><p>XOpenDisplay</p>
-<p> func：Display *XOpenDisplay(char *display_name);</p>
-<p> 作用：打开指定X的服务器，返回一个关于服务器的display结构体。参数传入为NULL则是本机环境，如果是局域网地址则可以通过:来隔开，hostname:number.screen_number</p>
-<p> 例子：</p>
- <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">Display *display = XOpenDisplay(<span class="literal">NULL</span>); <span class="comment">//本机环境</span></span><br><span class="line">XOpenDisplay(<span class="string">&quot;192.168.0.12:0&quot;</span>);			<span class="comment">//局域网</span></span><br></pre></td></tr></table></figure></li>
-<li><p>XCreateSimpleWindow</p>
-<p> func: Window XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes)</p>
-<p> 作用：创建一个简单窗口并返回一个窗口句柄</p>
-<p> 例子：</p>
- <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">Windows win = XCreateSimpleWindow(dpy, root, <span class="number">0</span>, <span class="number">0</span>, width, height, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0xFFFF7700</span>);<span class="comment">//窗口创建</span></span><br></pre></td></tr></table></figure></li>
-<li><p>XSelectInput</p>
-<p> func: int XSelectInput(Display *display, Window w, long event_mask);</p>
-<p> 作用： 选择窗口所需要监听的事件，第三个参数就是传入事件。否则X就不监听窗口的任何事件。</p>
-<p> 例子：</p>
- <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">XSelectInput(xfc-&gt;display, xfc-&gt;window, KeyPressMask);</span><br></pre></td></tr></table></figure></li>
-<li><p>XMapWindow</p>
-<p> func: XMapWindow(Display *display, Window w);</p>
-<p> 作用： 关联并映射子窗口让其能同步获取事件和显示。</p>
-<p> 例子：</p>
- <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">XMapWindow(xfc-&gt;display, xfc-&gt;window);      <span class="comment">//关联窗口并显示</span></span><br></pre></td></tr></table></figure>
-<h2 id="窗口事件处理"><a href="#窗口事件处理" class="headerlink" title="窗口事件处理"></a>窗口事件处理</h2></li>
-<li><p>XNextEvent</p>
-<p> func: XNextEvent(Display *display, XEvent)</p>
-<p> 作用： 从事件队列获取下一个事件，如果队列为空则刷新缓存直到获取下一个事件。</p>
-<p> 例子：</p>
- <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">XEvent event = &#123;<span class="number">0</span>&#125;; <span class="comment">//X的事件</span></span><br><span class="line">      XNextEvent(xfc-&gt;display, &amp;event);<span class="comment">//拉取窗口事件</span></span><br><span class="line">      <span class="built_in">printf</span>(<span class="string">&quot;event:%d\n&quot;</span>,event.type);</span><br></pre></td></tr></table></figure></li>
+<ul>
+<li><strong>总结</strong>:具体还是使用的linux中的fuse的库文件,来实现我们自己的fuse文件系统,我们只需要参照<code>fuse.h</code>文件的函数指针.需要实现哪个功能,就开始自己进行实现,最后把结构体传入至fuse,就可以成功编写一个属于我们自己的文件系统了.</li>
+</ul>
+<h2 id="fuse-http的实现"><a href="#fuse-http的实现" class="headerlink" title="fuse+http的实现"></a>fuse+http的实现</h2><p><strong>利用fuse的机制,再获取http接口,实现把http文件系统的文件挂载至本机指定文件夹中,虽然此程序是用纯C编写的,但是我们已知具体实现功能,并了解部分fuse实现原理,所以我们只需要解读关键函数的实现就能大致了解实现流程</strong></p>
+<ol>
+<li><p>link.c和link.h加载http中的Link中的路径转换至磁盘本地路径.</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function">LinkTable *<span class="title">LinkTable_disk_open</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *dirn)</span><span class="comment">//从磁盘加载链接表</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">char</span> *metadirn = path_append(META_DIR, dirn);</span><br><span class="line">	<span class="keyword">char</span> *path;</span><br><span class="line">	<span class="comment">//http中的路径进行选择截取</span></span><br><span class="line">	<span class="keyword">if</span> (metadirn[strnlen(metadirn, MAX_PATH_LEN)] == <span class="string">&#x27;/&#x27;</span>) &#123;</span><br><span class="line">		path = path_append(metadirn, <span class="string">&quot;.LinkTable&quot;</span>);</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		path = path_append(metadirn, <span class="string">&quot;/.LinkTable&quot;</span>);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">//打开路径开始获取目标文件</span></span><br><span class="line">	FILE *fp = fopen(path, <span class="string">&quot;r&quot;</span>);</span><br><span class="line">	<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;path&lt;%s&gt;\n&quot;</span>,path);</span><br><span class="line"></span><br><span class="line">	<span class="built_in">free</span>(metadirn);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!fp) &#123;</span><br><span class="line">		<span class="built_in">free</span>(path);</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	LinkTable *linktbl = CALLOC(<span class="number">1</span>, <span class="keyword">sizeof</span>(LinkTable));</span><br><span class="line"></span><br><span class="line">	fread(&amp;linktbl-&gt;num, <span class="keyword">sizeof</span>(<span class="keyword">int</span>), <span class="number">1</span>, fp);</span><br><span class="line">	linktbl-&gt;links = CALLOC(linktbl-&gt;num, <span class="keyword">sizeof</span>(Link *));</span><br><span class="line">	<span class="comment">//遍历link获取所需内容,并返回</span></span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; linktbl-&gt;num; i++) &#123;</span><br><span class="line">		linktbl-&gt;links[i] = CALLOC(<span class="number">1</span>, <span class="keyword">sizeof</span>(Link));</span><br><span class="line">		fread(linktbl-&gt;links[i]-&gt;linkname, <span class="keyword">sizeof</span>(<span class="keyword">char</span>), MAX_FILENAME_LEN, fp);</span><br><span class="line">		fread(linktbl-&gt;links[i]-&gt;f_url, <span class="keyword">sizeof</span>(<span class="keyword">char</span>), MAX_PATH_LEN, fp);</span><br><span class="line">		fread(&amp;linktbl-&gt;links[i]-&gt;type, <span class="keyword">sizeof</span>(LinkType), <span class="number">1</span>, fp);</span><br><span class="line">		fread(&amp;linktbl-&gt;links[i]-&gt;content_length, <span class="keyword">sizeof</span>(<span class="keyword">size_t</span>), <span class="number">1</span>, fp);</span><br><span class="line">		fread(&amp;linktbl-&gt;links[i]-&gt;time, <span class="keyword">sizeof</span>(<span class="keyword">long</span>), <span class="number">1</span>, fp);</span><br><span class="line">		<span class="keyword">if</span> (feof(fp)) &#123;</span><br><span class="line">			<span class="comment">/* reached EOF */</span></span><br><span class="line">			<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>,</span><br><span class="line">					<span class="string">&quot;LinkTable_disk_open(): reached EOF!\n&quot;</span>);</span><br><span class="line">			LinkTable_free(linktbl);</span><br><span class="line">			LinkTable_disk_delete(dirn);</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> (ferror(fp)) &#123;</span><br><span class="line">			<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;LinkTable_disk_open(): encountered ferror!\n&quot;</span>);</span><br><span class="line">			LinkTable_free(linktbl);</span><br><span class="line">			LinkTable_disk_delete(dirn);</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> (fclose(fp)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>,</span><br><span class="line">				<span class="string">&quot;LinkTable_disk_open(): cannot close the file pointer, %s\n&quot;</span>,</span><br><span class="line">				strerror(errno));</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> linktbl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>network.c 和network.h,获取http文件服务器内容,详情请参考<code>https://curl.haxx.se/libcurl/c/threaded-ssl.html</code>这位作者也是参考此源码完成.</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">NetworkSystem_init</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">	<span class="comment">/* ------- Global related ----------*/</span></span><br><span class="line">	<span class="comment">//初始化http的curl,如果非CURL_GLOBAL_ALL则初始化失败退出</span></span><br><span class="line">	<span class="keyword">if</span> (curl_global_init(CURL_GLOBAL_ALL)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;network_init(): curl_global_init() failed!\n&quot;</span>);</span><br><span class="line">		exit_failure();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* -------- Share related ----------*/</span></span><br><span class="line">	<span class="comment">//返回curl句柄,获取相应我curl</span></span><br><span class="line">	CURL_SHARE = curl_share_init();</span><br><span class="line">	<span class="keyword">if</span> (!(CURL_SHARE)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;network_init(): curl_share_init() failed!\n&quot;</span>);</span><br><span class="line">		exit_failure();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//给目标穿参</span></span><br><span class="line">	curl_share_setopt(CURL_SHARE, CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);</span><br><span class="line">	curl_share_setopt(CURL_SHARE, CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);</span><br><span class="line">	curl_share_setopt(CURL_SHARE, CURLSHOPT_SHARE, CURL_LOCK_DATA_SSL_SESSION);</span><br><span class="line">	<span class="comment">//thread的初始化</span></span><br><span class="line">	<span class="keyword">if</span> (pthread_mutex_init(&amp;curl_lock, <span class="literal">NULL</span>) != <span class="number">0</span>) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;network_init(): curl_lock initialisation failed!\n&quot;</span>);</span><br><span class="line">		exit_failure();</span><br><span class="line">	&#125;</span><br><span class="line">	curl_share_setopt(CURL_SHARE, CURLSHOPT_LOCKFUNC, curl_callback_lock);</span><br><span class="line">	curl_share_setopt(CURL_SHARE, CURLSHOPT_UNLOCKFUNC, curl_callback_unlock);</span><br><span class="line"></span><br><span class="line">	<span class="comment">//处理多个curl</span></span><br><span class="line">	<span class="comment">/* ------------- Multi related -----------*/</span></span><br><span class="line">	curl_multi = curl_multi_init();</span><br><span class="line">	<span class="keyword">if</span> (!curl_multi) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;network_init(): curl_multi_init() failed!\n&quot;</span>);</span><br><span class="line">		exit_failure();</span><br><span class="line">	&#125;</span><br><span class="line">	curl_multi_setopt(curl_multi, CURLMOPT_MAX_TOTAL_CONNECTIONS,</span><br><span class="line">					CONFIG.max_conns);</span><br><span class="line">	curl_multi_setopt(curl_multi, CURLMOPT_MAX_HOST_CONNECTIONS,</span><br><span class="line">					CONFIG.max_conns);</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* ------------ Initialise locks ---------*/</span></span><br><span class="line">	<span class="keyword">if</span> (pthread_mutex_init(&amp;transfer_lock, <span class="literal">NULL</span>)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>,</span><br><span class="line">				<span class="string">&quot;network_init(): transfer_lock initialisation failed!\n&quot;</span>);</span><br><span class="line">		exit_failure();</span><br><span class="line">	&#125;</span><br><span class="line">	crypto_lock_init();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>fuse_local.c和fuse_local.h,搭建本地fuse文件系统,本文上半部分已经详细介绍原理.</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">fs_readdir</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *path, <span class="keyword">void</span> *buf, <span class="keyword">fuse_fill_dir_t</span> dir_add,<span class="keyword">off_t</span> offset, struct fuse_file_info *fi)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	(<span class="keyword">void</span>) offset;</span><br><span class="line">	(<span class="keyword">void</span>) fi;</span><br><span class="line"></span><br><span class="line">	Link *link;</span><br><span class="line">	LinkTable *linktbl;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!<span class="built_in">strcmp</span>(path, <span class="string">&quot;/&quot;</span>)) &#123;</span><br><span class="line">		linktbl = ROOT_LINK_TBL;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		linktbl = path_to_Link_LinkTable_new(path);<span class="comment">//如果非根目录,则从link中重新拉去当前目录所有文件夹,和文件从而实现文件夹的存储.缺点是要试试刷新多文件会有较高延迟</span></span><br><span class="line">		<span class="keyword">if</span>(!linktbl) &#123;</span><br><span class="line">			<span class="keyword">return</span> -ENOENT;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* start adding the links */</span></span><br><span class="line">	dir_add(buf, <span class="string">&quot;.&quot;</span>, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">	dir_add(buf, <span class="string">&quot;..&quot;</span>, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; linktbl-&gt;num; i++) &#123;</span><br><span class="line">		link = linktbl-&gt;links[i];</span><br><span class="line">		<span class="keyword">if</span> (link-&gt;type != LINK_INVALID) &#123;</span><br><span class="line">			dir_add(buf, link-&gt;linkname, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
 </ol>
-<h2 id="简单窗口的创建"><a href="#简单窗口的创建" class="headerlink" title="简单窗口的创建"></a>简单窗口的创建</h2><p>main.c：</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;X11/Xlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">	Display *d;</span><br><span class="line">	Window w;</span><br><span class="line">	XEvent e;</span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">char</span> *msg = <span class="string">&quot;Hello, World!&quot;</span>;</span><br><span class="line">	<span class="keyword">int</span> s;</span><br><span class="line"></span><br><span class="line">	d = XOpenDisplay(<span class="literal">NULL</span>);</span><br><span class="line">	<span class="keyword">if</span> (d == <span class="literal">NULL</span>) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;Cannot open display\n&quot;</span>);</span><br><span class="line">		<span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	s = DefaultScreen(d);</span><br><span class="line">	w = XCreateSimpleWindow(d, RootWindow(d, s), <span class="number">10</span>, <span class="number">10</span>, <span class="number">100</span>, <span class="number">100</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0xFFFF7700</span>);</span><br><span class="line">	XSelectInput(d, w, ExposureMask | KeyPressMask);</span><br><span class="line">	XMapWindow(d, w);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">		XNextEvent(d, &amp;e);</span><br><span class="line">		<span class="keyword">if</span> (e.type == Expose) &#123;</span><br><span class="line">			XFillRectangle(d, w, DefaultGC(d, s), <span class="number">20</span>, <span class="number">20</span>, <span class="number">10</span>, <span class="number">10</span>);</span><br><span class="line">			XDrawString(d, w, DefaultGC(d, s), <span class="number">10</span>, <span class="number">50</span>, msg, <span class="built_in">strlen</span>(msg));</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> (e.type == KeyPress)</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	XCloseDisplay(d);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+<ul>
+<li><strong>总结</strong>:通过http(curl库),和fuse(fuse库).点击当前文件夹就会从http拉去当前文件夹所有内容,从而实现了把http文件系统服务器挂在至本机磁盘中.makefile直接使用make生成可执行文件httpdirfs,然后调用如下命令即可使用<blockquote>
+<p>./httpdirfs -f –cache $URL $MOUNT_POINT</p>
+</blockquote>
+</li>
+</ul>
+]]></content>
       <categories>
-        <category>X11学习</category>
+        <category>Linux利用fuse实现文件系统</category>
       </categories>
       <tags>
         <tag>Linux技术分享</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>【问题解决】博客搭建</title>
-    <url>/2021/04/20/blog%E7%9A%84%E6%90%AD%E5%BB%BA/</url>
-    <content><![CDATA[<h1 id="blog的搭建"><a href="#blog的搭建" class="headerlink" title="blog的搭建"></a>blog的搭建</h1><p><em><strong>此博客是github，用hexo，并用使用next主题进行配置和搭建。</strong></em></p>
-<span id="more"></span>
-
-<p><strong>吐槽一下，作为一名纯种的后端搭建blog，尽管网上有说明，但是还是觉得有些许吃力。特别是我换顶部图片，简直是我一步一步试出来的</strong></p>
-<p>搭建步骤</p>
-<ul>
-<li>注册一个github，并且新建一个名字一样的github仓库</li>
-<li>配置本地的hexo环境</li>
-<li>下载next主题</li>
-<li>直接在<code>_posts</code>下开始写博客</li>
-<li>大功告成</li>
-</ul>
-<p>注意：</p>
-<h4 id="问题1：背景图片更换"><a href="#问题1：背景图片更换" class="headerlink" title="问题1：背景图片更换"></a>问题1：背景图片更换</h4><p>解决：在<code>main.styl</code>加入<code>@import &quot;_custom/styles.styl&quot;</code>，背景图片放在<code>themes\next\source\images</code>文件夹中，本地创建<code>themes\next\source\css\ _custom\style.styl</code>文件。</p>
-<figure class="highlight js"><table><tr><td class="code"><pre><span class="line">body &#123;</span><br><span class="line">background: url(<span class="regexp">/images/</span>图片名);</span><br><span class="line">background-repeat: no-repeat;<span class="comment">// 设定背景图片非重复填充</span></span><br><span class="line">background-attachment: fixed;<span class="comment">// 设置背景图片不随页面滚动</span></span><br><span class="line">background-position: <span class="number">50</span>% <span class="number">50</span>%;<span class="comment">// 设置背景图片位置</span></span><br><span class="line">background-size: cover<span class="comment">//</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<h4 id="问题2：顶部图片更换"><a href="#问题2：顶部图片更换" class="headerlink" title="问题2：顶部图片更换"></a>问题2：顶部图片更换</h4><p>解决：在<code>headerband.styl</code>中插入下面那句话，背景图片放在站点的source/image下</p>
-<figure class="highlight js"><table><tr><td class="code"><pre><span class="line">.headband &#123;</span><br><span class="line">  <span class="comment">//background: $headband-bg;</span></span><br><span class="line">    background: url(<span class="string">&#x27;../../image/header-bg.jpg&#x27;</span>);</span><br><span class="line">  height: 180px;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="问题3：文章置顶"><a href="#问题3：文章置顶" class="headerlink" title="问题3：文章置顶"></a>问题3：文章置顶</h4><p>解决：直接复制替换node_modules/hexo-generator-index/lib/generator.js的内容</p>
-<figure class="highlight js"><table><tr><td class="code"><pre><span class="line"><span class="meta">&#x27;use strict&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> pagination = <span class="built_in">require</span>(<span class="string">&#x27;hexo-pagination&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = <span class="function"><span class="keyword">function</span>(<span class="params">locals</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> config = <span class="built_in">this</span>.config;</span><br><span class="line">  <span class="keyword">var</span> posts = locals.posts.sort(config.index_generator.order_by);</span><br><span class="line"></span><br><span class="line">  posts.data = posts.data.sort(<span class="function"><span class="keyword">function</span>(<span class="params">a, b</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">if</span>(a.top &amp;&amp; b.top) &#123;</span><br><span class="line">          <span class="keyword">if</span>(a.top == b.top) <span class="keyword">return</span> b.date - a.date;</span><br><span class="line">          <span class="keyword">else</span> <span class="keyword">return</span> b.top - a.top;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">if</span>(a.top &amp;&amp; !b.top) &#123;</span><br><span class="line">          <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">if</span>(!a.top &amp;&amp; b.top) &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">return</span> b.date - a.date;</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">var</span> paginationDir = config.pagination_dir || <span class="string">&#x27;page&#x27;</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> pagination(<span class="string">&#x27;&#x27;</span>, posts, &#123;</span><br><span class="line">    perPage: config.index_generator.per_page,</span><br><span class="line">    layout: [<span class="string">&#x27;index&#x27;</span>, <span class="string">&#x27;archive&#x27;</span>],</span><br><span class="line">    format: paginationDir + <span class="string">&#x27;/%d/&#x27;</span>,</span><br><span class="line">    data: &#123;</span><br><span class="line">      __index: <span class="literal">true</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>配置插件</p>
-<p>$ npm uninstall hexo-generator-index –save</p>
-<p>$ npm install hexo-generator-index-pin-top –save</p>
-<p>然后在需要置顶的文章的Front-matter中加上top: true或者top数字top: 1：</p>
-<figure class="highlight js"><table><tr><td class="code"><pre><span class="line">title: 置顶</span><br><span class="line">date: <span class="number">2019</span>-<span class="number">09</span>-<span class="number">09</span> <span class="number">09</span>:<span class="number">09</span>:<span class="number">09</span></span><br><span class="line">top: <span class="literal">true</span></span><br><span class="line">top: <span class="number">1</span></span><br></pre></td></tr></table></figure>
-<p>按照数字大小依次往下置顶排序</p>
-<h4 id="问题4：博客提交"><a href="#问题4：博客提交" class="headerlink" title="问题4：博客提交"></a>问题4：博客提交</h4><p>解决：调用<code>blog_push.sh</code>是提交，<code>blog_localtest.sh</code>是在本地查看</p>
-<h4 id="问题5：blog文章中图片添加"><a href="#问题5：blog文章中图片添加" class="headerlink" title="问题5：blog文章中图片添加"></a>问题5：blog文章中图片添加</h4><p>解决：在<code>_post</code>目录下创建一个同名文件夹，放图片，在文章中插入<code>![图1](1.png)</code>。</p>
-]]></content>
-      <categories>
-        <category>问题解决</category>
-      </categories>
-      <tags>
-        <tag>问题解决</tag>
       </tags>
   </entry>
   <entry>
@@ -340,28 +458,194 @@
       </tags>
   </entry>
   <entry>
-    <title>【windows技术】go的http服务器响应实现</title>
-    <url>/2021/10/09/go%E7%9A%84http%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%93%8D%E5%BA%94%E5%AE%9E%E7%8E%B0/</url>
-    <content><![CDATA[<h1 id="go实现服务器响应客户端操作"><a href="#go实现服务器响应客户端操作" class="headerlink" title="go实现服务器响应客户端操作"></a>go实现服务器响应客户端操作</h1><p><em><strong>利用go实现服务器响应客户端各种操作</strong></em></p>
+    <title>【Linux技术分享】利用QT的clipboard库监听和设置剪切板</title>
+    <url>/2021/06/02/UOS%E5%88%A9%E7%94%A8QT%E7%9B%91%E5%90%AC%E5%92%8C%E8%AE%BE%E7%BD%AE%E5%89%AA%E5%88%87%E6%9D%BF/</url>
+    <content><![CDATA[<h1 id="利用QT的clipboard库监听和设置剪切板"><a href="#利用QT的clipboard库监听和设置剪切板" class="headerlink" title="利用QT的clipboard库监听和设置剪切板"></a>利用QT的clipboard库监听和设置剪切板</h1><p>***使用QT的Clipboard库，监听和设置uos剪切板变化。经过dbus接口，把uos的剪切板暴露出来，从而进行设置和监听</p>
 <span id="more"></span>
-<h2 id="前期调研"><a href="#前期调研" class="headerlink" title="前期调研"></a>前期调研</h2><p>在go开发官方文档<code>https://pkg.go.dev/net/http</code>发现了针对http服务器响应和对http客户端对服务器请求的说明，本文参考此说明开始编写。</p>
-<h2 id="go服务器响应"><a href="#go服务器响应" class="headerlink" title="go服务器响应"></a>go服务器响应</h2><p><em>ListenAndServe starts an HTTP server with a given address and handler. The handler is usually nil, which means to use DefaultServeMux. Handle and HandleFunc add handlers to DefaultServeMux:</em></p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">http.Handle(<span class="string">&quot;/foo&quot;</span>, fooHandler)</span><br><span class="line"></span><br><span class="line">http.HandleFunc(<span class="string">&quot;/bar&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	fmt.Fprintf(w, <span class="string">&quot;Hello, %q&quot;</span>, html.EscapeString(r.URL.Path))</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line">log.Fatal(http.ListenAndServe(<span class="string">&quot;:8080&quot;</span>, <span class="literal">nil</span>))</span><br></pre></td></tr></table></figure>
 
-<p>开发文档意思是在http服务器添加handle来响应客户端不同请求操作即可，事例函数中有两个参数需要注意:</p>
-<p><code>ResponseWriter 是处理器用来创建 HTTP 响应的接口，其源码结构如下所示：</code></p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> ResponseWriter <span class="keyword">interface</span> &#123;</span><br><span class="line">   <span class="comment">// 用于设置/获取所有响应头信息</span></span><br><span class="line">    Header() Header</span><br><span class="line">   <span class="comment">// 用于写入数据到响应实体</span></span><br><span class="line">    Write([]<span class="keyword">byte</span>) (<span class="keyword">int</span>, error)</span><br><span class="line">   <span class="comment">// 用于设置响应状态码</span></span><br><span class="line">    WriteHeader(statusCode <span class="keyword">int</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>Request是用来解析请求头和请求体，其源码结构如下：</code></p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Request <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">//指定请求内容例如DELETE，POST，GET</span></span><br><span class="line">    Method <span class="keyword">string</span></span><br><span class="line">	<span class="comment">//指定要请求的 URI（对于服务器请求）或要访问的 URL（用于客户请求</span></span><br><span class="line">    URL *url.URL</span><br><span class="line">	<span class="comment">//服务器协议版本</span></span><br><span class="line">    Proto      <span class="keyword">string</span> <span class="comment">// &quot;HTTP/1.0&quot;</span></span><br><span class="line">    ProtoMajor <span class="keyword">int</span>    <span class="comment">// 1</span></span><br><span class="line">    ProtoMinor <span class="keyword">int</span>    <span class="comment">// 0</span></span><br><span class="line">	<span class="comment">//包含服务端收到或者由客户端发送的 HTTP 请求头</span></span><br><span class="line">    Header Header</span><br><span class="line"></span><br><span class="line">    Body io.ReadCloser</span><br><span class="line"></span><br><span class="line">    GetBody <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="params">(io.ReadCloser, error)</span></span></span><br><span class="line"></span><br><span class="line">    ContentLength <span class="keyword">int64</span></span><br><span class="line"></span><br><span class="line">    TransferEncoding []<span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">    Close <span class="keyword">bool</span></span><br><span class="line"></span><br><span class="line">    Host <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">    Form url.Values</span><br><span class="line"></span><br><span class="line">    PostForm url.Values</span><br><span class="line"></span><br><span class="line">    MultipartForm *multipart.Form</span><br><span class="line"></span><br><span class="line">    Trailer Header</span><br><span class="line"></span><br><span class="line">    RemoteAddr <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">    RequestURI <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">    TLS *tls.ConnectionState</span><br><span class="line"></span><br><span class="line">    Cancel &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">    Response *Response</span><br><span class="line"></span><br><span class="line">    ctx context.Context</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这边主要使用的就是request结构体前几个对象就可以实现了，具体的其他对象详细说明可以看下<code>request.go</code>源码</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;net/http&quot;</span></span><br><span class="line">    <span class="string">&quot;fmt&quot;</span></span><br><span class="line">    <span class="string">&quot;os&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    mux := http.NewServeMux()</span><br><span class="line">    fs := http.FileServer(http.Dir(<span class="string">&quot;/home/mecry/tmp/&quot;</span>))</span><br><span class="line">    mux.Handle(<span class="string">&quot;/&quot;</span>, <span class="built_in">delete</span>(<span class="string">&quot;/home/mecry/tmp/&quot;</span>, fs))</span><br><span class="line">    http.ListenAndServe(<span class="string">&quot;localhost:8888&quot;</span>, mux)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">delete</span> <span class="params">(dirprefix <span class="keyword">string</span>, next http.Handler)</span> <span class="title">http</span>.<span class="title">Handler</span></span> &#123;</span><br><span class="line">    <span class="keyword">return</span> http.HandlerFunc(<span class="function"><span class="keyword">func</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">        <span class="keyword">if</span> r.Method == <span class="string">&quot;DELETE&quot;</span> &#123;</span><br><span class="line">            path := dirprefix+r.URL.String()</span><br><span class="line">            fmt.Println(<span class="string">&quot;delete path:&quot;</span>, path)</span><br><span class="line">            os.Remove(path)</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">        next.ServeHTTP(w, r)</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="dbus的创建"><a href="#dbus的创建" class="headerlink" title="dbus的创建"></a>dbus的创建</h2><ol>
+<li>在C++头文件定义<code>Q_SLOTS</code>,和<code>Q_SIGNALS</code></li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Clipboard</span> :</span> <span class="keyword">public</span> QObject</span><br><span class="line">&#123;</span><br><span class="line">    Q_OBJECT</span><br><span class="line">    <span class="built_in">Q_CLASSINFO</span>(<span class="string">&quot;D-Bus Interface&quot;</span>, <span class="string">&quot;com.deepin.ListenClipboard&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">Clipboard</span><span class="params">(QObject *parent = <span class="literal">nullptr</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> Q_SLOTS:</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">SetDataToCB</span><span class="params">(<span class="keyword">const</span> QString &amp;clipboardData, <span class="keyword">const</span> <span class="keyword">int</span> nType)</span></span>;</span><br><span class="line"></span><br><span class="line">Q_SIGNALS:</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">ClipboardChanged</span><span class="params">(<span class="keyword">const</span> QString &amp;pathlist, <span class="keyword">const</span> <span class="keyword">int</span> nType)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>创建导出dbus接口的xml文件</li>
+</ol>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE <span class="meta-keyword">node</span> <span class="meta-keyword">PUBLIC</span> <span class="meta-string">&quot;-//freedesktop//DTD D-BUS Object Introspection 1.0//EN&quot;</span> <span class="meta-string">&quot;http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">node</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">interface</span> <span class="attr">name</span>=<span class="string">&quot;com.deepin.ListenClipboard&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">signal</span> <span class="attr">name</span>=<span class="string">&quot;ClipboardChanged&quot;</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">arg</span> <span class="attr">name</span>=<span class="string">&quot;str&quot;</span> <span class="attr">type</span>=<span class="string">&quot;s&quot;</span> <span class="attr">direction</span>=<span class="string">&quot;out&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">arg</span> <span class="attr">name</span>=<span class="string">&quot;nType&quot;</span> <span class="attr">type</span>=<span class="string">&quot;i&quot;</span> <span class="attr">direction</span>=<span class="string">&quot;out&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">signal</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">method</span> <span class="attr">name</span>=<span class="string">&quot;SetClipboardData&quot;</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">arg</span> <span class="attr">name</span>=<span class="string">&quot;str&quot;</span> <span class="attr">type</span>=<span class="string">&quot;s&quot;</span> <span class="attr">direction</span>=<span class="string">&quot;in&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">arg</span> <span class="attr">name</span>=<span class="string">&quot;nType&quot;</span> <span class="attr">type</span>=<span class="string">&quot;i&quot;</span> <span class="attr">direction</span>=<span class="string">&quot;in&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">method</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">interface</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">node</span>&gt;</span></span><br></pre></td></tr></table></figure>
 
+<ol start="3">
+<li>使用工具生成适配器类</li>
+</ol>
+<p><code>qdbusxml2cpp com.deepin.ListenClipboard.xml -i  com.deepin.ListenClipboard.xml -a widgetadaptor</code></p>
+<ol start="4">
+<li> 安装适配器将Widget类中的方法导出<code>DemoAdaptor adaptor(&amp;w);</code></li>
+</ol>
+<h2 id="剪切板监听"><a href="#剪切板监听" class="headerlink" title="剪切板监听"></a>剪切板监听</h2><ol>
+<li>调用<code>connect</code>，把自己的<code>func</code>和<code>cilpboard</code>变化连接一起 <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">Clipboard::CheckDataToCb</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">connect</span>(m_clipBoard, &amp;QClipboard::dataChanged, <span class="keyword">this</span>, &amp;Clipboard::ListenDataToCB);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>获取文件图片和文字</li>
+</ol>
+<ul>
+<li><p>图片</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">QImage img = qvariant_cast&lt;QImage&gt;(strMimeData-&gt;<span class="built_in">imageData</span>());</span><br><span class="line">QByteArray imageArray;</span><br><span class="line">QBuffer buffer;</span><br><span class="line">buffer.<span class="built_in">open</span>(QIODevice::WriteOnly);</span><br><span class="line">img.<span class="built_in">save</span>(&amp;buffer, <span class="string">&quot;PNG&quot;</span>);</span><br><span class="line">imageArray.<span class="built_in">append</span>(buffer.<span class="built_in">data</span>());</span><br></pre></td></tr></table></figure></li>
+<li><p>文字</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">QString strText = strMimeData-&gt;<span class="built_in">text</span>();</span><br><span class="line"><span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;clipboard text received:&quot;</span> &lt;&lt; strText;</span><br></pre></td></tr></table></figure></li>
+<li><p>文件</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">QString strFileList;</span><br><span class="line">QList&lt;QUrl&gt; cbUrls = strMimeData-&gt;<span class="built_in">urls</span>();</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; cbUrls.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">    QString strFile = cbUrls.<span class="built_in">at</span>(i).<span class="built_in">toLocalFile</span>();</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">isFusePath</span>(strFile) || <span class="number">0</span> == strFile.<span class="built_in">size</span>()) &#123;</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    strFileList += strFile + <span class="string">&quot;\n&amp;t&quot;</span>; <span class="comment">// windows约定文件路径分隔符</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;clipboard file received:&quot;</span> &lt;&lt; strFileList;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<ol start="3">
+<li><p>发送数据至<code>Q_SIGNALS</code></p>
+ <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function">emit <span class="title">ClipboardChanged</span><span class="params">(strClipboardData,<span class="keyword">static_cast</span>&lt;<span class="keyword">int</span>&gt;(nType))</span></span>;</span><br></pre></td></tr></table></figure>
+<h2 id="剪贴板设置"><a href="#剪贴板设置" class="headerlink" title="剪贴板设置"></a>剪贴板设置</h2></li>
+<li><p>使用dbus绑定接口<code>SetDataToCB</code></p>
+ <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">QMetaObject::<span class="built_in">invokeMethod</span>(<span class="built_in">parent</span>(), <span class="string">&quot;SetDataToCB&quot;</span>, <span class="built_in">Q_ARG</span>(QString, path),<span class="built_in">Q_ARG</span>(<span class="keyword">const</span> <span class="keyword">int</span>,nType));</span><br></pre></td></tr></table></figure></li>
+<li><p>设置文件图片和文字</p>
+</li>
+</ol>
+<ul>
+<li><p>图片</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">QImage img;</span><br><span class="line">QByteArray arr_base64 = clipboardData.<span class="built_in">toLatin1</span>();</span><br><span class="line">img.<span class="built_in">loadFromData</span>(QByteArray::<span class="built_in">fromBase64</span>(arr_base64));</span><br><span class="line">m_clipBoard-&gt;<span class="built_in">setImage</span>(img);</span><br><span class="line"><span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;set clipboard data as Image&quot;</span>;</span><br></pre></td></tr></table></figure></li>
+<li><p>文字</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">m_clipBoard-&gt;<span class="built_in">setText</span>(clipboardData);</span><br><span class="line"><span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;set clipboard data as text:&quot;</span> &lt;&lt; clipboardData;</span><br></pre></td></tr></table></figure></li>
+<li><p>文件</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">QString CopiedFile;</span><br><span class="line">QString UrlList;</span><br><span class="line"><span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;set clipboard data as file:&quot;</span> &lt;&lt; clipboardData;</span><br><span class="line">QStringList clipboardList = clipboardData.<span class="built_in">split</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line"><span class="keyword">for</span> (QString path : clipboardList) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!path.<span class="built_in">isEmpty</span>()) &#123;</span><br><span class="line">        CopiedFile = CopiedFile + <span class="string">&quot;copy\nfile://&quot;</span> + path;</span><br><span class="line">        UrlList = UrlList + <span class="string">&quot;file://&quot;</span> + path + <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (CopiedFile.<span class="built_in">size</span>() == <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;clipboard path is empty&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line">QMimeData *newMimeData = <span class="keyword">new</span> <span class="built_in">QMimeData</span>();</span><br><span class="line">newMimeData-&gt;<span class="built_in">setData</span>(<span class="string">&quot;x-special/gnome-copied-files&quot;</span>,</span><br><span class="line">                     <span class="built_in">QByteArray</span>(CopiedFile.<span class="built_in">toStdString</span>().<span class="built_in">c_str</span>()));</span><br><span class="line">newMimeData-&gt;<span class="built_in">setData</span>(<span class="string">&quot;text/uri-list&quot;</span>, <span class="built_in">QByteArray</span>(UrlList.<span class="built_in">toStdString</span>().<span class="built_in">c_str</span>()));</span><br><span class="line">m_clipBoard-&gt;<span class="built_in">clear</span>();</span><br><span class="line">m_clipBoard-&gt;<span class="built_in">setMimeData</span>(newMimeData);</span><br></pre></td></tr></table></figure></li>
+</ul>
 ]]></content>
       <categories>
-        <category>go</category>
+        <category>C++</category>
       </categories>
       <tags>
-        <tag>windows技术</tag>
+        <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>【问题解决】解决UOS部分问题</title>
+    <url>/2021/05/19/%E8%A7%A3%E5%86%B3UOS%E9%83%A8%E5%88%86%E9%97%AE%E9%A2%98/</url>
+    <content><![CDATA[<h1 id="解决UOS部分问题"><a href="#解决UOS部分问题" class="headerlink" title="解决UOS部分问题"></a>解决UOS部分问题</h1><ul>
+<li>修改配置文件，实现UOS文管不显示已挂载磁盘。</li>
+<li>解决扩展屏时,dock栏来回跳转</li>
+</ul>
+<span id="more"></span>
+<h2 id="1-UOS挂载磁盘不显示"><a href="#1-UOS挂载磁盘不显示" class="headerlink" title="1. UOS挂载磁盘不显示"></a>1. UOS挂载磁盘不显示</h2><p>问题描述：</p>
+<p>多个磁盘在文管显示，其实都是零碎的挂载没什么用，现在要想开机把他隐藏。<br><img src="/2021/05/19/%E8%A7%A3%E5%86%B3UOS%E9%83%A8%E5%88%86%E9%97%AE%E9%A2%98/1.png" alt="图1"></p>
+<p>解决方案1：</p>
+<ul>
+<li><p>可以在/lib/udev/rules.d/80-udisks2.rules 里面加入<code>ENV&#123;ID_fS_TYPE&#125;==&quot;squashfs&quot; ENV&#123;UDISKS_IGNORE&#125;=&quot;1&quot;</code></p>
+<p><img src="/2021/05/19/%E8%A7%A3%E5%86%B3UOS%E9%83%A8%E5%88%86%E9%97%AE%E9%A2%98/2.png" alt="图2"></p>
+</li>
+<li><p>/etc/udev/rules.d下面如果有80-udisks2.rules这个文件，刚刚的修改没有意义，大家把这个文件改个名字即可：/etc/udev/rules.d/80-udisks2-install.rules。这是老版本bug</p>
+<p><img src="/2021/05/19/%E8%A7%A3%E5%86%B3UOS%E9%83%A8%E5%88%86%E9%97%AE%E9%A2%98/3.png" alt="图3"></p>
+</li>
+</ul>
+<p>解决方案2：</p>
+<ul>
+<li>我遇见的是fusemount挂载，想在文管隐藏，当我挂载到<code>/tmp</code>目录下任何一个文件夹下文管就不显示了。</li>
+</ul>
+<p><img src="/2021/05/19/%E8%A7%A3%E5%86%B3UOS%E9%83%A8%E5%88%86%E9%97%AE%E9%A2%98/4.png" alt="图4"></p>
+<h2 id="2-扩展屏幕dock来回跳转"><a href="#2-扩展屏幕dock来回跳转" class="headerlink" title="2. 扩展屏幕dock来回跳转"></a>2. 扩展屏幕dock来回跳转</h2><p>解决方案:</p>
+<blockquote>
+<p>gsettings set com.deepin.dde.dock.mainwindow only-show-primary true</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>问题解决</category>
+      </categories>
+      <tags>
+        <tag>问题解决</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>【问题解决】vscode上go的自动补全和跳转</title>
+    <url>/2021/04/27/vscode%E4%B8%ADgo/</url>
+    <content><![CDATA[<h1 id="vscode上go自动补全问题和跳转问题"><a href="#vscode上go自动补全问题和跳转问题" class="headerlink" title="vscode上go自动补全问题和跳转问题"></a>vscode上go自动补全问题和跳转问题</h1><p><em><strong>在UOS环境下用vscode，不能跳转和自动补全。</strong></em></p>
+<span id="more"></span>
+<h2 id="ctrl不能跳转"><a href="#ctrl不能跳转" class="headerlink" title="ctrl不能跳转"></a>ctrl不能跳转</h2><p>解决：</p>
+<ul>
+<li>settings-&gt;搜索 use language server-&gt;Go: Use Language Server 改为非选中状态,就可以跳转了,这里是重点,重点.必须的要更改。</li>
+<li>设置搜索Docs Tool，把 Docs Tool改成gogetdoc或者guru试试，我的用guru就可以。</li>
+</ul>
+<h2 id="自动补全失效"><a href="#自动补全失效" class="headerlink" title="自动补全失效"></a>自动补全失效</h2><p>解决：<br>在升级到 1.11后， go加入了go module这一特性， 支持相对路径的导入包，这样在$GOPATH之外的地方也可以进行项目开发。</p>
+<ol>
+<li>但是vscode中很多插件只能工作在 $GOPATH下， 其中最重要的代码智能提示也是如此代码提示主要由 github.com/mdemsky/gocode 这个模块负责， 为了支持go module， 要使用新的gocode模块，项目地址为 github.com/stamblerre/gocode， 为了更新插件</li>
+</ol>
+<p>将$GOPATH/bin 中的 gocode 可执行文件删掉</p>
+<ol start="2">
+<li><p>go get -u -v github.com/stamblerre/gocode 获取包， 这里是不能安装的，有冲突</p>
+</li>
+<li><p>去到 $GOPATH/src/golang.org/x 这个目录下， 删除tools这个包，它和新版的 gocode不兼容，不要试图 git pull获取最新版，这个是被墙了的</p>
+</li>
+<li><p>从 <a href="https://github.com/golang/tools">https://github.com/golang/tools</a> 下载最新的tools包，clone很慢就直接下载 zip 文件， 解压到刚才原来的位置。</p>
+</li>
+<li><p>编译安装 stamblerre/gocode， go build -o $GOPATH/bin/gocode-gomod github.com/stamblerre/gocode或者直接到$GOPATH/src/github.com/stamblerre/gocode目录下执行go build</p>
+</li>
+</ol>
+<p>到此， Vscode智能提示就可以正常工作了</p>
+]]></content>
+      <categories>
+        <category>问题解决</category>
+      </categories>
+      <tags>
+        <tag>问题解决</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>【读书有感】谈谈《博弈论诡计》</title>
+    <url>/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/</url>
+    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p><em><strong>在一个咖啡屋偶然接触到这本书，当时旁边我翻遍了隔壁书架，一群要么是《骆驼祥子》，《呐喊》，《酒馆》这种上世纪的书，或是再给我整点余秋雨的风风雨雨，或者是再搞点三毛的恩恩爱爱，想找两本王朔的或者余华硬一点的却翻不到，碰巧遇到了，博弈论。现在想起，可能是《博弈论》前两的囚徒困境吸引住了我吧。现在距看完这本书两个月了，许多片段还能历历在目。</strong></em></p>
+<span id="more"></span>
+
+<h2 id="对人的博弈"><a href="#对人的博弈" class="headerlink" title="对人的博弈"></a>对人的博弈</h2><p>我觉得如果是正经人对完这本书，应该对一点人情世故有所提升。我只能讲一下，我自己看完的对其浅薄的理解。每个人和其他人交往是时候都是在博弈，可能你自己没有注意到，但是和他人的博弈都是在井然有序的发生，默认的处理的方法就是经验论，参照别人处理的方式。这种方法总不能说是错的，但回头想想这可能不是最优解，每个人性格，遇到的矛盾总是不同而已的，一招鲜吃遍天，不太适用。</p>
+<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/1.jpeg" alt="图1"></p>
+<p><code>举个栗子</code>：当你公司同事想去聚餐，想把你拉过去，但是你刚进公司，对公司同事不熟悉，这时候你就要考虑拒绝他还是答应他呢，我们画个表格。</p>
+<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/15.png" alt="图15"></p>
+<p>表格上很清楚明了，如果你觉得自身的舒适度比同事好感度重要的话，合理的拒绝总是利大于弊的，如果是刚来公司，想在新公司发展的话，还是多多的参加聚餐与同事熟络。可能你觉得这个栗子比较简单，生活中的经验论完全就可以解决这个问题，但是事实上许多复杂的东西，就是需要这种逻辑，特别的当你的对手是一个相当成熟的职场上<code>高手</code>的时候，他的每一步都在深思熟虑，都在找一个最优解。历史上往往很离谱的事情，把我们代入过去一步一步分析，那个离谱结果可能就是就是最优解。</p>
+<h2 id="对社会博弈理解"><a href="#对社会博弈理解" class="headerlink" title="对社会博弈理解"></a>对社会博弈理解</h2><p>社会上博弈从博弈论创始到现在，开始是冯·诺依曼证明了博弈论的基本原理，纳什有过完善，再～～～～～～～～发展，我就不记人名了，原谅我的差记性。大概是从提出的了博弈论，然后提出了博弈论的囚徒困境的局限性，再而破解了囚徒困境，提出了合作博弈理论，大概是这个历程。</p>
+<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/2.jpeg" alt="图2"></p>
+<p><code>举个栗子</code>：知乎上有个问题说的很好，核武器的六层猜疑链核威慑里的六层猜疑链<br>什么叫核威慑？很多人理解的核威慑，就是你敢发射核弹搞死我，我就敢发射核弹搞死你。在那个曾经只有美苏拥有核武器的年代，核威慑确实是这样的。但如今不是了。冷战末期时，美国拥有核弹头31255枚，苏联那边也差不多，每年的维护保养费用都是一个天文数字。那个年代，美苏两国确实是奔着直接搞死对面的心态去的，而且要有能搞死对面很多遍的能力才放心。1991年，美苏两国达成协议，削减各自的核武器，直接把人类接近80%的核武器化为乌有。但即便如此，美苏两国依然各自拥有近7000枚核武器，依然可以把对方搞死很多遍。目前全人类总共有15000多枚核弹头，基本都在美国和俄罗斯那里。而中国的核武器一直数量很少，只有美苏两国的零头，大概几百枚的样子。如此之少的核武器，怎么和美俄抗衡？</p>
+<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/3.jpeg" alt="图3"></p>
+<p>以前的中国穷，造不起，甚至维护不起核武器，这可以理解。但今天的中国不穷了啊，为什么不造几万枚核武器撑场面？因为完全没有必几百枚核武器，已经够用了。够用的原因，不是因为几百枚核武器真的够用，而是因为美国和俄罗斯的核武器够用。美国和俄罗斯的核武器，就是中国的核武器。核武器+洲际导弹的组合，让核威慑产生了极其复杂的变化。如果美国决定拿出3000枚核武器，先发制人，在中国没有反应过来之前就对中国进行地毯式核轰炸，把中国从地球上彻底的抹去。</p>
+<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/4.jpeg" alt="图4"></p>
+<p>那美国担心的是中国的核反制么？确实会担心，因为美国的反导系统不可能拦截中国发射的所有核武器，肯定有不少核弹头直接落在美国的大城市里。但这并不是美国最害怕的事情。美国最害怕的，是引发全球所有核国家的猜疑。首先，发动核攻击之前是要绝对保密的，绝对不可能对世界宣布的，更不可能挨个和盟友甚至敌国进行解释。这道理很好理解。假设你和对手都有枪，互相指着对手的头，谁都不敢开枪，这个时候如果对手告诉你，他准备开枪了，请问你会怎么做？</p>
+<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/5.jpeg" alt="图5"></p>
+<p>如果核攻击真的发动，那一定是毫无征兆的。<br>假如美国3000枚核弹头铺天盖地的向亚洲飞过来，在洲际导弹飞行的这十几分钟里，各核国家会想很多很多事情。</p>
+<ul>
+<li>第一层猜疑链：比如说俄罗斯，他首先会想一件事，这么多导弹到底是来炸谁的，是炸中国？还是炸俄罗斯？根据雷达测定，目前的飞行轨迹全部指向中国，看起来好像是炸中国的。但洲际导弹都是可以变轨的，这些弹头会不会在落地前分出一半，突然变轨来炸俄罗斯？等它变轨后，俄罗斯只有三分钟时间了，压根都没时间反应。如果等俄罗斯被炸了再反制，是不是太晚了？要不要提前发射核武器，先把美国给炸了，以防万一。这个问题，不仅俄罗斯会想，英国和法国也会想。</li>
+</ul>
+<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/6.jpeg" alt="图6"></p>
+<ul>
+<li>第二层猜疑链：除了害怕洲际导弹突然变轨之外，俄罗斯还会想一个问题。美国哪来的胆子突然炸中国的，他炸中国的目的是什么，他为什么敢炸中国。如果美国冒着本国被核弹攻击的风险，对中国发动核袭击，那为什么不顺便把俄罗斯一起给炸了，反正承担的风险是差不多的。所以，俄罗斯人会预估美国肯定会对俄罗斯发动核攻击。不管第一波核导弹是炸中国还是炸俄罗斯的，最后都一定会炸俄罗斯。既然如此，那俄罗斯索性就先动手吧。同样，这个问题，不仅俄罗斯会想，英国和法国也会想。</li>
+</ul>
+<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/7.jpeg" alt="图7"></p>
+<ul>
+<li>第三层猜疑链：更可怕的是，美国担心的绝不仅仅是俄罗斯的不信任。假设俄罗斯的领导人，有超强的定力，对美国有超强的信任，对人类有超强的慈悲之心，相信美国是只炸中国的，冒着俄罗斯人全部被屠灭的风险，最后没有下令发射核弹。俄罗斯还要担心一个问题，中国在对美国发动核反制的同时，会不会顺便给俄罗斯、英国、法国丢一波核弹。反正那个时候中国已经没了，名声这东西要来干嘛呢，大家一起死好了。这不是说中国一定会这么做，只要可能这么做就很可怕了。</li>
+</ul>
+<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/8.jpeg" alt="图8"></p>
+<ul>
+<li>第四层猜疑链：如果中国遭受美国核攻击后，可能会攻击全球核大国，那么英国法国应该如何自保？假如俄罗斯被炸了，哪怕只有几个主要大城市被炸了，国力都会严重削弱，从而彻底衰退，甚至可能会灭国。那么，俄罗斯会不会直接炸平全球，来确保俄罗斯的安全，或者拉全球给俄罗斯陪葬？如果英国和法国假定俄罗斯会这么做，那么为了英国和法国的国家利益最大化。从最理智的角度，英国和法国，应该立即发射所有的核弹，拉全球陪葬。偏偏一国领导人，一般来说都是相当理智的。</li>
+</ul>
+<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/12.jpeg" alt="图9"></p>
+<ul>
+<li>第五层猜疑链：当美国对中国发射核弹后，如果美国假定中国会核反制其他核大国，然后假定其他核大国为了自身利益最大化，都会直接把核弹头丢在美国头上，那美国会怎么应对这一情况？因为这个概率不仅有，而且还很高。作为美国，如果想要让本国利益最大化，在核攻击中国的同时，就应该同时核攻击俄罗斯、英国和法国等任何有能力对美国发动核攻击的国家。这才是美国最理性的选择。</li>
+</ul>
+<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/13.jpeg" alt="图10"></p>
+<ul>
+<li>第六层猜疑链：因为俄罗斯、英国和法国，都知道美国肯定会受困在第五层猜疑链，对本国发动核攻击的概率非常之大，自己无论怎么做都无法安抚美国。毕竟此时的美国已经疯了，如果不疯是无论如何都不敢发动核战争的。英法俄估计美国肯定会估计英法俄会估计美国会炸掉英法俄。所以英法俄无论如何都无法获得安全感。既然美国肯定会受困在猜疑链，肯定会对所有核国家发动打击，那么自己肯定就是个死。那，自己索性就拉全世界一起陪葬吧，说不定最后的情况还好一点。因此，在看到美国核弹头铺天盖地射向中国的一瞬间，俄罗斯、英国和法国，就会同时启动自己国家的核武库，向全世界所有国家发射核弹。你是真心实意的想炸中国？巧了，我怕你炸的不干净，或者导弹中途变向来炸我，我也帮你炸一遍中国吧，另外把你美国也全给炸了。</li>
+</ul>
+<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/11.jpeg" alt="图11"></p>
+<p>这六层猜疑链，基本没有国家能熬过去。而且即便有个把国家的领导人熬过去了，也没用，需要所有核国家的领导人全部熬过去，拿命去相信彼此，才算破除猜疑链。上面的全是转自知乎，我觉得是个经典的博弈所以引用一下。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li>当我们不知道对方底牌时，保持沉默是一个不错的办法。</li>
+<li>从长远来看，赌博是一个注定会输的游戏。</li>
+<li>如果一开始就让人觉得你多么了不起，对你给予了种种厚望，可你随后的表现让人一次又一次的失望，结果你只会被人越来越看不起。这种反差效应值得人们借鉴。别人对你的期望值越高，越容易看出你的平庸，发现你的错误;相反，如果别人本来对你并不抱有厚望，你的成绩就回容易被人发现，甚至让人吃惊。</li>
+<li>一个人的信息量是很有限的，要通过群体拓展思路，打开局面，才能在残酷的市场竞争中站稳脚跟。</li>
+<li>“当你自估的成功概率达到%40~%70，你就该去这件事了。也许你会失败，但拖延或等待的代价往往更大。”</li>
+<li>在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。</li>
+</ul>
+<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/16.png" alt="图16"></p>
+]]></content>
+      <categories>
+        <category>阅读</category>
+      </categories>
+      <tags>
+        <tag>读书有感</tag>
       </tags>
   </entry>
   <entry>
@@ -505,327 +789,43 @@ ExecStart就是我在电脑中目标脚本，脚本中可以写一些监视开�
       </tags>
   </entry>
   <entry>
-    <title>【问题解决】vscode上go的自动补全和跳转</title>
-    <url>/2021/04/27/vscode%E4%B8%ADgo/</url>
-    <content><![CDATA[<h1 id="vscode上go自动补全问题和跳转问题"><a href="#vscode上go自动补全问题和跳转问题" class="headerlink" title="vscode上go自动补全问题和跳转问题"></a>vscode上go自动补全问题和跳转问题</h1><p><em><strong>在UOS环境下用vscode，不能跳转和自动补全。</strong></em></p>
+    <title>【问题解决】博客搭建</title>
+    <url>/2021/04/20/blog%E7%9A%84%E6%90%AD%E5%BB%BA/</url>
+    <content><![CDATA[<h1 id="blog的搭建"><a href="#blog的搭建" class="headerlink" title="blog的搭建"></a>blog的搭建</h1><p><em><strong>此博客是github，用hexo，并用使用next主题进行配置和搭建。</strong></em></p>
 <span id="more"></span>
-<h2 id="ctrl不能跳转"><a href="#ctrl不能跳转" class="headerlink" title="ctrl不能跳转"></a>ctrl不能跳转</h2><p>解决：</p>
+
+<p><strong>吐槽一下，作为一名纯种的后端搭建blog，尽管网上有说明，但是还是觉得有些许吃力。特别是我换顶部图片，简直是我一步一步试出来的</strong></p>
+<p>搭建步骤</p>
 <ul>
-<li>settings-&gt;搜索 use language server-&gt;Go: Use Language Server 改为非选中状态,就可以跳转了,这里是重点,重点.必须的要更改。</li>
-<li>设置搜索Docs Tool，把 Docs Tool改成gogetdoc或者guru试试，我的用guru就可以。</li>
+<li>注册一个github，并且新建一个名字一样的github仓库</li>
+<li>配置本地的hexo环境</li>
+<li>下载next主题</li>
+<li>直接在<code>_posts</code>下开始写博客</li>
+<li>大功告成</li>
 </ul>
-<h2 id="自动补全失效"><a href="#自动补全失效" class="headerlink" title="自动补全失效"></a>自动补全失效</h2><p>解决：<br>在升级到 1.11后， go加入了go module这一特性， 支持相对路径的导入包，这样在$GOPATH之外的地方也可以进行项目开发。</p>
-<ol>
-<li>但是vscode中很多插件只能工作在 $GOPATH下， 其中最重要的代码智能提示也是如此代码提示主要由 github.com/mdemsky/gocode 这个模块负责， 为了支持go module， 要使用新的gocode模块，项目地址为 github.com/stamblerre/gocode， 为了更新插件</li>
-</ol>
-<p>将$GOPATH/bin 中的 gocode 可执行文件删掉</p>
-<ol start="2">
-<li><p>go get -u -v github.com/stamblerre/gocode 获取包， 这里是不能安装的，有冲突</p>
-</li>
-<li><p>去到 $GOPATH/src/golang.org/x 这个目录下， 删除tools这个包，它和新版的 gocode不兼容，不要试图 git pull获取最新版，这个是被墙了的</p>
-</li>
-<li><p>从 <a href="https://github.com/golang/tools">https://github.com/golang/tools</a> 下载最新的tools包，clone很慢就直接下载 zip 文件， 解压到刚才原来的位置。</p>
-</li>
-<li><p>编译安装 stamblerre/gocode， go build -o $GOPATH/bin/gocode-gomod github.com/stamblerre/gocode或者直接到$GOPATH/src/github.com/stamblerre/gocode目录下执行go build</p>
-</li>
-</ol>
-<p>到此， Vscode智能提示就可以正常工作了</p>
+<p>注意：</p>
+<h4 id="问题1：背景图片更换"><a href="#问题1：背景图片更换" class="headerlink" title="问题1：背景图片更换"></a>问题1：背景图片更换</h4><p>解决：在<code>main.styl</code>加入<code>@import &quot;_custom/styles.styl&quot;</code>，背景图片放在<code>themes\next\source\images</code>文件夹中，本地创建<code>themes\next\source\css\ _custom\style.styl</code>文件。</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line">body &#123;</span><br><span class="line">background: url(<span class="regexp">/images/</span>图片名);</span><br><span class="line">background-repeat: no-repeat;<span class="comment">// 设定背景图片非重复填充</span></span><br><span class="line">background-attachment: fixed;<span class="comment">// 设置背景图片不随页面滚动</span></span><br><span class="line">background-position: <span class="number">50</span>% <span class="number">50</span>%;<span class="comment">// 设置背景图片位置</span></span><br><span class="line">background-size: cover<span class="comment">//</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h4 id="问题2：顶部图片更换"><a href="#问题2：顶部图片更换" class="headerlink" title="问题2：顶部图片更换"></a>问题2：顶部图片更换</h4><p>解决：在<code>headerband.styl</code>中插入下面那句话，背景图片放在站点的source/image下</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line">.headband &#123;</span><br><span class="line">  <span class="comment">//background: $headband-bg;</span></span><br><span class="line">    background: url(<span class="string">&#x27;../../image/header-bg.jpg&#x27;</span>);</span><br><span class="line">  height: 180px;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="问题3：文章置顶"><a href="#问题3：文章置顶" class="headerlink" title="问题3：文章置顶"></a>问题3：文章置顶</h4><p>解决：直接复制替换node_modules/hexo-generator-index/lib/generator.js的内容</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line"><span class="meta">&#x27;use strict&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> pagination = <span class="built_in">require</span>(<span class="string">&#x27;hexo-pagination&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = <span class="function"><span class="keyword">function</span>(<span class="params">locals</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> config = <span class="built_in">this</span>.config;</span><br><span class="line">  <span class="keyword">var</span> posts = locals.posts.sort(config.index_generator.order_by);</span><br><span class="line"></span><br><span class="line">  posts.data = posts.data.sort(<span class="function"><span class="keyword">function</span>(<span class="params">a, b</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">if</span>(a.top &amp;&amp; b.top) &#123;</span><br><span class="line">          <span class="keyword">if</span>(a.top == b.top) <span class="keyword">return</span> b.date - a.date;</span><br><span class="line">          <span class="keyword">else</span> <span class="keyword">return</span> b.top - a.top;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">if</span>(a.top &amp;&amp; !b.top) &#123;</span><br><span class="line">          <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">if</span>(!a.top &amp;&amp; b.top) &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">return</span> b.date - a.date;</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">var</span> paginationDir = config.pagination_dir || <span class="string">&#x27;page&#x27;</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> pagination(<span class="string">&#x27;&#x27;</span>, posts, &#123;</span><br><span class="line">    perPage: config.index_generator.per_page,</span><br><span class="line">    layout: [<span class="string">&#x27;index&#x27;</span>, <span class="string">&#x27;archive&#x27;</span>],</span><br><span class="line">    format: paginationDir + <span class="string">&#x27;/%d/&#x27;</span>,</span><br><span class="line">    data: &#123;</span><br><span class="line">      __index: <span class="literal">true</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>配置插件</p>
+<p>$ npm uninstall hexo-generator-index –save</p>
+<p>$ npm install hexo-generator-index-pin-top –save</p>
+<p>然后在需要置顶的文章的Front-matter中加上top: true或者top数字top: 1：</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line">title: 置顶</span><br><span class="line">date: <span class="number">2019</span>-<span class="number">09</span>-<span class="number">09</span> <span class="number">09</span>:<span class="number">09</span>:<span class="number">09</span></span><br><span class="line">top: <span class="literal">true</span></span><br><span class="line">top: <span class="number">1</span></span><br></pre></td></tr></table></figure>
+<p>按照数字大小依次往下置顶排序</p>
+<h4 id="问题4：博客提交"><a href="#问题4：博客提交" class="headerlink" title="问题4：博客提交"></a>问题4：博客提交</h4><p>解决：调用<code>blog_push.sh</code>是提交，<code>blog_localtest.sh</code>是在本地查看</p>
+<h4 id="问题5：blog文章中图片添加"><a href="#问题5：blog文章中图片添加" class="headerlink" title="问题5：blog文章中图片添加"></a>问题5：blog文章中图片添加</h4><p>解决：在<code>_post</code>目录下创建一个同名文件夹，放图片，在文章中插入<code>![图1](1.png)</code>。</p>
 ]]></content>
       <categories>
         <category>问题解决</category>
       </categories>
       <tags>
         <tag>问题解决</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>【读书有感】谈谈《王朔的短篇小说》</title>
-    <url>/2021/12/06/%E4%BA%BA%E7%94%9F%E5%8D%81%E5%A4%A7%E6%B3%95%E5%88%99/</url>
-    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p><em><strong>如果你的生活不尽如人意，试着说真话;如果你拼命地坚持某种意识或者沉迷于虚无主义，试着说真话;如果你感到脆弱、无用、绝望和困惑，试着说真话。</strong></em></p>
-<span id="more"></span>
-
-<h2 id="猴子"><a href="#猴子" class="headerlink" title="猴子"></a>猴子</h2><p>如果你想捕捉猴子，你需要找一个大的窄口瓶，瓶子口刚好可以让猴子的手正好伸进去。然后把瓶子装些石头，直到猴子无法拎起来，并且把食物放在瓶子中。猴子过来就会抓起瓶子的食物，但是因为握着食物，无法将手从瓶子抽出来，除非他选择放手，猴子肯定不会这么做，于是捕捉者就可以大摇大摆的把猴子抓起来。</p>
-<h2 id="猛犸象"><a href="#猛犸象" class="headerlink" title="猛犸象"></a>猛犸象</h2><p>人类在捕捉猛犸象的时候吃不完的部分会留下来存储今后使用，一开始时候是偶然价值但是人们逐渐发现了这一举动的价值，就会产生一个概念：虽然我现在想把所有食物都吃掉，但是如果省下来一部分可以保证下次不会挨饿，这种概念升级：我没法吃掉整条猛犸象，我也不能存储，但我可以把我的食物都分出去可以保证下次我挨饿的时候会有人照顾我。</p>
-<h2 id="摘抄"><a href="#摘抄" class="headerlink" title="摘抄"></a>摘抄</h2><ul>
-<li><p>我应该如何使自己变得更强大?不要撒说或做你都夷的事情。我应该如何使自己变得更高尚?只遵照你心灵的旨意行事。</p>
-</li>
-<li><p>找应该如何面对最辣手的问题?将它们视为通向人生之道的大门。</p>
-</li>
-<li><p>我应该如何帮助落魄的人?用正确的示范来鼓舞他，使他重新振作起来。</p>
-</li>
-<li><p>当众人皆醉我独醒时应该做什么?坚定勇敢地说出事实的真相。</p>
-</li>
-<li><p>我们意识得到自己的无助、局限和死亡，也可以感受到疼痛、自厌、羞耻和恐惧。我们知道什么会让我们痛苦，如何让我们痛苦，甚至怎样让别人痛苦</p>
-</li>
-<li><p>人们天生喜欢秩序，在秩序中人们可以做长远打算，感到稳定、平静和自信，因此我们都倾向于留在熟悉的地方，坚持已有的思想观念。</p>
-</li>
-<li><p>如果你的生活不尽如人意，试着说真话;如果你拼命地坚持某种意识或者沉迷于虚无主义，试着说真话;如果你感到脆弱、无用、绝望和困惑，试着说真话。</p>
-</li>
-</ul>
-]]></content>
-      <categories>
-        <category>阅读</category>
-      </categories>
-      <tags>
-        <tag>读书有感</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>【Linux技术分享】cgo传入二级指针</title>
-    <url>/2021/09/03/%E5%85%B3%E4%BA%8Ecgo%E7%9A%84%E4%BA%8C%E7%BA%A7%E6%8C%87%E9%92%88/</url>
-    <content><![CDATA[<h1 id="cgo实现字符串切片传入c代码中"><a href="#cgo实现字符串切片传入c代码中" class="headerlink" title="cgo实现字符串切片传入c代码中"></a>cgo实现字符串切片传入c代码中</h1><p><em><strong>go实现字符串切片传入c代码中，让c识别为二级指针，能够顺利进行字符串的偏移读写</strong></em></p>
-<span id="more"></span>
-
-<h2 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h2><p>想通过go给C代码传入一个二级指针，然后在C中进行读取，本来以为是很简单的事情，但是发现go的string和c++的不太一样，C的代码如下</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">fill_2d_array</span><span class="params">(<span class="keyword">char</span> **arr, <span class="keyword">int</span> columeSize)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">char</span> szBuf[<span class="number">4</span>][<span class="number">255</span>];</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>;i &lt; <span class="number">4</span>;i++) &#123;</span><br><span class="line">		<span class="built_in">strcpy</span>(szBuf[i], arr[i]);</span><br><span class="line">		<span class="built_in">printf</span>(<span class="string">&quot;buf:%s\n&quot;</span>, szBuf[i]);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="第一次转换的写法"><a href="#第一次转换的写法" class="headerlink" title="第一次转换的写法"></a>第一次转换的写法</h3><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">byteToC</span><span class="params">(list []<span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	dirs := <span class="built_in">make</span>([][]<span class="keyword">byte</span>, <span class="number">4</span>)</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">4</span>; i++ &#123;</span><br><span class="line">		dirs[i] = <span class="built_in">make</span>([]<span class="keyword">byte</span>, <span class="number">4</span>)</span><br><span class="line">		dirs[i] = []<span class="keyword">byte</span>(list[i])</span><br><span class="line">		fmt.Println(<span class="string">&quot;list:&quot;</span>, list[i])</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	C.fill_2d_array((**C.char)(unsafe.Pointer(&amp;dirs[<span class="number">0</span>][<span class="number">0</span>])), C.<span class="keyword">int</span>(<span class="number">5</span>))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>把切片转成byte传入C的代码中，但是在C代码输出的时候直接输出直接崩溃，如果按照字节处理<code>strcpy((char*)(arr+0*sizeof(char)*columeSize), &quot;hello&quot;);</code>类似这种处理，但是在C中输出的时候，字符串会或多或少，不能正常输出。</p>
-<p>根因分析：之前我写过go转C++的dll，导出头文件关于GoString的定义为</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> GO_CGO_GOSTRING_TYPEDEF</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span> <span class="keyword">const</span> <span class="keyword">char</span>* p; <span class="keyword">ptrdiff_t</span> n; &#125; _GoString_;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
-<p>这边我直接输出了<code>printf(&quot;%s&quot;,goString.p);</code>，然后是一串很长的字符串，详情看如何生成dll的请移步<a href="http://linkmecry.cn/2021/06/04/go%E6%90%AD%E5%BB%BAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/">利用go搭建纯文件http服务器，并生成dll</a>，这边判断gostring中的p在转换的时候没有保存’\0’，意思就是没有结束符，把后面的东西全部都输出了</p>
-<h3 id="第二次转换的写法"><a href="#第二次转换的写法" class="headerlink" title="第二次转换的写法"></a>第二次转换的写法</h3><p>问题找到了，只需要把’\0’在传入的时候传过去就OK，于是放弃转byte的转换方法，改用C.char*.</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">charToC</span><span class="params">(list []<span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	nameunits := <span class="built_in">make</span>([]*C.char, <span class="built_in">len</span>(list))</span><br><span class="line">	<span class="keyword">for</span> i, _ := <span class="keyword">range</span> list &#123;</span><br><span class="line">		nameunits[i] = C.CString(list[i])</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	C.fill_2d_array((**C.char)(unsafe.Pointer(&amp;nameunits[<span class="number">0</span>])), C.<span class="keyword">int</span>(<span class="number">4</span>))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>输出正常圆满完成任务</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">buf:1111</span><br><span class="line">buf:2222</span><br><span class="line">buf:3333</span><br><span class="line">buf:4444</span><br></pre></td></tr></table></figure>]]></content>
-      <categories>
-        <category>go</category>
-      </categories>
-      <tags>
-        <tag>Linux技术分享</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>【Linux技术分享】利用fuse实现简单文件系统</title>
-    <url>/2021/09/16/%E5%88%A9%E7%94%A8fuse%E5%AE%9E%E7%8E%B0%E7%AE%80%E5%8D%95%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/</url>
-    <content><![CDATA[<h1 id="fuse实现原理"><a href="#fuse实现原理" class="headerlink" title="fuse实现原理"></a>fuse实现原理</h1><p><em><strong><a href="http://linkmecry.cn/2021/06/07/Linux%E4%B8%8Bfuse%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/">fuse原理</a></strong></em></p>
-<span id="more"></span>
-
-<h2 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h2><p>周末抽了两个半天，看了下之前写的fuse总结，和之前用的httpdirfs项目中fuse实现,自己做了一个fuse的小程序，主要是对二级指针的深层次应用，源码路径<code>https://github.com/MecryWork/fuselocal</code>,功能如下</p>
-<ol>
-<li>实现多层次的文件和文件夹创建，重命名，删除</li>
-</ol>
-<p>待实现：</p>
-<ol>
-<li><p>文件的写入和读取（后期和服务器文件关联一下，本机的文件写入和读取有一些鸡肋）</p>
-</li>
-<li><p>合理的日志系统</p>
-</li>
-<li><p>文件创建的时间细节需要补充</p>
-</li>
-</ol>
-]]></content>
-      <categories>
-        <category>Linux利用fuse实现文件系统</category>
-      </categories>
-      <tags>
-        <tag>Linux技术分享</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>【Linux技术分享】利用thrift实现跨语言通讯</title>
-    <url>/2021/06/17/%E5%88%A9%E7%94%A8thrift%E5%AE%9E%E7%8E%B0%E8%B7%A8%E8%AF%AD%E8%A8%80%E9%80%9A%E8%AE%AF/</url>
-    <content><![CDATA[<h1 id="blog的搭建"><a href="#blog的搭建" class="headerlink" title="blog的搭建"></a>blog的搭建</h1><p><em><strong>利用thrift的跨平台机制实现进程通讯，本机是uos系统+go语言，virtualbox是windows系统+C++，在virtualbox上增加端口转发既可实现windows与uos两者不同系统不同语言的进程通讯。</strong></em></p>
-<span id="more"></span>
-
-
-<h2 id="thrift简介"><a href="#thrift简介" class="headerlink" title="thrift简介"></a>thrift简介</h2><h3 id="1-理论知识"><a href="#1-理论知识" class="headerlink" title="1. 理论知识"></a>1. 理论知识</h3><pre><code>Thrift是一种接口描述语言和二进制通讯协议，它被用来定义和创建跨语言的服务。它被当作一个远程过程调用（RPC）框架来使用，是由Facebook为“大规模跨语言服务开发”而开发的。它通过一个代码生成引擎联合了一个软件栈，来创建不同程度的、无缝的跨平台高效服务，可以使用C#、C++（基于POSIX兼容系统）、Cappuccino、Cocoa、Delphi、Erlang、Go、Haskell、Java、Node.js、OCaml、Perl、PHP、Python、Ruby和Smalltalk。虽然它以前是由Facebook开发的，但它现在是Apache软件基金会的开源项目了。该实现被描述在2007年4月的一篇由Facebook发表的技术论文中，该论文现由Apache掌管。
-</code></pre>
-<h3 id="2-注意事项"><a href="#2-注意事项" class="headerlink" title="2.注意事项"></a>2.注意事项</h3><ol>
-<li>Thrift支持的基本数据类型<ul>
-<li>byte: 有符号字节</li>
-<li>i16: 16 位有符号整数</li>
-<li>i32 : 32 位有符号整数</li>
-<li>i64: 64 位有符号整数</li>
-<li>double : 64 位浮点数</li>
-<li>string : 字符串</li>
-</ul>
-</li>
-<li>可用容器类型<ul>
-<li>list(t): 元素类型为t的有序表，容许元素重复。</li>
-<li>set(t):元素类型为t的无序表，不容许元素重复。对应c++中的set，java中的HashSet,python中的set，php中没有set，则转换为list类型。</li>
-<li>map(t,t): 键类型为t，值类型为t的kv对，键不容许重复。对用c++中的map, Java的HashMap, PHP 对应 array, Python/Ruby 的dictionary。</li>
-</ul>
-</li>
-</ol>
-<ol start="3">
-<li>Thrift 架构（图来自于网络）<br>thrift主要用于各个服务之间的RPC通信，支持跨语言。thrift是一个典型的CS结构，客户端和服务端可以使用不同的语言开发，thrift通过IDL(Interface Description Language)来关联客户端和服务端。thrift的整体架构图如下图所示<br><img src="/2021/06/17/%E5%88%A9%E7%94%A8thrift%E5%AE%9E%E7%8E%B0%E8%B7%A8%E8%AF%AD%E8%A8%80%E9%80%9A%E8%AE%AF/1.png" alt="图1"></li>
-</ol>
-<h2 id="uos利用go实现thrift的客户端和服务端"><a href="#uos利用go实现thrift的客户端和服务端" class="headerlink" title="uos利用go实现thrift的客户端和服务端"></a>uos利用go实现thrift的客户端和服务端</h2><ol>
-<li><p>goland安装thrift包</p>
-<blockquote>
-<p>go get git.apache.org/thrift.git/lib/go/thrift<br>调用命令<code>thrift -version</code>显示版本号即安装成功。</p>
-</blockquote>
-</li>
-<li><p>下载的文件加入到<code>gopath</code>中</p>
-</li>
-<li><p>编写属于接口的fuse.thrift的LDL文件，我本地要实现一个剪切板数据互发功能，所以接口为剪切板功能。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">namespace <span class="keyword">go</span> fuse</span><br><span class="line"> service WindowsToUos &#123;</span><br><span class="line">     <span class="comment">//windows 剪切板发送到uos</span></span><br><span class="line">     <span class="keyword">bool</span> sendCliboard(<span class="number">1</span>:i32 nType, <span class="number">2</span>:<span class="keyword">string</span> path);</span><br><span class="line">     void stop();</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> service UosToWindows&#123;</span><br><span class="line">     <span class="comment">//uos 剪切板发送到windows</span></span><br><span class="line">     <span class="keyword">bool</span> sendCliboard(<span class="number">1</span>:i32 nType, <span class="number">2</span>:<span class="keyword">string</span> path, <span class="number">3</span>:<span class="keyword">string</span> Vol);</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
-<p>在service windowstouos中，是windows为客户端，uos为服务端。在uostowindows中，是windows为服务端，uos为客户端。两者可以来回通讯。</p>
-</li>
-<li><p>运行命令，生成相关代码，目录下就会存在一个gen-go的一个代码文件夹</p>
-<blockquote>
-<p> thrift -r –gen go fuse.thrift</p>
-</blockquote>
-</li>
-<li><p>服务端接口初始化代码如下,<code>EchoServerImp</code>接口为空接口。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">  <span class="keyword">type</span> EchoServerImp <span class="keyword">struct</span> &#123;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="params">(s *Server)</span> <span class="title">ServerStart</span><span class="params">(port <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()</span><br><span class="line">transportFactory := thrift.NewTBufferedTransportFactory(<span class="number">10000000</span>)</span><br><span class="line">serverTransport, err := thrift.NewTServerSocket(<span class="string">&quot;127.0.0.1:9150&quot;</span>)</span><br><span class="line"><span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;Error!&quot;</span>, err)</span><br><span class="line">	os.Exit(<span class="number">1</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">handler := &amp;EchoServerImp&#123;&#125;</span><br><span class="line">processor := fuse.NewWindowsToUosProcessor(handler)</span><br><span class="line">server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)</span><br><span class="line">fmt.Println(<span class="string">&quot;thrift server in&quot;</span>, <span class="string">&quot;127.0.0.1:9150&quot;</span>)</span><br><span class="line">server.Serve()</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">     <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="comment">//	ListenClipboard()</span></span><br><span class="line">     &#125;()</span><br><span class="line">     ctxT, cancelFunc = context.WithCancel(context.Background())</span><br><span class="line">     sev := &amp;Server&#123;&#125;</span><br><span class="line">     sev.ServerStart(<span class="number">8192</span>)</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></li>
-<li><p>在服务端时，需要把LDL的函数实现，不然会报错，逻辑实现代码如下</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">  <span class="function"><span class="keyword">func</span> <span class="params">(e *EchoServerImp)</span> <span class="title">Stop</span><span class="params">(ctx context.Context)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">logger.Info(<span class="string">&quot;Revice Stop!!!&quot;</span>)</span><br><span class="line">stop()</span><br><span class="line"><span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></li>
-<li><p>客户端接口初始化代码如下。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">  <span class="keyword">type</span> Manager <span class="keyword">struct</span> &#123;</span><br><span class="line">clipboard <span class="comment">// interface com.deepin.ListenClipboard</span></span><br><span class="line">proxy.Object</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">type</span> ClipboardService <span class="keyword">struct</span> &#123;</span><br><span class="line">     loginManager   *Manager</span><br><span class="line">     sessionSigLoop *dbusutil.SignalLoop</span><br><span class="line">     service        *dbusutil.Service</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">func</span> <span class="title">ListenClipboard</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">     <span class="keyword">var</span> cb ClipboardService</span><br><span class="line">     <span class="comment">//注册剪切板dbus信号</span></span><br><span class="line">     sessionBus, err := dbus.SessionBus()</span><br><span class="line">     <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        logger.Warning(<span class="string">&quot;failed to register clipboard changed signal:&quot;</span>, err)</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">     &#125;</span><br><span class="line">     cb.loginManager = NewCBManager(sessionBus)</span><br><span class="line">     cb.sessionSigLoop = dbusutil.NewSignalLoop(sessionBus, <span class="number">10</span>)</span><br><span class="line">     cb.sessionSigLoop.Start()</span><br><span class="line">     cb.loginManager.InitSignalExt(cb.sessionSigLoop, <span class="literal">true</span>)</span><br><span class="line"></span><br><span class="line">     <span class="comment">//绑定剪切板变化dbus信号</span></span><br><span class="line">     <span class="comment">//_, err = cb.loginManager.ConnectClipboardChange()qqq+</span></span><br><span class="line">     <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        logger.Warning(<span class="string">&quot;failed to connect clipboard changed signal:&quot;</span>, err)</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></li>
-<li><p>客户端调用服务端代码如下</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">cb.loginManager.SendCliboardToWindows(clipboardType, clipboardData, vol)</span><br></pre></td></tr></table></figure></li>
-</ol>
-<h2 id="windows利用C-实现thrift的客户端和服务端"><a href="#windows利用C-实现thrift的客户端和服务端" class="headerlink" title="windows利用C++实现thrift的客户端和服务端"></a>windows利用C++实现thrift的客户端和服务端</h2><h2 id="利用virtualbox的端口转发机制，实现windows和uos互相通讯"><a href="#利用virtualbox的端口转发机制，实现windows和uos互相通讯" class="headerlink" title="利用virtualbox的端口转发机制，实现windows和uos互相通讯"></a>利用virtualbox的端口转发机制，实现windows和uos互相通讯</h2>]]></content>
-      <categories>
-        <category>go</category>
-      </categories>
-      <tags>
-        <tag>Linux技术分享</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>【读书有感】谈谈《博弈论诡计》</title>
-    <url>/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/</url>
-    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p><em><strong>在一个咖啡屋偶然接触到这本书，当时旁边我翻遍了隔壁书架，一群要么是《骆驼祥子》，《呐喊》，《酒馆》这种上世纪的书，或是再给我整点余秋雨的风风雨雨，或者是再搞点三毛的恩恩爱爱，想找两本王朔的或者余华硬一点的却翻不到，碰巧遇到了，博弈论。现在想起，可能是《博弈论》前两的囚徒困境吸引住了我吧。现在距看完这本书两个月了，许多片段还能历历在目。</strong></em></p>
-<span id="more"></span>
-
-<h2 id="对人的博弈"><a href="#对人的博弈" class="headerlink" title="对人的博弈"></a>对人的博弈</h2><p>我觉得如果是正经人对完这本书，应该对一点人情世故有所提升。我只能讲一下，我自己看完的对其浅薄的理解。每个人和其他人交往是时候都是在博弈，可能你自己没有注意到，但是和他人的博弈都是在井然有序的发生，默认的处理的方法就是经验论，参照别人处理的方式。这种方法总不能说是错的，但回头想想这可能不是最优解，每个人性格，遇到的矛盾总是不同而已的，一招鲜吃遍天，不太适用。</p>
-<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/1.jpeg" alt="图1"></p>
-<p><code>举个栗子</code>：当你公司同事想去聚餐，想把你拉过去，但是你刚进公司，对公司同事不熟悉，这时候你就要考虑拒绝他还是答应他呢，我们画个表格。</p>
-<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/15.png" alt="图15"></p>
-<p>表格上很清楚明了，如果你觉得自身的舒适度比同事好感度重要的话，合理的拒绝总是利大于弊的，如果是刚来公司，想在新公司发展的话，还是多多的参加聚餐与同事熟络。可能你觉得这个栗子比较简单，生活中的经验论完全就可以解决这个问题，但是事实上许多复杂的东西，就是需要这种逻辑，特别的当你的对手是一个相当成熟的职场上<code>高手</code>的时候，他的每一步都在深思熟虑，都在找一个最优解。历史上往往很离谱的事情，把我们代入过去一步一步分析，那个离谱结果可能就是就是最优解。</p>
-<h2 id="对社会博弈理解"><a href="#对社会博弈理解" class="headerlink" title="对社会博弈理解"></a>对社会博弈理解</h2><p>社会上博弈从博弈论创始到现在，开始是冯·诺依曼证明了博弈论的基本原理，纳什有过完善，再～～～～～～～～发展，我就不记人名了，原谅我的差记性。大概是从提出的了博弈论，然后提出了博弈论的囚徒困境的局限性，再而破解了囚徒困境，提出了合作博弈理论，大概是这个历程。</p>
-<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/2.jpeg" alt="图2"></p>
-<p><code>举个栗子</code>：知乎上有个问题说的很好，核武器的六层猜疑链核威慑里的六层猜疑链<br>什么叫核威慑？很多人理解的核威慑，就是你敢发射核弹搞死我，我就敢发射核弹搞死你。在那个曾经只有美苏拥有核武器的年代，核威慑确实是这样的。但如今不是了。冷战末期时，美国拥有核弹头31255枚，苏联那边也差不多，每年的维护保养费用都是一个天文数字。那个年代，美苏两国确实是奔着直接搞死对面的心态去的，而且要有能搞死对面很多遍的能力才放心。1991年，美苏两国达成协议，削减各自的核武器，直接把人类接近80%的核武器化为乌有。但即便如此，美苏两国依然各自拥有近7000枚核武器，依然可以把对方搞死很多遍。目前全人类总共有15000多枚核弹头，基本都在美国和俄罗斯那里。而中国的核武器一直数量很少，只有美苏两国的零头，大概几百枚的样子。如此之少的核武器，怎么和美俄抗衡？</p>
-<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/3.jpeg" alt="图3"></p>
-<p>以前的中国穷，造不起，甚至维护不起核武器，这可以理解。但今天的中国不穷了啊，为什么不造几万枚核武器撑场面？因为完全没有必几百枚核武器，已经够用了。够用的原因，不是因为几百枚核武器真的够用，而是因为美国和俄罗斯的核武器够用。美国和俄罗斯的核武器，就是中国的核武器。核武器+洲际导弹的组合，让核威慑产生了极其复杂的变化。如果美国决定拿出3000枚核武器，先发制人，在中国没有反应过来之前就对中国进行地毯式核轰炸，把中国从地球上彻底的抹去。</p>
-<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/4.jpeg" alt="图4"></p>
-<p>那美国担心的是中国的核反制么？确实会担心，因为美国的反导系统不可能拦截中国发射的所有核武器，肯定有不少核弹头直接落在美国的大城市里。但这并不是美国最害怕的事情。美国最害怕的，是引发全球所有核国家的猜疑。首先，发动核攻击之前是要绝对保密的，绝对不可能对世界宣布的，更不可能挨个和盟友甚至敌国进行解释。这道理很好理解。假设你和对手都有枪，互相指着对手的头，谁都不敢开枪，这个时候如果对手告诉你，他准备开枪了，请问你会怎么做？</p>
-<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/5.jpeg" alt="图5"></p>
-<p>如果核攻击真的发动，那一定是毫无征兆的。<br>假如美国3000枚核弹头铺天盖地的向亚洲飞过来，在洲际导弹飞行的这十几分钟里，各核国家会想很多很多事情。</p>
-<ul>
-<li>第一层猜疑链：比如说俄罗斯，他首先会想一件事，这么多导弹到底是来炸谁的，是炸中国？还是炸俄罗斯？根据雷达测定，目前的飞行轨迹全部指向中国，看起来好像是炸中国的。但洲际导弹都是可以变轨的，这些弹头会不会在落地前分出一半，突然变轨来炸俄罗斯？等它变轨后，俄罗斯只有三分钟时间了，压根都没时间反应。如果等俄罗斯被炸了再反制，是不是太晚了？要不要提前发射核武器，先把美国给炸了，以防万一。这个问题，不仅俄罗斯会想，英国和法国也会想。</li>
-</ul>
-<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/6.jpeg" alt="图6"></p>
-<ul>
-<li>第二层猜疑链：除了害怕洲际导弹突然变轨之外，俄罗斯还会想一个问题。美国哪来的胆子突然炸中国的，他炸中国的目的是什么，他为什么敢炸中国。如果美国冒着本国被核弹攻击的风险，对中国发动核袭击，那为什么不顺便把俄罗斯一起给炸了，反正承担的风险是差不多的。所以，俄罗斯人会预估美国肯定会对俄罗斯发动核攻击。不管第一波核导弹是炸中国还是炸俄罗斯的，最后都一定会炸俄罗斯。既然如此，那俄罗斯索性就先动手吧。同样，这个问题，不仅俄罗斯会想，英国和法国也会想。</li>
-</ul>
-<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/7.jpeg" alt="图7"></p>
-<ul>
-<li>第三层猜疑链：更可怕的是，美国担心的绝不仅仅是俄罗斯的不信任。假设俄罗斯的领导人，有超强的定力，对美国有超强的信任，对人类有超强的慈悲之心，相信美国是只炸中国的，冒着俄罗斯人全部被屠灭的风险，最后没有下令发射核弹。俄罗斯还要担心一个问题，中国在对美国发动核反制的同时，会不会顺便给俄罗斯、英国、法国丢一波核弹。反正那个时候中国已经没了，名声这东西要来干嘛呢，大家一起死好了。这不是说中国一定会这么做，只要可能这么做就很可怕了。</li>
-</ul>
-<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/8.jpeg" alt="图8"></p>
-<ul>
-<li>第四层猜疑链：如果中国遭受美国核攻击后，可能会攻击全球核大国，那么英国法国应该如何自保？假如俄罗斯被炸了，哪怕只有几个主要大城市被炸了，国力都会严重削弱，从而彻底衰退，甚至可能会灭国。那么，俄罗斯会不会直接炸平全球，来确保俄罗斯的安全，或者拉全球给俄罗斯陪葬？如果英国和法国假定俄罗斯会这么做，那么为了英国和法国的国家利益最大化。从最理智的角度，英国和法国，应该立即发射所有的核弹，拉全球陪葬。偏偏一国领导人，一般来说都是相当理智的。</li>
-</ul>
-<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/12.jpeg" alt="图9"></p>
-<ul>
-<li>第五层猜疑链：当美国对中国发射核弹后，如果美国假定中国会核反制其他核大国，然后假定其他核大国为了自身利益最大化，都会直接把核弹头丢在美国头上，那美国会怎么应对这一情况？因为这个概率不仅有，而且还很高。作为美国，如果想要让本国利益最大化，在核攻击中国的同时，就应该同时核攻击俄罗斯、英国和法国等任何有能力对美国发动核攻击的国家。这才是美国最理性的选择。</li>
-</ul>
-<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/13.jpeg" alt="图10"></p>
-<ul>
-<li>第六层猜疑链：因为俄罗斯、英国和法国，都知道美国肯定会受困在第五层猜疑链，对本国发动核攻击的概率非常之大，自己无论怎么做都无法安抚美国。毕竟此时的美国已经疯了，如果不疯是无论如何都不敢发动核战争的。英法俄估计美国肯定会估计英法俄会估计美国会炸掉英法俄。所以英法俄无论如何都无法获得安全感。既然美国肯定会受困在猜疑链，肯定会对所有核国家发动打击，那么自己肯定就是个死。那，自己索性就拉全世界一起陪葬吧，说不定最后的情况还好一点。因此，在看到美国核弹头铺天盖地射向中国的一瞬间，俄罗斯、英国和法国，就会同时启动自己国家的核武库，向全世界所有国家发射核弹。你是真心实意的想炸中国？巧了，我怕你炸的不干净，或者导弹中途变向来炸我，我也帮你炸一遍中国吧，另外把你美国也全给炸了。</li>
-</ul>
-<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/11.jpeg" alt="图11"></p>
-<p>这六层猜疑链，基本没有国家能熬过去。而且即便有个把国家的领导人熬过去了，也没用，需要所有核国家的领导人全部熬过去，拿命去相信彼此，才算破除猜疑链。上面的全是转自知乎，我觉得是个经典的博弈所以引用一下。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
-<li>当我们不知道对方底牌时，保持沉默是一个不错的办法。</li>
-<li>从长远来看，赌博是一个注定会输的游戏。</li>
-<li>如果一开始就让人觉得你多么了不起，对你给予了种种厚望，可你随后的表现让人一次又一次的失望，结果你只会被人越来越看不起。这种反差效应值得人们借鉴。别人对你的期望值越高，越容易看出你的平庸，发现你的错误;相反，如果别人本来对你并不抱有厚望，你的成绩就回容易被人发现，甚至让人吃惊。</li>
-<li>一个人的信息量是很有限的，要通过群体拓展思路，打开局面，才能在残酷的市场竞争中站稳脚跟。</li>
-<li>“当你自估的成功概率达到%40~%70，你就该去这件事了。也许你会失败，但拖延或等待的代价往往更大。”</li>
-<li>在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。</li>
-</ul>
-<p><img src="/2021/04/27/%E5%8D%9A%E5%BC%88%E8%AE%BA/16.png" alt="图16"></p>
-]]></content>
-      <categories>
-        <category>阅读</category>
-      </categories>
-      <tags>
-        <tag>读书有感</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>【读书有感】谈谈《王朔的短篇小说》</title>
-    <url>/2021/08/01/%E7%8E%8B%E6%9C%94%E7%9A%84%E7%9F%AD%E7%AF%87/</url>
-    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p><em><strong>打败你自己的只有你自己，其他人只能使你强大</strong></em></p>
-<span id="more"></span>
-
-<p>在我18年时特别迷姜文的电影和他的采访，电影是期期不落，采访的没被封的基本上都看过了，在姜文的侧面熏陶下间接的知道了王朔这个人，知道他也是一名《顽主》。从此便记下了想闲下来找他的几篇小说瞅瞅，不想一拖就是两年，说实话还是挺讽刺的上学的时候没时间看上班了为了生活还，为了充实所谓的精神世界对他的小说狂买了一通，没想到竟爱不释手。看完之后，真没想这本竟是90年代的小说，大为通透。其中大部分的小说都拍成了电影，没拍的说明不能拍或者是现在不让放了。只能引用他自己采访的一句话，<strong>我对写作是有天赋的，是生来就会不需要灵感</strong></p>
-<h3 id="动物凶猛"><a href="#动物凶猛" class="headerlink" title="动物凶猛"></a>动物凶猛</h3><p>动物凶猛是被姜文改编为<code>阳光灿烂下的日子</code>，我是先看的电影再读的小说，所以在读这个时候是一边回忆我看电影的角色剧情，一边代入进小说，想<code>米兰</code>是<code>宁静</code>那样的丰满吗到底（笑），年轻的时候总是对异性抱有幻想，到底<code>马小军</code>和<code>米兰</code>发生了这么多故事么？还是都是臆想？我倒是觉得马小军自己一半臆想一半真事，他自己都说不清到底发生了什么，我觉得他对米兰的爱慕是真的，对自己的胆怯也是真的，他哪有这个胆子拿着刀去捅<code>刘忆苦</code>,只不过是在自己16，7岁认识了想<code>米兰</code>这样的性感的人儿，自己发生的幻想，对年轻女生的青少年爱情的憧憬。</p>
-<h3 id="顽主"><a href="#顽主" class="headerlink" title="顽主"></a>顽主</h3><p>一看开头我就想起来了葛优的翻拍，还不止翻拍一次10年后还整了一个私人定制，不过我还是觉得第一次拍的顽主是最好的，那个经典的3T公司，为人排忧解难，刚改革开放新一代年轻人不知道干什么，在现有的生活中挣扎想混的有意义，却又不想干正事（笑），搁现在你不得为生活拼搏。3T公司是给小人物一个大人物的梦，可是之后呢，小人物还是得为自己的阶级而奋斗，所有表象,皆为虚妄，只不过是还是常常要做梦，让自己充实，如果不做梦岂不是当现实的努力，生活这么苦，跟个熟透的苦瓜一样，又苦又老，有时候还是得做做梦安慰安慰自己。</p>
-<h3 id="过把瘾就死"><a href="#过把瘾就死" class="headerlink" title="过把瘾就死"></a>过把瘾就死</h3><p>杜梅想要一轰轰烈烈的爱情，想作着来，方言不明白，我也不明白，所以我不理解也不评价，只能说文字很有张力，杜梅很绝望</p>
-<h3 id="一半是火焰一半是海水"><a href="#一半是火焰一半是海水" class="headerlink" title="一半是火焰一半是海水"></a>一半是火焰一半是海水</h3><p>简单的讲这个就是一个玩仙人跳的渣男，骗炮一个清纯的大学生，大学生对他不离不弃直到自杀，渣男被抓进监狱然后出狱之后幡然醒悟的故事，俗味到掉牙的老套故事。王朔在描述绝望的时候是令人窒息的，很容易把自己带入，俗套的故事不俗套的文字描述，只能说是值得一看。</p>
-<h3 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h3><p>他的短篇小说太多了，我一买就买了三本合集，之后的有时间再写吧</p>
-<ul>
-<li>不要把心爱的东西放在身边,除非有一天你有能力保护它。——王朔《动物凶猛》</li>
-<li>人都是顽固不化和自以为是的,相安无事的唯一办法就是欺骗。——王朔《动物凶猛》</li>
-<li>越聊我们越觉得我们相识纯属偶然，有太多的因素可以使我们失之交臂。纯粹一念之差，邂逅了，认识了，关系进一步发展了。在此之前，我们能活到与对方相识都是侥幸。疾病、车祸以及种种意外始终威胁、伴随着我们，还有那些危险的人们。——王朔《过把瘾就死》</li>
-<li>我可不喜欢什么事都清楚地知道结局，有条不紊地逐次达标，那也太乏味了。多一分远见，就少一分刺激。如果我知道下一步，每一步会碰到什么，产生什么后果，我立刻就没兴趣活了。——王朔《一半是火焰一半是海水》</li>
-</ul>
-]]></content>
-      <categories>
-        <category>阅读</category>
-      </categories>
-      <tags>
-        <tag>读书有感</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>【问题解决】解决UOS部分问题</title>
-    <url>/2021/05/19/%E8%A7%A3%E5%86%B3UOS%E9%83%A8%E5%88%86%E9%97%AE%E9%A2%98/</url>
-    <content><![CDATA[<h1 id="解决UOS部分问题"><a href="#解决UOS部分问题" class="headerlink" title="解决UOS部分问题"></a>解决UOS部分问题</h1><ul>
-<li>修改配置文件，实现UOS文管不显示已挂载磁盘。</li>
-<li>解决扩展屏时,dock栏来回跳转</li>
-</ul>
-<span id="more"></span>
-<h2 id="1-UOS挂载磁盘不显示"><a href="#1-UOS挂载磁盘不显示" class="headerlink" title="1. UOS挂载磁盘不显示"></a>1. UOS挂载磁盘不显示</h2><p>问题描述：</p>
-<p>多个磁盘在文管显示，其实都是零碎的挂载没什么用，现在要想开机把他隐藏。<br><img src="/2021/05/19/%E8%A7%A3%E5%86%B3UOS%E9%83%A8%E5%88%86%E9%97%AE%E9%A2%98/1.png" alt="图1"></p>
-<p>解决方案1：</p>
-<ul>
-<li><p>可以在/lib/udev/rules.d/80-udisks2.rules 里面加入<code>ENV&#123;ID_fS_TYPE&#125;==&quot;squashfs&quot; ENV&#123;UDISKS_IGNORE&#125;=&quot;1&quot;</code></p>
-<p><img src="/2021/05/19/%E8%A7%A3%E5%86%B3UOS%E9%83%A8%E5%88%86%E9%97%AE%E9%A2%98/2.png" alt="图2"></p>
-</li>
-<li><p>/etc/udev/rules.d下面如果有80-udisks2.rules这个文件，刚刚的修改没有意义，大家把这个文件改个名字即可：/etc/udev/rules.d/80-udisks2-install.rules。这是老版本bug</p>
-<p><img src="/2021/05/19/%E8%A7%A3%E5%86%B3UOS%E9%83%A8%E5%88%86%E9%97%AE%E9%A2%98/3.png" alt="图3"></p>
-</li>
-</ul>
-<p>解决方案2：</p>
-<ul>
-<li>我遇见的是fusemount挂载，想在文管隐藏，当我挂载到<code>/tmp</code>目录下任何一个文件夹下文管就不显示了。</li>
-</ul>
-<p><img src="/2021/05/19/%E8%A7%A3%E5%86%B3UOS%E9%83%A8%E5%88%86%E9%97%AE%E9%A2%98/4.png" alt="图4"></p>
-<h2 id="2-扩展屏幕dock来回跳转"><a href="#2-扩展屏幕dock来回跳转" class="headerlink" title="2. 扩展屏幕dock来回跳转"></a>2. 扩展屏幕dock来回跳转</h2><p>解决方案:</p>
-<blockquote>
-<p>gsettings set com.deepin.dde.dock.mainwindow only-show-primary true</p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>问题解决</category>
-      </categories>
-      <tags>
-        <tag>问题解决</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>【Linux技术分享】利用C++实现链表</title>
-    <url>/2021/09/03/%E9%93%BE%E8%A1%A8%E5%9F%BA%E7%A1%80%E7%90%86%E8%A7%A3/</url>
-    <content><![CDATA[<h1 id="利用C-实现链表基础代码"><a href="#利用C-实现链表基础代码" class="headerlink" title="利用C++实现链表基础代码"></a>利用C++实现链表基础代码</h1><p><em><strong>利用C++实现链表和CString<code>https://github.com/MecryWork/listapp</code>。</strong></em></p>
-<span id="more"></span>
-<h2 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h2><ol>
-<li>实现增删改查插入</li>
-<li>CString实现深拷贝</li>
-</ol>
-]]></content>
-      <categories>
-        <category>C++</category>
-      </categories>
-      <tags>
-        <tag>Linux技术分享</tag>
       </tags>
   </entry>
 </search>
