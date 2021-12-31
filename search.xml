@@ -1,6 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【Linux技术分享】X11学习（一）实现光标系统级别转圈</title>
+    <url>/2021/12/31/X11%E5%AD%A6%E4%B9%A0%EF%BC%88%E4%BA%8C%EF%BC%89%E5%AE%9E%E7%8E%B0%E5%85%89%E6%A0%87%E7%B3%BB%E7%BB%9F%E7%BA%A7%E5%88%AB%E8%BD%AC%E5%9C%88/</url>
+    <content><![CDATA[<h1 id="X11基础学习（一）实现光标系统级别转圈"><a href="#X11基础学习（一）实现光标系统级别转圈" class="headerlink" title="X11基础学习（一）实现光标系统级别转圈"></a>X11基础学习（一）实现光标系统级别转圈</h1><p><em><strong>本文学习X11设置系统的光标，使其全局状态为<code>等待</code>，参考开源项目<a href="https://github.com/linuxdeepin/startdde/tree/b2fe38552c48dd1086639b55b1fcd62c0fc7e2ca/iowait">linuxdeepin/startdde</a>，中IO读写设置光标逻辑。代码已归纳至我的<a href="https://github.com/MecryWork/x11Cursor">x11Cursor</a>可以使用cmake直接编译使用</strong></em></p>
+<span id="more"></span>
+
+<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><ol>
+<li><p>X11是什么</p>
+<p> X提供了GUI一个在unix系统下基本框架，可以绘图，移动窗口，显示窗口，与鼠标键盘一系列的交互。当前X已经更新到第11版所以简称为X11协议。与其类似的可以参考Wayland</p>
+</li>
+</ol>
+<h2 id="局部设置鼠标为转圈状态"><a href="#局部设置鼠标为转圈状态" class="headerlink" title="局部设置鼠标为转圈状态"></a>局部设置鼠标为转圈状态</h2><ol>
+<li><p>setOverrideCursor</p>
+<p> 在QT实现窗口上，进行全局鼠标光标加载利用<code>QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));</code>然后在使用<code>QApplication::restoreOverrideCursor();</code>对光标进行释放</p>
+<h2 id="全局设置鼠标为转圈状态"><a href="#全局设置鼠标为转圈状态" class="headerlink" title="全局设置鼠标为转圈状态"></a>全局设置鼠标为转圈状态</h2></li>
+<li><p>XcursorImagesLoadCursor</p>
+<p> 在linux系统上观察，单一进程僵死或者无响应并不会导致光标转圈，当系统的CPU飙升时才会导致鼠标全局转圈。查看deepin的startdde中iowait代码发现存在时时监视CPU状态线程，当线程飙升时会调用<code>XcursorImagesLoadCursor + XDefineCursor + XFixesChangeCursorByName</code>函数设置光标，将光标样式设置为转圈样式就能实现</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">    * @brief 改变当前光标样式</span></span><br><span class="line"><span class="comment">    * @param theme &#123;const char *&#125; 选择光标主题</span></span><br><span class="line"><span class="comment">    * @param src &#123;const char *&#125; 目标样式</span></span><br><span class="line"><span class="comment"> * @param dst &#123;const char *&#125; 待修改样式</span></span><br><span class="line"><span class="comment"> * @param dst &#123;int&#125; 光标大小</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">xc_change_cursor_by_name</span><span class="params">(Display *dpy, <span class="keyword">const</span> <span class="keyword">char</span> *theme,<span class="keyword">const</span> <span class="keyword">char</span> *src, <span class="keyword">const</span> <span class="keyword">char</span>* dst, <span class="keyword">int</span> size)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (size == <span class="number">-1</span>) &#123;</span><br><span class="line">		size = XcursorGetDefaultSize(dpy);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// load cursor images</span></span><br><span class="line">	XcursorImages *dst_images = xc_load_images(theme, dst, size);<span class="comment">//①</span></span><br><span class="line">	<span class="keyword">if</span> (!dst_images) &#123;</span><br><span class="line">		XcursorImagesDestroy(dst_images);</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;Failed to load cursor images: %s/%s\n&quot;</span>, src, dst);</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	Cursor dst_cursor = XcursorImagesLoadCursor(dpy, dst_images);</span><br><span class="line"></span><br><span class="line">	Window root = XDefaultRootWindow(dpy);</span><br><span class="line">	XUndefineCursor(dpy, root);</span><br><span class="line">	XDefineCursor(dpy, root, dst_cursor);</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">&quot;Will change cursor: %s --&gt; %lu(%s)\n&quot;</span>, src, dst_cursor, dst);</span><br><span class="line">	XFixesChangeCursorByName(dpy, dst_cursor, src);<span class="comment">//更改光标样式</span></span><br><span class="line"></span><br><span class="line">	XcursorImagesDestroy(dst_images);</span><br><span class="line">	XFreeCursor(dpy, dst_cursor);</span><br><span class="line">	<span class="keyword">return</span> ;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p> ①： Xcursor (mostly) follows the freedesktop.org spec for theming icons. The default search path it uses is ~/.local/share/icons, ~/.icons, /usr/share/icons, /usr/share/pixmaps. Within each of these directories, it searches for a directory using the theme name. Within the theme directory, it looks for cursor files in the ‘cursors’ subdirectory. It uses the first cursor file found along the path.<br> If necessary, Xcursor also looks for a “index.theme” file in each theme directory to find inherited themes and searches along the path for those themes as well.</p>
+<p> If no theme is set, or if no cursor is found for the specified theme, Xcursor checks the “default” theme.</p>
+<p> 上述为官方对them介绍，简而言之就是当你参数传入时他会从<code>~/.local/share/icons, ~/.icons, /usr/share/icons, /usr/share/pixmaps.</code>路径查找目标主题然后加载光标，如果主题不存在的设置为<code>default</code></p>
+<h2 id="隐藏光标"><a href="#隐藏光标" class="headerlink" title="隐藏光标"></a>隐藏光标</h2></li>
+<li><p>XFixesHideCursor</p>
+<p> 隐藏光标原理是将光标设置为<code>x11 null cursor</code>,设置光标方法和上面一样，当不需要隐藏时就设置<code>x11 left_ptr cursor</code>进行还原。如下为创建光标为NULL</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">window = DefaultRootWindow(display);</span><br><span class="line">Cursor invisibleCursor;</span><br><span class="line">Pixmap bitmap;</span><br><span class="line">XColor black;</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">char</span> data[] = &#123; <span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span> &#125;;</span><br><span class="line">black.red = black.green = black.blue = <span class="number">0</span>;</span><br><span class="line">bitmap = XCreateBitmapFromData(display, window, data, <span class="number">8</span>, <span class="number">8</span>);</span><br><span class="line">invisibleCursor = XCreatePixmapCursor(display, bitmap, bitmap, &amp;black, &amp;black, <span class="number">0</span>, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+
+<p> 如果不想用上述方法对光标进行设置，可以用<code>libxfixes</code>库进行光标隐藏和显示</p>
+ <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">void XFixesHideCursor (Display *dpy, Window win);</span><br><span class="line">void XFixesShowCursor (Display *dpy, Window win);</span><br></pre></td></tr></table></figure></li>
+</ol>
+]]></content>
+      <categories>
+        <category>X11学习</category>
+      </categories>
+      <tags>
+        <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【读书有感】摘要《人生十大法则》</title>
     <url>/2021/12/06/%E4%BA%BA%E7%94%9F%E5%8D%81%E5%A4%A7%E6%B3%95%E5%88%99/</url>
     <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p><em><strong>如果你的生活不尽如人意，试着说真话;如果你拼命地坚持某种意识或者沉迷于虚无主义，试着说真话;如果你感到脆弱、无用、绝望和困惑，试着说真话。</strong></em></p>
@@ -34,7 +72,7 @@
   </entry>
   <entry>
     <title>【Linux技术分享】X11学习（一）</title>
-    <url>/2021/10/26/X11%E5%AD%A6%E4%B9%A0%EF%BC%88%E4%B8%80%EF%BC%89/</url>
+    <url>/2021/10/26/X11%E5%AD%A6%E4%B9%A0%EF%BC%88%E4%B8%80%EF%BC%89%E5%9F%BA%E6%9C%AC%E7%AA%97%E5%8F%A3%E7%9A%84%E5%BB%BA%E7%AB%8B/</url>
     <content><![CDATA[<h1 id="X11基础学习（一）"><a href="#X11基础学习（一）" class="headerlink" title="X11基础学习（一）"></a>X11基础学习（一）</h1><p><em><strong>基本窗口创建。官方文档链接<a href="http://mech.math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html">http://mech.math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html</a>.</strong></em></p>
 <span id="more"></span>
 
