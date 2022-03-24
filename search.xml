@@ -3,7 +3,7 @@
   <entry>
     <title>【问题解决】UOS下搭建latex</title>
     <url>/2022/03/24/UOS%E6%90%AD%E5%BB%BAlatex/</url>
-    <content><![CDATA[<h1 id="UOS系统下搭建latex环境"><a href="#UOS系统下搭建latex环境" class="headerlink" title="UOS系统下搭建latex环境"></a>UOS系统下搭建latex环境</h1><p><em><strong>UOS系统下搭建latex并在tex文件下使用plantuml进行绘图。</strong></em></p>
+    <content><![CDATA[<h1 id="UOS系统下搭建latex环境"><a href="#UOS系统下搭建latex环境" class="headerlink" title="UOS系统下搭建latex环境"></a>UOS系统下搭建latex环境</h1><p><em><strong>UOS系统下搭建latex并使用plantuml进行绘图。</strong></em></p>
 <span id="more"></span>
 <h2 id="本文适读人群"><a href="#本文适读人群" class="headerlink" title="本文适读人群"></a>本文适读人群</h2><ol>
 <li>有linux下使用vscode开发经验</li>
