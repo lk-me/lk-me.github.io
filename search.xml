@@ -201,7 +201,7 @@
   <entry>
     <title>【Linux技术分享】X11学习（一）基本窗口的建立</title>
     <url>/2021/10/26/X11%E5%AD%A6%E4%B9%A0%EF%BC%88%E4%B8%80%EF%BC%89%E5%9F%BA%E6%9C%AC%E7%AA%97%E5%8F%A3%E7%9A%84%E5%BB%BA%E7%AB%8B/</url>
-    <content><![CDATA[<h1 id="X11学习（一）基本窗口的建立"><a href="#X11学习（一）基本窗口的建立" class="headerlink" title="X11学习（一）基本窗口的建立"></a>X11学习（一）基本窗口的建立</h1><p><em><strong>基本窗口创建。官方文档链接<a href="http://mech.math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html">http://mech.math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html</a>.</strong></em></p>
+    <content><![CDATA[<h1 id="X11学习（一）基本窗口的建立"><a href="#X11学习（一）基本窗口的建立" class="headerlink" title="X11学习（一）基本窗口的建立"></a>X11学习（一）基本窗口的建立</h1><p><em><strong><a href="http://mech.math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html">http://mech.math.msu.su/~vvb/2course/Borisenko/CppProjects/GWindow/xintro.html</a>.</strong></em></p>
 <span id="more"></span>
 
 <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><ol>
