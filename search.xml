@@ -1,6 +1,166 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【问题解决】科学上网简单搭建</title>
+    <url>/2022/07/03/%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA/</url>
+    <content><![CDATA[<h1 id="linux下科学上网简单搭建"><a href="#linux下科学上网简单搭建" class="headerlink" title="linux下科学上网简单搭建"></a>linux下科学上网简单搭建</h1><p><em><strong>linux下利用shadowsock+kcptun+udp2raw的科学上网搭建。</strong></em></p>
+<span id="more"></span>
+<h2 id="本文适读人群"><a href="#本文适读人群" class="headerlink" title="本文适读人群"></a>本文适读人群</h2><ol>
+<li>对linux服务有简单了解</li>
+<li>对科学上网稳定性有强迫，在使用shadowsock+kcptun+udp2raw会让科学上网非常稳定不容易掉包</li>
+</ol>
+<h2 id="本文能够知道什么"><a href="#本文能够知道什么" class="headerlink" title="本文能够知道什么"></a>本文能够知道什么</h2><ol>
+<li>linux下成功使用shadowsock+kcptun+udp2raw搭建科学上网</li>
+</ol>
+<h2 id="本文不知道什么"><a href="#本文不知道什么" class="headerlink" title="本文不知道什么"></a>本文不知道什么</h2><ol>
+<li>搭建工具原理</li>
+</ol>
+<h2 id="VPS购买"><a href="#VPS购买" class="headerlink" title="VPS购买"></a>VPS购买</h2><ol>
+<li>我买的是<a href="https://m.do.co/c/417ce18c978d/">digitalocean</a>价格在5刀一个月偏贵，只要是国外服务器就行。</li>
+</ol>
+<h2 id="shadowsock搭建"><a href="#shadowsock搭建" class="headerlink" title="shadowsock搭建"></a>shadowsock搭建</h2><ol>
+<li><p>下载shadowsock已发布的版本<code>https://github.com/shadowsocks/shadowsocks-rust/releases</code>，找一个最新版本下载即可，或者用命令<code> wget https://github.com/shadowsocks/shadowsocks-rust/releases/download/v1.6.10/shadowsocks-v1.6.10-release.x86_64-unknown-linux-musl.tar.xz</code>即可下载至本地;</p>
+</li>
+<li><p>本地压缩包解压后我们要使用的有两个文件，ssserver：shadowsock的服务端，sslocal：shadowsock的客户端;</p>
+<h3 id="客户端配置"><a href="#客户端配置" class="headerlink" title="客户端配置"></a>客户端配置</h3></li>
+<li><p>将<code>sslocal</code>二进制拷贝至<code>/usr/local/bin/</code>下</p>
+<blockquote>
+<p>sudo cp sslocal /usr/local/bin</p>
+</blockquote>
+</li>
+<li><p>创建配置文件</p>
+<blockquote>
+<p>sudo vim /etc/shadowsocks.json</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;server&quot;:&quot;127.0.0.1&quot;,</span><br><span class="line">    &quot;server_port&quot;:30001,</span><br><span class="line">    &quot;local_address&quot;:&quot;127.0.0.1&quot;,</span><br><span class="line">    &quot;local_port&quot;:9872,</span><br><span class="line">    &quot;password&quot;:&quot;rtqqer190&quot;,</span><br><span class="line">    &quot;timeout&quot;:300,</span><br><span class="line">    &quot;method&quot;:&quot;aes-256-gcm&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>创建开机启动服务</p>
+<blockquote>
+<p>sudo vim /lib/systemd/system/ss-server.service</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;shadowsocks server daemon</span><br><span class="line">After&#x3D;syslog.target network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line"># 关键就是这行，确定我们的程序文件，以及配置文件的路径</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;sslocal -c &#x2F;etc&#x2F;shadowsocks.json</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
+<li><p>启动服务并设置开机启动</p>
+<blockquote>
+<p>systemctl start ss-server.service<br>systemctl enable ss-server.service</p>
+</blockquote>
+</li>
+</ol>
+<h3 id="服务端配置"><a href="#服务端配置" class="headerlink" title="服务端配置"></a>服务端配置</h3><ol>
+<li>将<code>ssserver</code>二进制拷贝至<code>/usr/local/bin/</code>下<blockquote>
+<p>sudo cp ssserver /usr/local/bin</p>
+</blockquote>
+</li>
+<li>创建配置文件<blockquote>
+<p>sudo vim /etc/shadowsocks.json</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;server&quot;:&quot;::&quot;,</span><br><span class="line">    &quot;server_port&quot;:39201,</span><br><span class="line">    &quot;local_address&quot;: &quot;127.0.0.1&quot;,</span><br><span class="line">    &quot;local_port&quot;:1080,</span><br><span class="line">    &quot;password&quot;:&quot;rtqqer190&quot;,</span><br><span class="line">    &quot;timeout&quot;:300,</span><br><span class="line">    &quot;method&quot;:&quot;aes-256-gcm&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>创建开机启动服务<blockquote>
+<p>sudo vim /lib/systemd/system/ss-server.service</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;shadowsocks server daemon</span><br><span class="line">After&#x3D;syslog.target network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line"># 关键就是这行，确定我们的程序文件，以及配置文件的路径</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;ssserver -c &#x2F;etc&#x2F;shadowsocks.json</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
+<li>启动服务并设置开机启动<blockquote>
+<p>systemctl start ss-server.service<br>systemctl enable ss-server.service</p>
+</blockquote>
+</li>
+</ol>
+<h2 id="kcptun搭建"><a href="#kcptun搭建" class="headerlink" title="kcptun搭建"></a>kcptun搭建</h2><ol>
+<li><p>下载kcptun已发布的版本<code>https://github.com/xtaci/kcptun/releases</code>，找一个最新版本下载即可，或者用命令<code>wget https://github.com/xtaci/kcptun/releases/download/v20220628/kcptun-linux-amd64-20220628.tar.gz</code>即可下载至本地;</p>
+</li>
+<li><p>本地压缩包解压后我们要使用的有两个文件，server_linux_amd64：kcptun的服务端，client_linux_amd64：kcptun的客户端;</p>
+<h3 id="客户端配置-1"><a href="#客户端配置-1" class="headerlink" title="客户端配置"></a>客户端配置</h3></li>
+<li><p>将<code>client_linux_amd64</code>二进制拷贝至<code>/usr/local/bin/</code>下</p>
+<blockquote>
+<p>sudo cp client_linux_amd64 /usr/local/bin</p>
+</blockquote>
+</li>
+<li><p>创建开机启动服务</p>
+<blockquote>
+<p>sudo vim /lib/systemd/system/kcptun.service</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;kcptun-server Service</span><br><span class="line">After&#x3D;network.target</span><br><span class="line">Wants&#x3D;network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line">PIDFile&#x3D;&#x2F;var&#x2F;run&#x2F;kcp-server.pid</span><br><span class="line"># 重要的就是下面的这句话</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;client_linux_amd64 -l :30001 -r 127.0.0.1:30001 --crypt salsa20 --key &quot;lch0719&quot; --nocomp</span><br><span class="line">Restart&#x3D;on-abnormal</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
+<li><p>启动服务并设置开机启动</p>
+<blockquote>
+<p>systemctl start kcptun.service<br>systemctl enable kcptun.service</p>
+</blockquote>
+</li>
+</ol>
+<h3 id="服务端配置-1"><a href="#服务端配置-1" class="headerlink" title="服务端配置"></a>服务端配置</h3><ol>
+<li><p>将<code>server_linux_amd64</code>二进制拷贝至<code>/usr/local/bin/</code>下</p>
+<blockquote>
+<p>sudo cp server_linux_amd64 /usr/local/bin</p>
+</blockquote>
+</li>
+<li><p>创建配置文件</p>
+<blockquote>
+<p>sudo vim /etc/kcptun.json</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;listen&quot;:&quot;:8400&quot;,</span><br><span class="line">  &quot;target&quot;:&quot;127.0.0.1:39201&quot;,</span><br><span class="line">  &quot;crypt&quot;:&quot;salsa20&quot;,</span><br><span class="line">  &quot;mode&quot;:&quot;fast2&quot;,</span><br><span class="line">  &quot;key&quot;:&quot;lch0719&quot;,</span><br><span class="line">  &quot;nocomp&quot;:true,</span><br><span class="line">  &quot;keepalive&quot;:10,</span><br><span class="line">  &quot;nodelay&quot;:0,</span><br><span class="line">  &quot;mtu&quot;:1350,</span><br><span class="line">  &quot;dscp&quot;:0,</span><br><span class="line">  &quot;sockbuf&quot;:4194304,</span><br><span class="line">  &quot;nc&quot;:1,</span><br><span class="line">  &quot;resend&quot;:2,</span><br><span class="line">  &quot;parityshard&quot;:3,</span><br><span class="line">  &quot;rcvwnd&quot;:4096,</span><br><span class="line">  &quot;interval&quot;:20,</span><br><span class="line">  &quot;sndwnd&quot;:4096,</span><br><span class="line">  &quot;datashard&quot;:10</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>创建开机启动服务</p>
+<blockquote>
+<p>sudo vim /lib/systemd/system/kcptun.service</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;kcptun-server Service</span><br><span class="line">After&#x3D;network.target</span><br><span class="line">Wants&#x3D;network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line">PIDFile&#x3D;&#x2F;var&#x2F;run&#x2F;kcp-server.pid</span><br><span class="line"># 重要的就是下面的这句话</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;kcptun -c &#x2F;etc&#x2F;kcptun.json</span><br><span class="line">Restart&#x3D;on-abnormal</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
+<li><p>启动服务并设置开机启动</p>
+<blockquote>
+<p>systemctl start kcptun.service<br>systemctl enable kcptun.service</p>
+</blockquote>
+</li>
+</ol>
+<h2 id="udp2raw搭建"><a href="#udp2raw搭建" class="headerlink" title="udp2raw搭建"></a>udp2raw搭建</h2><ol>
+<li><p>下载udp2raw已发布的版本<code>https://github.com/wangyu-/udp2raw-tunnel</code>，找一个最新版本下载即可;</p>
+</li>
+<li><p>本地压缩包解压后我们要使用指定架构版本<code>udp2raw_amd64</code>，udp2raw为服务端客户端一体;</p>
+<h3 id="客户端配置-2"><a href="#客户端配置-2" class="headerlink" title="客户端配置"></a>客户端配置</h3></li>
+<li><p>将<code>udp2raw_amd64</code>二进制拷贝至<code>/usr/local/bin/</code>下</p>
+<blockquote>
+<p>sudo cp client_linux_amd64 /usr/local/bin</p>
+</blockquote>
+</li>
+<li><p>创建开机启动服务</p>
+<blockquote>
+<p>sudo vim /lib/systemd/system/udp2raw.service</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;udp2raw-server Service</span><br><span class="line">After&#x3D;network.target</span><br><span class="line">Wants&#x3D;network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line">PIDFile&#x3D;&#x2F;var&#x2F;run&#x2F;kcp-server.pid</span><br><span class="line"># 重要的就是下面的这句话</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;udp2raw_amd64 -c -l0.0.0.0:30001 -r &lt;服务器ip地址&gt;:&lt;服务器udp端口，比如我这里就是：4096&gt; -k &quot;lch0719&quot;</span><br><span class="line">Restart&#x3D;on-abnormal</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
+<li><p>启动服务并设置开机启动</p>
+<blockquote>
+<p>systemctl start udp2raw.service<br>systemctl enable udp2raw.service</p>
+</blockquote>
+</li>
+</ol>
+<h3 id="服务端配置-2"><a href="#服务端配置-2" class="headerlink" title="服务端配置"></a>服务端配置</h3><ol>
+<li><p>将<code>udp2raw_amd64</code>二进制拷贝至<code>/usr/local/bin/</code>下</p>
+<blockquote>
+<p>sudo cp server_linux_amd64 /usr/local/bin</p>
+</blockquote>
+</li>
+<li><p>创建开机启动服务</p>
+<blockquote>
+<p>sudo vim /lib/systemd/system/udp2raw.service</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;udp2raw-server Service</span><br><span class="line">After&#x3D;network.target</span><br><span class="line">Wants&#x3D;network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line">PIDFile&#x3D;&#x2F;var&#x2F;run&#x2F;kcp-server.pid</span><br><span class="line"># 重要的就是下面的这句话</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;udp2raw_amd64 -s -l0.0.0.0:4096 -r127.0.0.1:8400 -a -k &quot;lch0719&quot;</span><br><span class="line">Restart&#x3D;on-abnormal</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
+<li><p>启动服务并设置开机启动</p>
+<blockquote>
+<p>systemctl start udp2raw.service<br>systemctl enable udp2raw.service</p>
+</blockquote>
+</li>
+</ol>
+<h2 id="谷歌设置shadowsock"><a href="#谷歌设置shadowsock" class="headerlink" title="谷歌设置shadowsock"></a>谷歌设置shadowsock</h2><ol>
+<li>首先下载谷歌插件<code>SwitchyOmega</code></li>
+<li><code>auto switch</code>配置规则列表网址<code>https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt</code></li>
+<li><code>proxy</code> 配置代理协议<code>Sock5</code>，代理服务器<code>127.0.0.1</code>，代理端口为刚才shadowsock端口<code>9872</code></li>
+<li>不代理列表配置<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">127.0.0.1</span><br><span class="line">::1</span><br><span class="line">localhost</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="终端配置科学上网"><a href="#终端配置科学上网" class="headerlink" title="终端配置科学上网"></a>终端配置科学上网</h2><blockquote>
+<p>sudo apt install proxychains4<br>sudo vim /etc/proxychains4.conf<br>在[Proxylist]下增加：sock4 127.0.0.1 9872</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>问题解决</category>
+      </categories>
+      <tags>
+        <tag>问题解决</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【思考】浅谈欲望</title>
     <url>/2022/05/30/%E6%B5%85%E8%B0%88%E6%AC%B2%E6%9C%9B/</url>
     <content><![CDATA[<h1 id="浅谈个人欲望"><a href="#浅谈个人欲望" class="headerlink" title="浅谈个人欲望"></a>浅谈个人欲望</h1><p><strong>Don’t stretch your desire towards it, but wait till it reaches you. Do this with regard to children, to a wife, to careers, to riches, and you will eventually be a worthy partner of the feasts of the gods.</strong></p>
@@ -72,33 +232,47 @@
 </ol>
 <h2 id="latex的安装"><a href="#latex的安装" class="headerlink" title="latex的安装"></a>latex的安装</h2><ol>
 <li>在官网对<code>Tex Live</code>进行下载，<a href="https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz">下载链接</a>。下载之后会得到一个install-tl-unx.tar.gz，解压之后获取install-tl，直接运行输入I即可安装。不推荐使用命令安装<code>sudo apt install texlive-full</code>，debian上游的版本太老。</li>
-<li>将已安装成功的texlive路径加入至环境变量<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">export MANPATH&#x3D;$&#123;MANPATH&#125;:&#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;texmf-dist&#x2F;doc&#x2F;man</span><br><span class="line">export INFOPATH&#x3D;$&#123;INFOPATH&#125;:&#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;texmf-dist&#x2F;doc&#x2F;info</span><br><span class="line">export PATH&#x3D;$&#123;PATH&#125;:&#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux</span><br></pre></td></tr></table></figure></li>
-<li>将已安装成功的texlive的可执行程序软链放入<code>/usr/bin</code>中，如果用其他的都可放入 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo ln -s &#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux&#x2F;tex &#x2F;usr&#x2F;bin&#x2F;tex</span><br><span class="line"> sudo ln -s &#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux&#x2F;latex &#x2F;usr&#x2F;bin&#x2F;latex</span><br><span class="line">sudo ln -s &#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux&#x2F;pdftex &#x2F;usr&#x2F;bin&#x2F;pdftex</span><br><span class="line">sudo ln -s  &#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux&#x2F;lualatex &#x2F;usr&#x2F;bin&#x2F;lualatex</span><br></pre></td></tr></table></figure></li>
-<li>调用<code>tex --version</code>，有版本信息则是调用成功</li>
-</ol>
-<h2 id="latex引用包配置"><a href="#latex引用包配置" class="headerlink" title="latex引用包配置"></a>latex引用包配置</h2><ol>
-<li>查看本地包存放地址 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">kpsewhich -var-value&#x3D;TEXMFHOME</span><br></pre></td></tr></table></figure></li>
-<li>将引用包存放至本地目录，在开发tex文件时，就可以找到了</li>
-</ol>
-<h2 id="vscode的配置"><a href="#vscode的配置" class="headerlink" title="vscode的配置"></a>vscode的配置</h2><ol>
-<li>在vscode扩展商店中安装<code>LaTeX Workshop</code>和<code>LaTeX Utilities</code>扩展插件</li>
-<li>在vsocde首选项设置中搜索<code>latex-workshop.latex.tools</code>，点击setting进行设置</li>
-<li>增加以下配置,此配置只针对lualatex，当vscode进行编译时调用的就是lualatex <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">&quot;latex-workshop.latex.recipes&quot;: [</span><br><span class="line">    &#123;</span><br><span class="line">        &quot;name&quot;: &quot;lualatex-&gt;biber-&gt;lualatex&quot;,</span><br><span class="line">        &quot;tools&quot;: [</span><br><span class="line">            &quot;lualatex&quot;,</span><br><span class="line">            &quot;biber&quot;,</span><br><span class="line">            &quot;lualatex&quot;</span><br><span class="line">        ]</span><br><span class="line">    &#125;</span><br><span class="line">],</span><br><span class="line">&quot;latex-workshop.latex.tools&quot;: [</span><br><span class="line">    &#123;</span><br><span class="line">        &quot;name&quot;: &quot;lualatex&quot;,</span><br><span class="line">        &quot;command&quot;: &quot;lualatex&quot;,</span><br><span class="line">        &quot;args&quot;: [</span><br><span class="line">            &quot;-synctex&#x3D;1&quot;,</span><br><span class="line">            &quot;-shell-escape&quot;,</span><br><span class="line">            &quot;-interaction&#x3D;nonstopmode&quot;,</span><br><span class="line">            &quot;-file-line-error&quot;,</span><br><span class="line">            &quot;-pdf&quot;,</span><br><span class="line">            &quot;%DOC%&quot;</span><br><span class="line">        ]</span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">        &quot;name&quot;: &quot;biber&quot;,</span><br><span class="line">        &quot;command&quot;: &quot;biber&quot;,</span><br><span class="line">        &quot;args&quot;: [</span><br><span class="line">            &quot;%DOCFILE%&quot;</span><br><span class="line">        ]</span><br><span class="line">    &#125;</span><br><span class="line">],</span><br><span class="line">&quot;latex-workshop.view.pdf.viewer&quot;: &quot;tab&quot;,</span><br><span class="line">&quot;window.zoomLevel&quot;: -1</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<ul>
-<li>latex-workshop.latex.tools：编译工具选项，也就是我们上面在 Build LaTex project 下拉菜单看到的，只要在这里配置了 tools ，就会新增到下拉菜单里供我们选择。</li>
-<li>latex-workshop.latex.recipes：配置每一个编译的小环境。</li>
-</ul>
-</li>
-</ol>
-<h2 id="latex中使用plantuml"><a href="#latex中使用plantuml" class="headerlink" title="latex中使用plantuml"></a>latex中使用plantuml</h2><ol>
-<li>首先需要将本机的plantuml环境搭建成功，此文档不进行赘述默认已完成安装</li>
-<li>在plant<a href="https://plantuml.com/starting">官网</a>下载对应的jar扩展包</li>
-<li>调用命令下载plantuml脚本 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo apt install plantuml</span><br></pre></td></tr></table></figure></li>
-<li>编辑<code>/usr/bin/plantuml</code>脚本，将本机下载的<code>plantuml.jar</code>路径进行编辑，将<code>$JAVA</code>开头这句话进行替换 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$JAVA -Djava.net.useSystemProxies&#x3D;true $HEADLESS -jar &quot;&#x2F;usr&#x2F;share&#x2F;plantuml&#x2F;plantuml.jar&quot; &quot;$@&quot;</span><br></pre></td></tr></table></figure>
- <code>-Djava.net.useSystemProxies=true $HEADLESS</code>这句话影响plantuml颜色，不加就会是黑白的，<code>/usr/share/plantuml/plantuml.jar</code>这个路径为系统的plantuml.jar路径，将第二步下载的文件进行替换。</li>
-<li>编辑<code>/usr/share/texlive/texmf-dist/tex/lualatex/plantuml/plantuml.lua</code>脚本，将其<code>plantuml</code>路径进行替换 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">--local plantUmlJar &#x3D; os.getenv(&quot;PLANTUML_JAR&quot;)</span><br><span class="line">--if not plantUmlJar then</span><br><span class="line">    --texio.write_nl(&quot;Environment variable PLANTUML_JAR not set.&quot;)</span><br><span class="line">    --return</span><br><span class="line">--end</span><br></pre></td></tr></table></figure>
- 注释plantumljar <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">texio.write(&quot;Executing PlantUML... &quot;)</span><br><span class="line">--  local cmd &#x3D; &quot;java -jar &quot; .. plantUmlJar .. &quot; -t&quot;</span><br><span class="line">local cmd &#x3D; &quot;plantuml -charset UTF-8 -t&quot;</span><br></pre></td></tr></table></figure>
- 将plantuml加入至cmd命令中并加上<code>-charset UTF-8 -t</code>，处理中文问题。</li>
+<li>将已安装成功的texlive路径加入至环境变量<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">export MANPATH&#x3D;$&#123;MANPATH&#125;:&#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;texmf-dist&#x2F;doc&#x2F;man</span><br><span class="line">export INFOPATH&#x3D;$&#123;INFOPATH&#125;:&#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;texmf-dist&#x2F;doc&#x2F;info</span><br><span class="line">export PATH&#x3D;$&#123;PATH&#125;:&#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux</span><br></pre></td></tr></table></figure>
+~~2. 将已安装成功的texlive的可执行程序软链放入<code>/usr/bin</code>中，如果用其他的都可放入 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">    sudo ln -s &#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux&#x2F;tex &#x2F;usr&#x2F;bin&#x2F;tex</span><br><span class="line">     sudo ln -s &#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux&#x2F;latex &#x2F;usr&#x2F;bin&#x2F;latex</span><br><span class="line">    sudo ln -s &#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux&#x2F;pdftex &#x2F;usr&#x2F;bin&#x2F;pdftex</span><br><span class="line">    sudo ln -s  &#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux&#x2F;lualatex &#x2F;usr&#x2F;bin&#x2F;lualatex</span><br><span class="line">    &#96;&#96;&#96;~~</span><br><span class="line">3. 调用&#96;tex --version&#96;，有版本信息则是调用成功</span><br><span class="line"></span><br><span class="line">## latex引用包配置</span><br><span class="line">1. 查看本地包存放地址</span><br></pre></td></tr></table></figure>
+ kpsewhich -var-value=TEXMFHOME <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">2. 将引用包存放至本地目录，在开发tex文件时，就可以找到了。</span><br></pre></td></tr></table></figure>
+ 环境变量为 /home/mecry/texmf, 自定义包存放至/home/mecry/texmf/tex/latex/目录下<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">## vscode的配置</span><br><span class="line">1. 在vscode扩展商店中安装&#96;LaTeX Workshop&#96;和&#96;LaTeX Utilities&#96;扩展插件</span><br><span class="line">2. 在vsocde首选项设置中搜索&#96;latex-workshop.latex.tools&#96;，点击setting进行设置</span><br><span class="line">3. 增加以下配置,此配置只针对lualatex，当vscode进行编译时调用的就是lualatex</span><br></pre></td></tr></table></figure>
+ {<br> “latex-workshop.latex.recipes”: [<pre><code> &#123;
+     &quot;name&quot;: &quot;lualatex-&gt;biber-&gt;lualatex&quot;,
+     &quot;tools&quot;: [
+         &quot;lualatex&quot;,
+         &quot;biber&quot;,
+         &quot;lualatex&quot;
+     ]
+ &#125;
+</code></pre>
+ ],<br> “latex-workshop.latex.tools”: [<pre><code> &#123;
+     &quot;name&quot;: &quot;lualatex&quot;,
+     &quot;command&quot;: &quot;lualatex&quot;,
+     &quot;args&quot;: [
+         &quot;-synctex=1&quot;,
+         &quot;-shell-escape&quot;,
+         &quot;-interaction=nonstopmode&quot;,
+         &quot;-file-line-error&quot;,
+         &quot;-pdf&quot;,
+         &quot;%DOC%&quot;
+     ]
+ &#125;,
+ &#123;
+     &quot;name&quot;: &quot;biber&quot;,
+     &quot;command&quot;: &quot;biber&quot;,
+     &quot;args&quot;: [
+         &quot;%DOCFILE%&quot;
+     ]
+ &#125;
+</code></pre>
+ ],<br> “latex-workshop.view.pdf.viewer”: “tab”,<br> “window.zoomLevel”: -1<br> } <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">    - latex-workshop.latex.tools：编译工具选项，也就是我们上面在 Build LaTex project 下拉菜单看到的，只要在这里配置了 tools ，就会新增到下拉菜单里供我们选择。</span><br><span class="line">    - latex-workshop.latex.recipes：配置每一个编译的小环境。</span><br><span class="line"></span><br><span class="line">## latex中使用plantuml</span><br><span class="line">1. 首先需要将本机的plantuml环境搭建成功，此文档不进行赘述默认已完成安装</span><br><span class="line">2. 在plant[官网](https:&#x2F;&#x2F;plantuml.com&#x2F;starting)下载对应的jar扩展包</span><br><span class="line">3. 调用命令下载plantuml脚本</span><br></pre></td></tr></table></figure>
+ sudo apt install plantuml <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">4. 编辑&#96;&#x2F;usr&#x2F;bin&#x2F;plantuml&#96;脚本，将本机下载的&#96;plantuml.jar&#96;路径进行编辑，将&#96;$JAVA&#96;开头这句话进行替换</span><br></pre></td></tr></table></figure>
+ $JAVA -Djava.net.useSystemProxies=true $HEADLESS -jar “/usr/share/plantuml/plantuml.jar” “$@” <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">    &#96;-Djava.net.useSystemProxies&#x3D;true $HEADLESS&#96;这句话影响plantuml颜色，不加就会是黑白的，&#96;&#x2F;usr&#x2F;share&#x2F;plantuml&#x2F;plantuml.jar&#96;这个路径为系统的plantuml.jar路径，将第二步下载的文件进行替换。</span><br><span class="line">5. 编辑&#96;&#x2F;usr&#x2F;share&#x2F;texlive&#x2F;texmf-dist&#x2F;tex&#x2F;lualatex&#x2F;plantuml&#x2F;plantuml.lua&#96;脚本，将其&#96;plantuml&#96;路径进行替换</span><br></pre></td></tr></table></figure>
+ –local plantUmlJar = os.getenv(“PLANTUML_JAR”)<br> –if not plantUmlJar then<pre><code> --texio.write_nl(&quot;Environment variable PLANTUML_JAR not set.&quot;)
+ --return
+</code></pre>
+ –end <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">注释plantumljar</span><br></pre></td></tr></table></figure>
+ texio.write(“Executing PlantUML… “)<br> –  local cmd = “java -jar “ .. plantUmlJar .. “ -t”<br> local cmd = “plantuml -charset UTF-8 -t”<br> ```<br> 将plantuml加入至cmd命令中并加上<code>-charset UTF-8 -t</code>，处理中文问题。</li>
 </ol>
 ]]></content>
       <categories>

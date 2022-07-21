@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="linux下科学上网简单搭建linux下利用shadowsock+kcptun+udp2raw的科学上网搭建。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【问题解决】科学上网简单搭建">
+<meta property="og:url" content="http://example.com/2022/07/03/%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA/index.html">
+<meta property="og:site_name" content="Link Mecry">
+<meta property="og:description" content="linux下科学上网简单搭建linux下利用shadowsock+kcptun+udp2raw的科学上网搭建。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-07-03T03:05:30.000Z">
+<meta property="article:modified_time" content="2022-07-20T09:41:18.284Z">
+<meta property="article:author" content="Mecry">
+<meta property="article:tag" content="问题解决">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2022/07/03/%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【问题解决】科学上网简单搭建 | Link Mecry</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div id="id-header-inner" class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Link Mecry</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Mecry Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/03/%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Mecry">
+      <meta itemprop="description" content="在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Link Mecry">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【问题解决】科学上网简单搭建
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-03 11:05:30" itemprop="dateCreated datePublished" datetime="2022-07-03T11:05:30+08:00">2022-07-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-07-20 17:41:18" itemprop="dateModified" datetime="2022-07-20T17:41:18+08:00">2022-07-20</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/" itemprop="url" rel="index"><span itemprop="name">问题解决</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="linux下科学上网简单搭建"><a href="#linux下科学上网简单搭建" class="headerlink" title="linux下科学上网简单搭建"></a>linux下科学上网简单搭建</h1><p><em><strong>linux下利用shadowsock+kcptun+udp2raw的科学上网搭建。</strong></em></p>
+<span id="more"></span>
+<h2 id="本文适读人群"><a href="#本文适读人群" class="headerlink" title="本文适读人群"></a>本文适读人群</h2><ol>
+<li>对linux服务有简单了解</li>
+<li>对科学上网稳定性有强迫，在使用shadowsock+kcptun+udp2raw会让科学上网非常稳定不容易掉包</li>
+</ol>
+<h2 id="本文能够知道什么"><a href="#本文能够知道什么" class="headerlink" title="本文能够知道什么"></a>本文能够知道什么</h2><ol>
+<li>linux下成功使用shadowsock+kcptun+udp2raw搭建科学上网</li>
+</ol>
+<h2 id="本文不知道什么"><a href="#本文不知道什么" class="headerlink" title="本文不知道什么"></a>本文不知道什么</h2><ol>
+<li>搭建工具原理</li>
+</ol>
+<h2 id="VPS购买"><a href="#VPS购买" class="headerlink" title="VPS购买"></a>VPS购买</h2><ol>
+<li>我买的是<a target="_blank" rel="noopener" href="https://m.do.co/c/417ce18c978d/">digitalocean</a>价格在5刀一个月偏贵，只要是国外服务器就行。</li>
+</ol>
+<h2 id="shadowsock搭建"><a href="#shadowsock搭建" class="headerlink" title="shadowsock搭建"></a>shadowsock搭建</h2><ol>
+<li><p>下载shadowsock已发布的版本<code>https://github.com/shadowsocks/shadowsocks-rust/releases</code>，找一个最新版本下载即可，或者用命令<code> wget https://github.com/shadowsocks/shadowsocks-rust/releases/download/v1.6.10/shadowsocks-v1.6.10-release.x86_64-unknown-linux-musl.tar.xz</code>即可下载至本地;</p>
+</li>
+<li><p>本地压缩包解压后我们要使用的有两个文件，ssserver：shadowsock的服务端，sslocal：shadowsock的客户端;</p>
+<h3 id="客户端配置"><a href="#客户端配置" class="headerlink" title="客户端配置"></a>客户端配置</h3></li>
+<li><p>将<code>sslocal</code>二进制拷贝至<code>/usr/local/bin/</code>下</p>
+<blockquote>
+<p>sudo cp sslocal /usr/local/bin</p>
+</blockquote>
+</li>
+<li><p>创建配置文件</p>
+<blockquote>
+<p>sudo vim /etc/shadowsocks.json</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;server&quot;:&quot;127.0.0.1&quot;,</span><br><span class="line">    &quot;server_port&quot;:30001,</span><br><span class="line">    &quot;local_address&quot;:&quot;127.0.0.1&quot;,</span><br><span class="line">    &quot;local_port&quot;:9872,</span><br><span class="line">    &quot;password&quot;:&quot;rtqqer190&quot;,</span><br><span class="line">    &quot;timeout&quot;:300,</span><br><span class="line">    &quot;method&quot;:&quot;aes-256-gcm&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>创建开机启动服务</p>
+<blockquote>
+<p>sudo vim /lib/systemd/system/ss-server.service</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;shadowsocks server daemon</span><br><span class="line">After&#x3D;syslog.target network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line"># 关键就是这行，确定我们的程序文件，以及配置文件的路径</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;sslocal -c &#x2F;etc&#x2F;shadowsocks.json</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
+<li><p>启动服务并设置开机启动</p>
+<blockquote>
+<p>systemctl start ss-server.service<br>systemctl enable ss-server.service</p>
+</blockquote>
+</li>
+</ol>
+<h3 id="服务端配置"><a href="#服务端配置" class="headerlink" title="服务端配置"></a>服务端配置</h3><ol>
+<li>将<code>ssserver</code>二进制拷贝至<code>/usr/local/bin/</code>下<blockquote>
+<p>sudo cp ssserver /usr/local/bin</p>
+</blockquote>
+</li>
+<li>创建配置文件<blockquote>
+<p>sudo vim /etc/shadowsocks.json</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;server&quot;:&quot;::&quot;,</span><br><span class="line">    &quot;server_port&quot;:39201,</span><br><span class="line">    &quot;local_address&quot;: &quot;127.0.0.1&quot;,</span><br><span class="line">    &quot;local_port&quot;:1080,</span><br><span class="line">    &quot;password&quot;:&quot;rtqqer190&quot;,</span><br><span class="line">    &quot;timeout&quot;:300,</span><br><span class="line">    &quot;method&quot;:&quot;aes-256-gcm&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>创建开机启动服务<blockquote>
+<p>sudo vim /lib/systemd/system/ss-server.service</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;shadowsocks server daemon</span><br><span class="line">After&#x3D;syslog.target network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line"># 关键就是这行，确定我们的程序文件，以及配置文件的路径</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;ssserver -c &#x2F;etc&#x2F;shadowsocks.json</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
+<li>启动服务并设置开机启动<blockquote>
+<p>systemctl start ss-server.service<br>systemctl enable ss-server.service</p>
+</blockquote>
+</li>
+</ol>
+<h2 id="kcptun搭建"><a href="#kcptun搭建" class="headerlink" title="kcptun搭建"></a>kcptun搭建</h2><ol>
+<li><p>下载kcptun已发布的版本<code>https://github.com/xtaci/kcptun/releases</code>，找一个最新版本下载即可，或者用命令<code>wget https://github.com/xtaci/kcptun/releases/download/v20220628/kcptun-linux-amd64-20220628.tar.gz</code>即可下载至本地;</p>
+</li>
+<li><p>本地压缩包解压后我们要使用的有两个文件，server_linux_amd64：kcptun的服务端，client_linux_amd64：kcptun的客户端;</p>
+<h3 id="客户端配置-1"><a href="#客户端配置-1" class="headerlink" title="客户端配置"></a>客户端配置</h3></li>
+<li><p>将<code>client_linux_amd64</code>二进制拷贝至<code>/usr/local/bin/</code>下</p>
+<blockquote>
+<p>sudo cp client_linux_amd64 /usr/local/bin</p>
+</blockquote>
+</li>
+<li><p>创建开机启动服务</p>
+<blockquote>
+<p>sudo vim /lib/systemd/system/kcptun.service</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;kcptun-server Service</span><br><span class="line">After&#x3D;network.target</span><br><span class="line">Wants&#x3D;network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line">PIDFile&#x3D;&#x2F;var&#x2F;run&#x2F;kcp-server.pid</span><br><span class="line"># 重要的就是下面的这句话</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;client_linux_amd64 -l :30001 -r 127.0.0.1:30001 --crypt salsa20 --key &quot;lch0719&quot; --nocomp</span><br><span class="line">Restart&#x3D;on-abnormal</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
+<li><p>启动服务并设置开机启动</p>
+<blockquote>
+<p>systemctl start kcptun.service<br>systemctl enable kcptun.service</p>
+</blockquote>
+</li>
+</ol>
+<h3 id="服务端配置-1"><a href="#服务端配置-1" class="headerlink" title="服务端配置"></a>服务端配置</h3><ol>
+<li><p>将<code>server_linux_amd64</code>二进制拷贝至<code>/usr/local/bin/</code>下</p>
+<blockquote>
+<p>sudo cp server_linux_amd64 /usr/local/bin</p>
+</blockquote>
+</li>
+<li><p>创建配置文件</p>
+<blockquote>
+<p>sudo vim /etc/kcptun.json</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;listen&quot;:&quot;:8400&quot;,</span><br><span class="line">  &quot;target&quot;:&quot;127.0.0.1:39201&quot;,</span><br><span class="line">  &quot;crypt&quot;:&quot;salsa20&quot;,</span><br><span class="line">  &quot;mode&quot;:&quot;fast2&quot;,</span><br><span class="line">  &quot;key&quot;:&quot;lch0719&quot;,</span><br><span class="line">  &quot;nocomp&quot;:true,</span><br><span class="line">  &quot;keepalive&quot;:10,</span><br><span class="line">  &quot;nodelay&quot;:0,</span><br><span class="line">  &quot;mtu&quot;:1350,</span><br><span class="line">  &quot;dscp&quot;:0,</span><br><span class="line">  &quot;sockbuf&quot;:4194304,</span><br><span class="line">  &quot;nc&quot;:1,</span><br><span class="line">  &quot;resend&quot;:2,</span><br><span class="line">  &quot;parityshard&quot;:3,</span><br><span class="line">  &quot;rcvwnd&quot;:4096,</span><br><span class="line">  &quot;interval&quot;:20,</span><br><span class="line">  &quot;sndwnd&quot;:4096,</span><br><span class="line">  &quot;datashard&quot;:10</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>创建开机启动服务</p>
+<blockquote>
+<p>sudo vim /lib/systemd/system/kcptun.service</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;kcptun-server Service</span><br><span class="line">After&#x3D;network.target</span><br><span class="line">Wants&#x3D;network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line">PIDFile&#x3D;&#x2F;var&#x2F;run&#x2F;kcp-server.pid</span><br><span class="line"># 重要的就是下面的这句话</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;kcptun -c &#x2F;etc&#x2F;kcptun.json</span><br><span class="line">Restart&#x3D;on-abnormal</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
+<li><p>启动服务并设置开机启动</p>
+<blockquote>
+<p>systemctl start kcptun.service<br>systemctl enable kcptun.service</p>
+</blockquote>
+</li>
+</ol>
+<h2 id="udp2raw搭建"><a href="#udp2raw搭建" class="headerlink" title="udp2raw搭建"></a>udp2raw搭建</h2><ol>
+<li><p>下载udp2raw已发布的版本<code>https://github.com/wangyu-/udp2raw-tunnel</code>，找一个最新版本下载即可;</p>
+</li>
+<li><p>本地压缩包解压后我们要使用指定架构版本<code>udp2raw_amd64</code>，udp2raw为服务端客户端一体;</p>
+<h3 id="客户端配置-2"><a href="#客户端配置-2" class="headerlink" title="客户端配置"></a>客户端配置</h3></li>
+<li><p>将<code>udp2raw_amd64</code>二进制拷贝至<code>/usr/local/bin/</code>下</p>
+<blockquote>
+<p>sudo cp client_linux_amd64 /usr/local/bin</p>
+</blockquote>
+</li>
+<li><p>创建开机启动服务</p>
+<blockquote>
+<p>sudo vim /lib/systemd/system/udp2raw.service</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;udp2raw-server Service</span><br><span class="line">After&#x3D;network.target</span><br><span class="line">Wants&#x3D;network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line">PIDFile&#x3D;&#x2F;var&#x2F;run&#x2F;kcp-server.pid</span><br><span class="line"># 重要的就是下面的这句话</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;udp2raw_amd64 -c -l0.0.0.0:30001 -r &lt;服务器ip地址&gt;:&lt;服务器udp端口，比如我这里就是：4096&gt; -k &quot;lch0719&quot;</span><br><span class="line">Restart&#x3D;on-abnormal</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
+<li><p>启动服务并设置开机启动</p>
+<blockquote>
+<p>systemctl start udp2raw.service<br>systemctl enable udp2raw.service</p>
+</blockquote>
+</li>
+</ol>
+<h3 id="服务端配置-2"><a href="#服务端配置-2" class="headerlink" title="服务端配置"></a>服务端配置</h3><ol>
+<li><p>将<code>udp2raw_amd64</code>二进制拷贝至<code>/usr/local/bin/</code>下</p>
+<blockquote>
+<p>sudo cp server_linux_amd64 /usr/local/bin</p>
+</blockquote>
+</li>
+<li><p>创建开机启动服务</p>
+<blockquote>
+<p>sudo vim /lib/systemd/system/udp2raw.service</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;udp2raw-server Service</span><br><span class="line">After&#x3D;network.target</span><br><span class="line">Wants&#x3D;network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line">PIDFile&#x3D;&#x2F;var&#x2F;run&#x2F;kcp-server.pid</span><br><span class="line"># 重要的就是下面的这句话</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;udp2raw_amd64 -s -l0.0.0.0:4096 -r127.0.0.1:8400 -a -k &quot;lch0719&quot;</span><br><span class="line">Restart&#x3D;on-abnormal</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
+<li><p>启动服务并设置开机启动</p>
+<blockquote>
+<p>systemctl start udp2raw.service<br>systemctl enable udp2raw.service</p>
+</blockquote>
+</li>
+</ol>
+<h2 id="谷歌设置shadowsock"><a href="#谷歌设置shadowsock" class="headerlink" title="谷歌设置shadowsock"></a>谷歌设置shadowsock</h2><ol>
+<li>首先下载谷歌插件<code>SwitchyOmega</code></li>
+<li><code>auto switch</code>配置规则列表网址<code>https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt</code></li>
+<li><code>proxy</code> 配置代理协议<code>Sock5</code>，代理服务器<code>127.0.0.1</code>，代理端口为刚才shadowsock端口<code>9872</code></li>
+<li>不代理列表配置<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1</span><br><span class="line">::1</span><br><span class="line">localhost</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="终端配置科学上网"><a href="#终端配置科学上网" class="headerlink" title="终端配置科学上网"></a>终端配置科学上网</h2><blockquote>
+<p>sudo apt install proxychains4<br>sudo vim /etc/proxychains4.conf<br>在[Proxylist]下增加：sock4 127.0.0.1 9872</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/" rel="tag"># 问题解决</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/05/30/%E6%B5%85%E8%B0%88%E6%AC%B2%E6%9C%9B/" rel="prev" title="【思考】浅谈欲望">
+      <i class="fa fa-chevron-left"></i> 【思考】浅谈欲望
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#linux%E4%B8%8B%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA"><span class="nav-number">1.</span> <span class="nav-text">linux下科学上网简单搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E9%80%82%E8%AF%BB%E4%BA%BA%E7%BE%A4"><span class="nav-number">1.1.</span> <span class="nav-text">本文适读人群</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E8%83%BD%E5%A4%9F%E7%9F%A5%E9%81%93%E4%BB%80%E4%B9%88"><span class="nav-number">1.2.</span> <span class="nav-text">本文能够知道什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E4%B8%8D%E7%9F%A5%E9%81%93%E4%BB%80%E4%B9%88"><span class="nav-number">1.3.</span> <span class="nav-text">本文不知道什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#VPS%E8%B4%AD%E4%B9%B0"><span class="nav-number">1.4.</span> <span class="nav-text">VPS购买</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#shadowsock%E6%90%AD%E5%BB%BA"><span class="nav-number">1.5.</span> <span class="nav-text">shadowsock搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%85%8D%E7%BD%AE"><span class="nav-number">1.5.1.</span> <span class="nav-text">客户端配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%85%8D%E7%BD%AE"><span class="nav-number">1.5.2.</span> <span class="nav-text">服务端配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#kcptun%E6%90%AD%E5%BB%BA"><span class="nav-number">1.6.</span> <span class="nav-text">kcptun搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%85%8D%E7%BD%AE-1"><span class="nav-number">1.6.1.</span> <span class="nav-text">客户端配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%85%8D%E7%BD%AE-1"><span class="nav-number">1.6.2.</span> <span class="nav-text">服务端配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#udp2raw%E6%90%AD%E5%BB%BA"><span class="nav-number">1.7.</span> <span class="nav-text">udp2raw搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%85%8D%E7%BD%AE-2"><span class="nav-number">1.7.1.</span> <span class="nav-text">客户端配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%85%8D%E7%BD%AE-2"><span class="nav-number">1.7.2.</span> <span class="nav-text">服务端配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B0%B7%E6%AD%8C%E8%AE%BE%E7%BD%AEshadowsock"><span class="nav-number">1.8.</span> <span class="nav-text">谷歌设置shadowsock</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%88%E7%AB%AF%E9%85%8D%E7%BD%AE%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91"><span class="nav-number">1.9.</span> <span class="nav-text">终端配置科学上网</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mecry"
+      src="/images/%E5%A4%B4%E5%83%8F.jpg">
+  <p class="site-author-name" itemprop="name">Mecry</p>
+  <div class="site-description" itemprop="description">在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/MecryWork" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;MecryWork" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:Mecryhao@163.com" title="E-Mail → mailto:Mecryhao@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6036706114" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6036706114" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        <img src="https://static.dy208.cn/o_1dfilp8ruo521thr1hvf18ji17soa.png">
+<a href="https://beian.miit.gov.cn/"  style="color:#f72b07" target="_blank">鄂ICP备2021006857号-1</a>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mecry</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+}
+}
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>
