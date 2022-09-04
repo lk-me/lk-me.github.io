@@ -1,6 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【Linux技术分享】原子更新调研分析（一）Fedora-Silverblue初窥</title>
+    <url>/2022/09/04/%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94%E5%88%86%E6%9E%90%EF%BC%88%E4%B8%80%EF%BC%89Fedora-Silverblue%E5%88%9D%E7%AA%A5/</url>
+    <content><![CDATA[<h1 id="原子更新调研分析（一）Fedora-Silverblue初窥"><a href="#原子更新调研分析（一）Fedora-Silverblue初窥" class="headerlink" title="原子更新调研分析（一）Fedora-Silverblue初窥"></a>原子更新调研分析（一）Fedora-Silverblue初窥</h1><p><em><strong>最近很大一部分时间都在开发deepin的原子更新，在闲暇时关注下其他的os原子更新的实现，从而查漏补缺完善自身的不足，本文为Fedora-Silverblue OS自身的原子更新一个大致框架介绍。</strong></em></p>
+<span id="more"></span>
+
+<h2 id="本文适读人群"><a href="#本文适读人群" class="headerlink" title="本文适读人群"></a>本文适读人群</h2><ol>
+<li>对linux系统启动流程有基本认知</li>
+<li>有过linux系统开发基本常识，了解sh脚本</li>
+</ol>
+<h2 id="本文能够知道什么"><a href="#本文能够知道什么" class="headerlink" title="本文能够知道什么"></a>本文能够知道什么</h2><ol>
+<li>Fedora-Silverblue OS原子更新应用安装到启动基本流程介绍</li>
+</ol>
+<h2 id="本文不知道什么"><a href="#本文不知道什么" class="headerlink" title="本文不知道什么"></a>本文不知道什么</h2><ol>
+<li>rpm-ostree原理及其在os使用</li>
+<li>Fedora-Silverblue OS版本清除</li>
+</ol>
+<h2 id="前提概要"><a href="#前提概要" class="headerlink" title="前提概要"></a>前提概要</h2><ol>
+<li><p>Fedora-Silverblue OS原子更新优势是什么？<br>详细的可以看下这篇文章，里面有详细介绍其原子更新的优势以及其特点，<a href="https://www.linkedin.com/pulse/never-worry-updates-again-ostree-zincati-kelvin-yao-fan/">Never Worry about Updates Again with OSTree and Zincati</a>。这里我大致讲一下，系统在更新时若由于应用不稳定或系统基础组件不稳定导致无法启动，可以还原至更新前的节点，原子意思为本次操作为完整并不可切分，通过原子化更新可以随时切回更新前节点。</p>
+</li>
+<li><p>rpm-ostree是什么<br>ostree为本地部署仓库，类似与git,但ostree针对的是本地的文件，用户可以在本地初始化仓库并将系统文件提交至此仓库中，提交过程中ostree会对提交文件进行分析，进行增量备份从而节省空间。rpm为linux系统下软件包管理工具。rpm与ostree进行结合则可以做到对每一次应用的修改都可以将其备份。详细内容见<a href="https://coreos.github.io/rpm-ostree/">rpm-ostree</a>。</p>
+</li>
+</ol>
+<h2 id="框架介绍"><a href="#框架介绍" class="headerlink" title="框架介绍"></a>框架介绍</h2><ol>
+<li><p>系统的<code>/boot</code>目录下存有多个initrd,若两者为相同md5值则为硬链接，系统的<code>/boot</code>，<code>/var</code>目录为单独挂载<br><img src="/2022/09/04/%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94%E5%88%86%E6%9E%90%EF%BC%88%E4%B8%80%EF%BC%89Fedora-Silverblue%E5%88%9D%E7%AA%A5/1.png" alt="图1"></p>
+<ul>
+<li>/boot为启动分区，在系统备份时，会将备份的initrd存放至/boot分区中，并且备份的initrd无任何改变时为了节省空间会将其硬链接。</li>
+</ul>
+</li>
+<li><p>Fedora-Silverblue利用rpm-ostree命令将其安装至系统中，但此次安装时安装时并不会立即生效，Fedora-Silverblue将系统的根分区挂载为只读，本次安装无法将应用释放至系统根目录中。<br><img src="/2022/09/04/%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94%E5%88%86%E6%9E%90%EF%BC%88%E4%B8%80%EF%BC%89Fedora-Silverblue%E5%88%9D%E7%AA%A5/2.png" alt="图2"></p>
+</li>
+<li><p>本次系统应用安装时，会将对本次安装的所有应用进行提交，包括其依赖的文件。<br><img src="/2022/09/04/%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94%E5%88%86%E6%9E%90%EF%BC%88%E4%B8%80%EF%BC%89Fedora-Silverblue%E5%88%9D%E7%AA%A5/3.png" alt="图3"></p>
+</li>
+<li><p>linux系统通过指定目标目录组成，系统在应用安装时，会对本地系统进行硬链接组成<code>sysroot</code>文件夹，此文件夹内容为当前系统以及本次安装的应用。<br><img src="/2022/09/04/%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94%E5%88%86%E6%9E%90%EF%BC%88%E4%B8%80%EF%BC%89Fedora-Silverblue%E5%88%9D%E7%AA%A5/4.png" alt="图4"></p>
+</li>
+<li><p>通过设置<code>/boot/grub2/grubenv</code>的环境变量来修改本机<code>grub</code>等待时间，在下次系统启动时，不等待grub界面直接启动系统，从而保护系统启动的安全性。<br><img src="/2022/09/04/%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94%E5%88%86%E6%9E%90%EF%BC%88%E4%B8%80%EF%BC%89Fedora-Silverblue%E5%88%9D%E7%AA%A5/5.png" alt="图5"></p>
+</li>
+<li><p>目前我们拥有了一个新的系统目录<code>sysroot</code>，os通过<code>Dracut</code>工具，可以指定<code>sysroot</code>启动本机系统详细见官方文档<code>https://man7.org/linux/man-pages/man8/dracut.8.html</code>，在启动后/sysroot进入系统后中其中文件会被清空。</p>
+</li>
+</ol>
+<h2 id="os原子更新优劣分析"><a href="#os原子更新优劣分析" class="headerlink" title="os原子更新优劣分析"></a>os原子更新优劣分析</h2><ul>
+<li><p>优点：</p>
+<ul>
+<li>os的根只读可以保护根系统不被破坏</li>
+</ul>
+</li>
+<li><p>缺点</p>
+<ul>
+<li>用户无法对本次安装的应用直接使用，必须重启才能生效。</li>
+<li>分区的固定性，对多种分区格式支持不太友好。</li>
+</ul>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>原子更新</category>
+      </categories>
+      <tags>
+        <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【读书有感】读《哲学故事》</title>
     <url>/2022/07/31/%E8%AF%BB%E5%93%B2%E5%AD%A6%E7%9A%84%E6%95%85%E4%BA%8B/</url>
     <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p><em><strong>《哲学故事》 非常难得的一本幽默诙谐又带有科普性质的哲学书籍。</strong></em></p>
@@ -843,7 +904,7 @@
   <entry>
     <title>【Linux技术分享】利用QT的clipboard库监听和设置剪切板</title>
     <url>/2021/06/02/UOS%E5%88%A9%E7%94%A8QT%E7%9B%91%E5%90%AC%E5%92%8C%E8%AE%BE%E7%BD%AE%E5%89%AA%E5%88%87%E6%9D%BF/</url>
-    <content><![CDATA[<h1 id="利用QT的clipboard库监听和设置剪切板"><a href="#利用QT的clipboard库监听和设置剪切板" class="headerlink" title="利用QT的clipboard库监听和设置剪切板"></a>利用QT的clipboard库监听和设置剪切板</h1><p>***使用QT的Clipboard库，监听和设置uos剪切板变化。经过dbus接口，把uos的剪切板暴露出来，从而进行设置和监听</p>
+    <content><![CDATA[<h1 id="利用QT的clipboard库监听和设置剪切板"><a href="#利用QT的clipboard库监听和设置剪切板" class="headerlink" title="利用QT的clipboard库监听和设置剪切板"></a>利用QT的clipboard库监听和设置剪切板</h1><p><em><strong>使用QT的Clipboard库，监听和设置uos剪切板变化。经过dbus接口，把uos的剪切板暴露出来，从而进行设置和监听</strong></em></p>
 <span id="more"></span>
 
 <h2 id="dbus的创建"><a href="#dbus的创建" class="headerlink" title="dbus的创建"></a>dbus的创建</h2><ol>
