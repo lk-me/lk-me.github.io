@@ -28,7 +28,7 @@
 <meta property="og:description" content="UOS系统下搭建latex环境UOS系统下搭建latex并使用plantuml进行绘图。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-03-24T03:05:30.000Z">
-<meta property="article:modified_time" content="2022-07-12T05:22:22.435Z">
+<meta property="article:modified_time" content="2022-09-29T07:45:34.054Z">
 <meta property="article:author" content="Mecry">
 <meta property="article:tag" content="问题解决">
 <meta name="twitter:card" content="summary">
@@ -225,7 +225,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-07-12 13:22:22" itemprop="dateModified" datetime="2022-07-12T13:22:22+08:00">2022-07-12</time>
+                <time title="修改时间：2022-09-29 15:45:34" itemprop="dateModified" datetime="2022-09-29T15:45:34+08:00">2022-09-29</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -264,48 +264,38 @@
 <li>plantuml的搭建</li>
 </ol>
 <h2 id="latex的安装"><a href="#latex的安装" class="headerlink" title="latex的安装"></a>latex的安装</h2><ol>
-<li>在官网对<code>Tex Live</code>进行下载，<a target="_blank" rel="noopener" href="https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz">下载链接</a>。下载之后会得到一个install-tl-unx.tar.gz，解压之后获取install-tl，直接运行输入I即可安装。不推荐使用命令安装<code>sudo apt install texlive-full</code>，debian上游的版本太老。</li>
-<li>将已安装成功的texlive路径加入至环境变量<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">export MANPATH&#x3D;$&#123;MANPATH&#125;:&#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;texmf-dist&#x2F;doc&#x2F;man</span><br><span class="line">export INFOPATH&#x3D;$&#123;INFOPATH&#125;:&#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;texmf-dist&#x2F;doc&#x2F;info</span><br><span class="line">export PATH&#x3D;$&#123;PATH&#125;:&#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux</span><br></pre></td></tr></table></figure>
-~~2. 将已安装成功的texlive的可执行程序软链放入<code>/usr/bin</code>中，如果用其他的都可放入 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">    sudo ln -s &#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux&#x2F;tex &#x2F;usr&#x2F;bin&#x2F;tex</span><br><span class="line">     sudo ln -s &#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux&#x2F;latex &#x2F;usr&#x2F;bin&#x2F;latex</span><br><span class="line">    sudo ln -s &#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux&#x2F;pdftex &#x2F;usr&#x2F;bin&#x2F;pdftex</span><br><span class="line">    sudo ln -s  &#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux&#x2F;lualatex &#x2F;usr&#x2F;bin&#x2F;lualatex</span><br><span class="line">    &#96;&#96;&#96;~~</span><br><span class="line">3. 调用&#96;tex --version&#96;，有版本信息则是调用成功</span><br><span class="line"></span><br><span class="line">## latex引用包配置</span><br><span class="line">1. 查看本地包存放地址</span><br></pre></td></tr></table></figure>
- kpsewhich -var-value=TEXMFHOME <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2. 将引用包存放至本地目录，在开发tex文件时，就可以找到了。</span><br></pre></td></tr></table></figure>
- 环境变量为 /home/mecry/texmf, 自定义包存放至/home/mecry/texmf/tex/latex/目录下<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">## vscode的配置</span><br><span class="line">1. 在vscode扩展商店中安装&#96;LaTeX Workshop&#96;和&#96;LaTeX Utilities&#96;扩展插件</span><br><span class="line">2. 在vsocde首选项设置中搜索&#96;latex-workshop.latex.tools&#96;，点击setting进行设置</span><br><span class="line">3. 增加以下配置,此配置只针对lualatex，当vscode进行编译时调用的就是lualatex</span><br></pre></td></tr></table></figure>
- {<br> “latex-workshop.latex.recipes”: [<pre><code> &#123;
-     &quot;name&quot;: &quot;lualatex-&gt;biber-&gt;lualatex&quot;,
-     &quot;tools&quot;: [
-         &quot;lualatex&quot;,
-         &quot;biber&quot;,
-         &quot;lualatex&quot;
-     ]
- &#125;
-</code></pre>
- ],<br> “latex-workshop.latex.tools”: [<pre><code> &#123;
-     &quot;name&quot;: &quot;lualatex&quot;,
-     &quot;command&quot;: &quot;lualatex&quot;,
-     &quot;args&quot;: [
-         &quot;-synctex=1&quot;,
-         &quot;-shell-escape&quot;,
-         &quot;-interaction=nonstopmode&quot;,
-         &quot;-file-line-error&quot;,
-         &quot;-pdf&quot;,
-         &quot;%DOC%&quot;
-     ]
- &#125;,
- &#123;
-     &quot;name&quot;: &quot;biber&quot;,
-     &quot;command&quot;: &quot;biber&quot;,
-     &quot;args&quot;: [
-         &quot;%DOCFILE%&quot;
-     ]
- &#125;
-</code></pre>
- ],<br> “latex-workshop.view.pdf.viewer”: “tab”,<br> “window.zoomLevel”: -1<br> } <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">    - latex-workshop.latex.tools：编译工具选项，也就是我们上面在 Build LaTex project 下拉菜单看到的，只要在这里配置了 tools ，就会新增到下拉菜单里供我们选择。</span><br><span class="line">    - latex-workshop.latex.recipes：配置每一个编译的小环境。</span><br><span class="line"></span><br><span class="line">## latex中使用plantuml</span><br><span class="line">1. 首先需要将本机的plantuml环境搭建成功，此文档不进行赘述默认已完成安装</span><br><span class="line">2. 在plant[官网](https:&#x2F;&#x2F;plantuml.com&#x2F;starting)下载对应的jar扩展包</span><br><span class="line">3. 调用命令下载plantuml脚本</span><br></pre></td></tr></table></figure>
- sudo apt install plantuml <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">4. 编辑&#96;&#x2F;usr&#x2F;bin&#x2F;plantuml&#96;脚本，将本机下载的&#96;plantuml.jar&#96;路径进行编辑，将&#96;$JAVA&#96;开头这句话进行替换</span><br></pre></td></tr></table></figure>
- $JAVA -Djava.net.useSystemProxies=true $HEADLESS -jar “/usr/share/plantuml/plantuml.jar” “$@” <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">    &#96;-Djava.net.useSystemProxies&#x3D;true $HEADLESS&#96;这句话影响plantuml颜色，不加就会是黑白的，&#96;&#x2F;usr&#x2F;share&#x2F;plantuml&#x2F;plantuml.jar&#96;这个路径为系统的plantuml.jar路径，将第二步下载的文件进行替换。</span><br><span class="line">5. 编辑&#96;&#x2F;usr&#x2F;share&#x2F;texlive&#x2F;texmf-dist&#x2F;tex&#x2F;lualatex&#x2F;plantuml&#x2F;plantuml.lua&#96;脚本，将其&#96;plantuml&#96;路径进行替换</span><br></pre></td></tr></table></figure>
- –local plantUmlJar = os.getenv(“PLANTUML_JAR”)<br> –if not plantUmlJar then<pre><code> --texio.write_nl(&quot;Environment variable PLANTUML_JAR not set.&quot;)
- --return
-</code></pre>
- –end <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">注释plantumljar</span><br></pre></td></tr></table></figure>
- texio.write(“Executing PlantUML… “)<br> –  local cmd = “java -jar “ .. plantUmlJar .. “ -t”<br> local cmd = “plantuml -charset UTF-8 -t”<br> ```<br> 将plantuml加入至cmd命令中并加上<code>-charset UTF-8 -t</code>，处理中文问题。</li>
+<li><p>在官网对<code>Tex Live</code>进行下载，<a target="_blank" rel="noopener" href="https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz">下载链接</a>。下载之后会得到一个install-tl-unx.tar.gz，解压之后获取install-tl，直接运行输入I即可安装。不推荐使用命令安装<code>sudo apt install texlive-full</code>，debian上游的版本太老。</p>
+</li>
+<li><p>将已安装成功的texlive路径加入至环境变量</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">export MANPATH&#x3D;$&#123;MANPATH&#125;:&#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;texmf-dist&#x2F;doc&#x2F;man</span><br><span class="line">export INFOPATH&#x3D;$&#123;INFOPATH&#125;:&#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;texmf-dist&#x2F;doc&#x2F;info</span><br><span class="line">export PATH&#x3D;$&#123;PATH&#125;:&#x2F;usr&#x2F;local&#x2F;texlive&#x2F;2021&#x2F;bin&#x2F;x86_64-linux</span><br></pre></td></tr></table></figure>
+<p><del>2. 将已安装成功的texlive的可执行程序软链放入<code>/usr/bin</code>中，如果用其他的都可放入</del>s</p>
+</li>
+<li><p>调用<code>tex --version</code>，有版本信息则是调用成功</p>
+</li>
+</ol>
+<h2 id="latex引用包配置"><a href="#latex引用包配置" class="headerlink" title="latex引用包配置"></a>latex引用包配置</h2><ol>
+<li>查看本地包存放地址 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kpsewhich -var-value&#x3D;TEXMFHOME</span><br></pre></td></tr></table></figure></li>
+<li>将引用包存放至本地目录，在开发tex文件时，就可以找到了。<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">环境变量为 &#x2F;home&#x2F;mecry&#x2F;texmf, 自定义包存放至&#x2F;home&#x2F;mecry&#x2F;texmf&#x2F;tex&#x2F;latex&#x2F;目录下</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="vscode的配置"><a href="#vscode的配置" class="headerlink" title="vscode的配置"></a>vscode的配置</h2><ol>
+<li>在vscode扩展商店中安装<code>LaTeX Workshop</code>和<code>LaTeX Utilities</code>扩展插件</li>
+<li>在vsocde首选项设置中搜索<code>latex-workshop.latex.tools</code>，点击setting进行设置</li>
+<li>增加以下配置,此配置只针对lualatex，当vscode进行编译时调用的就是lualatex <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">&quot;latex-workshop.latex.recipes&quot;: [</span><br><span class="line">    &#123;</span><br><span class="line">        &quot;name&quot;: &quot;lualatex-&gt;biber-&gt;lualatex&quot;,</span><br><span class="line">        &quot;tools&quot;: [</span><br><span class="line">            &quot;lualatex&quot;,</span><br><span class="line">            &quot;biber&quot;,</span><br><span class="line">            &quot;lualatex&quot;</span><br><span class="line">        ]</span><br><span class="line">    &#125;</span><br><span class="line">],</span><br><span class="line">&quot;latex-workshop.latex.tools&quot;: [</span><br><span class="line">    &#123;</span><br><span class="line">        &quot;name&quot;: &quot;lualatex&quot;,</span><br><span class="line">        &quot;command&quot;: &quot;lualatex&quot;,</span><br><span class="line">        &quot;args&quot;: [</span><br><span class="line">            &quot;-synctex&#x3D;1&quot;,</span><br><span class="line">            &quot;-shell-escape&quot;,</span><br><span class="line">            &quot;-interaction&#x3D;nonstopmode&quot;,</span><br><span class="line">            &quot;-file-line-error&quot;,</span><br><span class="line">            &quot;-pdf&quot;,</span><br><span class="line">            &quot;%DOC%&quot;</span><br><span class="line">        ]</span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">        &quot;name&quot;: &quot;biber&quot;,</span><br><span class="line">        &quot;command&quot;: &quot;biber&quot;,</span><br><span class="line">        &quot;args&quot;: [</span><br><span class="line">            &quot;%DOCFILE%&quot;</span><br><span class="line">        ]</span><br><span class="line">    &#125;</span><br><span class="line">],</span><br><span class="line">&quot;latex-workshop.view.pdf.viewer&quot;: &quot;tab&quot;,</span><br><span class="line">&quot;window.zoomLevel&quot;: -1</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>latex-workshop.latex.tools：编译工具选项，也就是我们上面在 Build LaTex project 下拉菜单看到的，只要在这里配置了 tools ，就会新增到下拉菜单里供我们选择。</li>
+<li>latex-workshop.latex.recipes：配置每一个编译的小环境。</li>
+</ul>
+</li>
+</ol>
+<h2 id="latex中使用plantuml"><a href="#latex中使用plantuml" class="headerlink" title="latex中使用plantuml"></a>latex中使用plantuml</h2><ol>
+<li>首先需要将本机的plantuml环境搭建成功，此文档不进行赘述默认已完成安装</li>
+<li>在plant<a target="_blank" rel="noopener" href="https://plantuml.com/starting">官网</a>下载对应的jar扩展包</li>
+<li>调用命令下载plantuml脚本 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install plantuml</span><br></pre></td></tr></table></figure></li>
+<li>编辑<code>/usr/bin/plantuml</code>脚本，将本机下载的<code>plantuml.jar</code>路径进行编辑，将<code>$JAVA</code>开头这句话进行替换 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$JAVA -Djava.net.useSystemProxies&#x3D;true $HEADLESS -jar &quot;&#x2F;usr&#x2F;share&#x2F;plantuml&#x2F;plantuml.jar&quot; &quot;$@&quot;</span><br></pre></td></tr></table></figure>
+ <code>-Djava.net.useSystemProxies=true $HEADLESS</code>这句话影响plantuml颜色，不加就会是黑白的，<code>/usr/share/plantuml/plantuml.jar</code>这个路径为系统的plantuml.jar路径，将第二步下载的文件进行替换。</li>
+<li>编辑<code>/usr/share/texlive/texmf-dist/tex/lualatex/plantuml/plantuml.lua</code>脚本，将其<code>plantuml</code>路径进行替换 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">--local plantUmlJar &#x3D; os.getenv(&quot;PLANTUML_JAR&quot;)</span><br><span class="line">--if not plantUmlJar then</span><br><span class="line">    --texio.write_nl(&quot;Environment variable PLANTUML_JAR not set.&quot;)</span><br><span class="line">    --return</span><br><span class="line">--end</span><br></pre></td></tr></table></figure>
+ 注释plantumljar <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">texio.write(&quot;Executing PlantUML... &quot;)</span><br><span class="line">--  local cmd &#x3D; &quot;java -jar &quot; .. plantUmlJar .. &quot; -t&quot;</span><br><span class="line">local cmd &#x3D; &quot;plantuml -charset UTF-8 -t&quot;</span><br></pre></td></tr></table></figure>
+ 将plantuml加入至cmd命令中并加上<code>-charset UTF-8 -t</code>，处理中文问题。</li>
 </ol>
 
     </div>
@@ -390,7 +380,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#UOS%E7%B3%BB%E7%BB%9F%E4%B8%8B%E6%90%AD%E5%BB%BAlatex%E7%8E%AF%E5%A2%83"><span class="nav-number">1.</span> <span class="nav-text">UOS系统下搭建latex环境</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E9%80%82%E8%AF%BB%E4%BA%BA%E7%BE%A4"><span class="nav-number">1.1.</span> <span class="nav-text">本文适读人群</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E8%83%BD%E5%A4%9F%E7%9F%A5%E9%81%93%E4%BB%80%E4%B9%88"><span class="nav-number">1.2.</span> <span class="nav-text">本文能够知道什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E4%B8%8D%E7%9F%A5%E9%81%93%E4%BB%80%E4%B9%88"><span class="nav-number">1.3.</span> <span class="nav-text">本文不知道什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#latex%E7%9A%84%E5%AE%89%E8%A3%85"><span class="nav-number">1.4.</span> <span class="nav-text">latex的安装</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#UOS%E7%B3%BB%E7%BB%9F%E4%B8%8B%E6%90%AD%E5%BB%BAlatex%E7%8E%AF%E5%A2%83"><span class="nav-number">1.</span> <span class="nav-text">UOS系统下搭建latex环境</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E9%80%82%E8%AF%BB%E4%BA%BA%E7%BE%A4"><span class="nav-number">1.1.</span> <span class="nav-text">本文适读人群</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E8%83%BD%E5%A4%9F%E7%9F%A5%E9%81%93%E4%BB%80%E4%B9%88"><span class="nav-number">1.2.</span> <span class="nav-text">本文能够知道什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E4%B8%8D%E7%9F%A5%E9%81%93%E4%BB%80%E4%B9%88"><span class="nav-number">1.3.</span> <span class="nav-text">本文不知道什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#latex%E7%9A%84%E5%AE%89%E8%A3%85"><span class="nav-number">1.4.</span> <span class="nav-text">latex的安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#latex%E5%BC%95%E7%94%A8%E5%8C%85%E9%85%8D%E7%BD%AE"><span class="nav-number">1.5.</span> <span class="nav-text">latex引用包配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#vscode%E7%9A%84%E9%85%8D%E7%BD%AE"><span class="nav-number">1.6.</span> <span class="nav-text">vscode的配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#latex%E4%B8%AD%E4%BD%BF%E7%94%A8plantuml"><span class="nav-number">1.7.</span> <span class="nav-text">latex中使用plantuml</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
