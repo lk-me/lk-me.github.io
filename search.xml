@@ -1015,6 +1015,23 @@
       </tags>
   </entry>
   <entry>
+    <title>【问题解决】chatgpt使用</title>
+    <url>/2021/04/27/chatgpt/</url>
+    <content><![CDATA[<h1 id="chatgpt学习与工作上应用"><a href="#chatgpt学习与工作上应用" class="headerlink" title="chatgpt学习与工作上应用"></a>chatgpt学习与工作上应用</h1><p><em><strong>vscode下使用chatgpt加快工作效率。</strong></em></p>
+<span id="more"></span>
+
+<p>在一个领域刚入门的时候，可能一头雾水没办法精准的确定需求告诉google自己想要什么，只能够模糊搜索再慢慢确认自己的需求，但是我们现在有了chatgpt,可以将大致需求告诉他，你会给你一个看起来很精准的结果，注意是看起来，chatgpt给出的api对比微软的msdn搜索的发现还是有些许出入。我们可以把chatgpt比喻成图书管理员，具体知识他可能不大清楚，但是他可以帮助你剩下很长时间确定在哪个位置。</p>
+<p>在vscode上使用chatgpt,需要对vscode进行代理配置，在设置中搜索<code>proxy</code>进行代理配置（如果使用sock5需要把完整的代理链接都贴上去），第一次登陆chatgpt会要求输入<code>key</code>进行配置，<code>key</code>的获取需要登陆<code>openai</code>。配置完成后其效果如下：<img src="/2021/04/27/chatgpt/%E5%9B%BE1.jpg" alt="图1"></p>
+<p>推荐一个开源项目，把微信机器人与chatgpt绑定一起了，实现一个ai好友。<a href="https://github.com/SnapdragonLee/ChatGPT-weBot%E3%80%82">https://github.com/SnapdragonLee/ChatGPT-weBot。</a></p>
+]]></content>
+      <categories>
+        <category>问题解决</category>
+      </categories>
+      <tags>
+        <tag>问题解决</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【问题解决】vscode上go的自动补全和跳转</title>
     <url>/2021/04/27/vscode%E4%B8%ADgo/</url>
     <content><![CDATA[<h1 id="vscode上go自动补全问题和跳转问题"><a href="#vscode上go自动补全问题和跳转问题" class="headerlink" title="vscode上go自动补全问题和跳转问题"></a>vscode上go自动补全问题和跳转问题</h1><p><em><strong>在UOS环境下用vscode，不能跳转和自动补全。</strong></em></p>
