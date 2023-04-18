@@ -1,6 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【Linux技术分享】原子更新调研分析（二）deepin原子更新调研开发</title>
+    <url>/2023/04/18/%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94%E5%88%86%E6%9E%90%EF%BC%88%E4%BA%8C%EF%BC%89deepin%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94/</url>
+    <content><![CDATA[<h1 id="原子更新调研分析（一）deepin原子更新调研开发"><a href="#原子更新调研分析（一）deepin原子更新调研开发" class="headerlink" title="原子更新调研分析（一）deepin原子更新调研开发"></a>原子更新调研分析（一）deepin原子更新调研开发</h1><p><em><strong>deepin的原子开发告一段落，项目已经交给社区维护，仓库在：<a href="https://github.com/linuxdeepin/deepin-upgrade-manager%E3%80%82%E9%A2%84%E8%AE%A1%E5%86%99%E5%87%A0%E7%AF%87%E6%96%87%E6%A1%A3%E8%AE%B0%E5%BD%95%E4%B8%8B%E5%BC%80%E5%8F%91%E7%9A%84%E7%BB%86%E8%8A%82%E4%B8%8E%E5%88%9D%E8%A1%B7%EF%BC%8C%E7%AE%97%E6%98%AF%E5%AF%B9%E8%BF%99%E4%B8%AA%E9%A1%B9%E7%9B%AE%E7%9A%84%E6%80%BB%E7%BB%93%E5%8F%AD%E3%80%82">https://github.com/linuxdeepin/deepin-upgrade-manager。预计写几篇文档记录下开发的细节与初衷，算是对这个项目的总结叭。</a></strong></em></p>
+<span id="more"></span>
+<h2 id="原子更新是什么"><a href="#原子更新是什么" class="headerlink" title="原子更新是什么"></a>原子更新是什么</h2><pre><code>原子更新是对deepin系统级别的备份方案，为什么叫原子更新呢？原子说明本次操作是不可中断的，连一起意思就是本次系统更新是可靠的，可逆的，不可中断的意思，旨在解决deepin的系统更新不稳定的问题，若存在系统更新崩溃可随时回到之前备份的任意节点，保证系统数据。
+</code></pre>
+<h2 id="老版本存在问题"><a href="#老版本存在问题" class="headerlink" title="老版本存在问题"></a>老版本存在问题</h2><ol>
+<li>deepin在v20以及v20之前，在系统备份的时候使用的都是ab分区。ab分区的劣势主要是只能支持全盘分区的，像自定义分区的就无法支持，并且只能备份一个版本，有时候a,b版本的备份内容都存在问题时就很棘手，无法找到之前版本了。</li>
+<li>ab备份的时候，全盘安装的时候会多一个分区来存储系统文件，当时的主分区无法调整，就是因为ab分区需要空间太大了这个原因，如果主分区是要30g空间，那个备份分区也需要30g,会对磁盘空间有较大浪费。</li>
+<li>备份时间较长，在ab分区的时候，需要将主分区内容全部拷贝到另一个分区，如果是机械磁盘，耗费的时候就是非常长的了。</li>
+</ol>
+<h2 id="原子更新优势"><a href="#原子更新优势" class="headerlink" title="原子更新优势"></a>原子更新优势</h2><ol>
+<li>可以备份任意版本，多个数量系统版本</li>
+<li>由于是增量备份，所以备份速度较快，回滚也较快，占据空间较小。</li>
+</ol>
+<h2 id="原子更新劣势"><a href="#原子更新劣势" class="headerlink" title="原子更新劣势"></a>原子更新劣势</h2><ol>
+<li>与debian的管理包应用的软件耦合较低，无法做到像rpm-ostree对每一个应用进行备份管理。</li>
+<li>由于第一个原因，所以备份的时候需要对系统进行一个文件校验，查询每次安装应用后增加的应用，有时间消耗。</li>
+</ol>
+<h2 id="未来展望"><a href="#未来展望" class="headerlink" title="未来展望"></a>未来展望</h2><ol>
+<li>希望与系统耦合增加，能明确知道每次应用更新内容</li>
+<li>增加只读根分区功能，通过原子更新来组成os进行系统更新</li>
+<li>系统更新应该是一个阻塞功能，用户不能进行对系统进行操作，类比windows/手机的系统更新。</li>
+<li>改造ostree,当前ostree是单线程，原子更新备份与回滚是为阻塞操作，可以将其改造为多线程操作。</li>
+</ol>
+<h2 id="实现原理简介"><a href="#实现原理简介" class="headerlink" title="实现原理简介"></a>实现原理简介</h2><p>原子更新的具体实现在github上的<a href="https://github.com/linuxdeepin/deepin-upgrade-manager/blob/master/docs/deepin-atomic-upgrade_outline_detailed_design.tex">概要设计</a>，这里简单讲一下，并把一些遇到的困难点记录一下。原子更新由于是系统级别应用，需要尽可能减少依赖，所以使用<code>go</code>开发，主要分层如下图：<img src="/2023/04/18/%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94%E5%88%86%E6%9E%90%EF%BC%88%E4%BA%8C%EF%BC%89deepin%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94/1.png" alt="图1"></p>
+<ol>
+<li>其中deepin-boot-kit是管理grub显示更新，原子更新的grub引导项展示由此模块支持，后期可以讲一下这个模块以及grub原理。</li>
+<li>原子更新支持命令行与dbus两种方案的调用，dbus则为通用接口，命令行则为了在initramfs下使用。</li>
+<li>用户可以使用 commit,init,rollback,version的直接命令调用原子更新</li>
+<li>原子更新内部则封装ostree的命令，实现底层接口，后期ostree也可以换其他的文件级别的备份方案。</li>
+</ol>
+<h2 id="开发困难点"><a href="#开发困难点" class="headerlink" title="开发困难点"></a>开发困难点</h2><ol>
+<li>自动选择最大分区</li>
+<li>断电回滚，重启后继续回滚</li>
+<li>引导分区的加密</li>
+<li>提交时快速找到系统增量文件，提交至ostree仓库</li>
+<li>回滚时，快速建立rootfs对系统进行替换</li>
+</ol>
+]]></content>
+      <categories>
+        <category>原子更新</category>
+      </categories>
+      <tags>
+        <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【问题解决】chatgpt使用</title>
     <url>/2023/02/23/chatgpt%E4%BD%BF%E7%94%A8/</url>
     <content><![CDATA[<h1 id="chatgpt学习与工作上应用"><a href="#chatgpt学习与工作上应用" class="headerlink" title="chatgpt学习与工作上应用"></a>chatgpt学习与工作上应用</h1><p><em><strong>vscode下使用chatgpt加快工作效率。</strong></em></p>
