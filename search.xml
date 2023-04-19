@@ -2,12 +2,12 @@
 <search>
   <entry>
     <title>【Linux技术分享】deepin实现boot分区加密</title>
-    <url>/2023/04/18/deepin%E5%AE%9E%E7%8E%B0boot%E5%88%86%E5%8C%BA%E5%8A%A0%E5%AF%86/</url>
+    <url>/2023/04/19/deepin%E5%AE%9E%E7%8E%B0boot%E5%88%86%E5%8C%BA%E5%8A%A0%E5%AF%86/</url>
     <content><![CDATA[<h1 id="deepin实现boot分区加密"><a href="#deepin实现boot分区加密" class="headerlink" title="deepin实现boot分区加密"></a>deepin实现boot分区加密</h1><p><em><strong>当前linux下的磁盘加密，为了保证系统的正常启动，一般不会将引导分区进行加密。luck2在grub2.06版本以后支持了boot分区加密，但是仍然无法支持mbr分区格式的引导加密，本文旨在解决此问题</strong></em></p>
 <span id="more"></span>
 <h2 id="问题起因"><a href="#问题起因" class="headerlink" title="问题起因"></a>问题起因</h2><p>在原子更新开发时，发现引导项需要保存至/boot分区中，但是/boot分区的存储空间固定的，再多个版本迭代进行更新后会出现分区空间不足问题，此时需考虑将引导向的备份存储至其他分区。如果用户选择了全盘加密，在用户的grub内核选择阶段，必须将加密磁盘解密，否则找到当前备份的内核文件，此时问题则变为如何在grub阶段或者在grub阶段前将磁盘进行解密，等效于加密/boot分区后如何在grub阶段前将/boot分区进行解密。</p>
 <h2 id="boot分区解密"><a href="#boot分区解密" class="headerlink" title="boot分区解密"></a>boot分区解密</h2><h3 id="mbr启动流程"><a href="#mbr启动流程" class="headerlink" title="mbr启动流程"></a>mbr启动流程</h3><ol>
-<li><p>mbr主要组成为core.img的结构，首先是diskboot.img，接下来是解压缩程序lzma_decompress.img，再往下是kernel.img，最后是各个模块module对应的映像，细节查看，<a href="http://www.pixelbeat.org/docs/disk/%E3%80%82">http://www.pixelbeat.org/docs/disk/。</a><br><img src="/2023/04/18/deepin%E5%AE%9E%E7%8E%B0boot%E5%88%86%E5%8C%BA%E5%8A%A0%E5%AF%86/1.png" alt="图1"></p>
+<li><p>mbr主要组成为core.img的结构，首先是diskboot.img，接下来是解压缩程序lzma_decompress.img，再往下是kernel.img，最后是各个模块module对应的映像，细节查看，<a href="http://www.pixelbeat.org/docs/disk/%E3%80%82">http://www.pixelbeat.org/docs/disk/。</a><br><img src="/2023/04/19/deepin%E5%AE%9E%E7%8E%B0boot%E5%88%86%E5%8C%BA%E5%8A%A0%E5%AF%86/1.png" alt="图1"></p>
 </li>
 <li><p>首先读取第一扇区的boot.img，该文件处的某处一定保存了整个core.img的起始扇区，然后从该起始扇区处首先读取一个扇区，即diskboot.img，该映像的结尾处保存了后续映像的长度，根据该长度读取这些数据，数据的头部即lzma_decompress.img映像又保存了加压缩的参数，例如压缩文件的大小，以及解压缩后文件的大小，根据这些参数对后续数据进行解压缩，得到kernel.img以及各个module模块的映像起始地址，最后进入kernel.img的入口函数继续执行，具体模块查看<a href="https://www.gnu.org/software/grub/manual/grub/html_node/Images.html%E3%80%82">https://www.gnu.org/software/grub/manual/grub/html_node/Images.html。</a></p>
 </li>
@@ -23,7 +23,7 @@
 </li>
 <li><p>将img文件写入磁盘头，grub-bios-setup -b i386-pc/boot.img -c i386-pc/core2.img /dev/sda</p>
 </li>
-<li><p>效果如下<br><img src="/2023/04/18/deepin%E5%AE%9E%E7%8E%B0boot%E5%88%86%E5%8C%BA%E5%8A%A0%E5%AF%86/1.png" alt="图1"></p>
+<li><p>效果如下<br><img src="/2023/04/19/deepin%E5%AE%9E%E7%8E%B0boot%E5%88%86%E5%8C%BA%E5%8A%A0%E5%AF%86/1.png" alt="图1"></p>
 </li>
 </ol>
 <h3 id="grub2-06-luks1"><a href="#grub2-06-luks1" class="headerlink" title="grub2.06+luks1"></a>grub2.06+luks1</h3><p>deepin的20.8需要将luks2降至luks1,但在efi与mbr下都能实现引导加密，具体的操作可以看debian的<a href="https://cryptsetup-team.pages.debian.net/cryptsetup/encrypted-boot.html">官方文档</a></p>
