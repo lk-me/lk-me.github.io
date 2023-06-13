@@ -1,0 +1,31 @@
+<h1 id="问题现象"><a href="#问题现象" class="headerlink" title="问题现象"></a>问题现象</h1><p>用户在使用摄像头捕捉软件时，windows下点击属性设置button时，可以弹出关于设置当前使用摄像头属性窗口，在wine下点击无响应，在windows显示弹窗如下：<br><img src="%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/1.png" alt="图1"><br>经测试在不同摄像头插入时，弹出窗口界面展示不同。</p>
+<h1 id="问题定位"><a href="#问题定位" class="headerlink" title="问题定位"></a>问题定位</h1><ol>
+<li>使用spy++分析窗口组成，发现组成窗口都是由windows api绘制<br><img src="%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/2.png" alt="图2"></li>
+<li>通过google搜图，发现此窗口为通用窗口，在obs等摄像头捕捉软件都存在。</li>
+</ol>
+<p>根据以上确定此窗口非当前软件绘制，为windows的提供的摄像头设置窗口。</p>
+<h1 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h1><ol>
+<li><p>根据<code>问题定位</code>，发现设置属性窗口为windows提供。通过google可以了解windows视频录制框架大致为Windows Media Foundation（WMF）与DirectShow，在wine中通过模块开启发现应用通过DirectShow框架捕捉视频</p>
+<ul>
+<li>DirectShow：DirectShow 是一种基于 COM 的框架，可用于创建和管理音频和视频流。它提供了一组可编程的组件，称为过滤器，用于捕获、压缩、转换和渲染音频和视频流。应用程序可以使用 DirectShow 来捕获和编码视频，然后将其保存为文件或流式传输到网络。</li>
+</ul>
+</li>
+<li><p>查询msdn，了解DirectShow属性页弹出基本原理，编写demo（demo代码见文件夹demo），发现弹出界面与应用弹出设置界面一致</p>
+<ul>
+<li><p>属性页原理：DirectShow滤镜是一个COM对象，因此它实现了IUnknown接口，包括QueryInterface方法。在DirectShow中，每个滤镜都可以实现不同的接口来提供不同的功能，例如播放音频和视频、录制视频、捕获窗口等等。为了获取滤镜支持的特定接口，您可以使用滤镜对象的QueryInterface方法，并提供要获取的接口的IID（接口标识符）。ISpecifyPropertyPages接口是DirectShow中用于获取滤镜属性页的接口之一。当您调用pFilter-&gt;QueryInterface(IID_ISpecifyPropertyPages, (void**)&amp;pSpecPropPages)函数时，DirectShow会检查该滤镜是否支持ISpecifyPropertyPages接口。如果滤镜支持该接口，则DirectShow会返回S_OK，并将ISpecifyPropertyPages接口的指针存储在pSpecPropPages变量中。</p>
+<pre><code class="c++">hr = pBaseFilter-&gt;QueryInterface(IID_ISpecifyPropertyPages, (void**)&amp;pSpecPropPages);
+    if (SUCCEEDED(hr)) {
+    hr = pSpecPropPages-&gt;GetPages(pCaGUID);
+    pSpecPropPages-&gt;Release();
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ol>
+<ol start="3">
+<li>将windows的demo移动至wine中进行运行，发现设置弹出未弹出，通过日志观察，发现运行至vfw_capture_query_interface函数中获取com接口时，返回E_NOINTERFACE<br><img src="%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/3.png" alt="图3"><br><img src="%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/4.png" alt="图4"></li>
+</ol>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>wine未实现IID_ISpecifyPropertyPages接口，导致点击设置属性button无响应。窗口显示流程可以大致为 <code>用户点击属性设置窗口-&gt;windows获取驱动可设置参数-&gt;根据参数组成设置界面-&gt;显示至用户</code>。目前wine在<code>windows获取驱动可设置参数</code>步骤中未实现。</p>
+<h1 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h1><p>方案1：调研windows获取驱动可设置参数接口如何实现，在wine中进行代码补充<br>优点：彻底解决窗口无法弹出问题，可对wine的DirectShow有较大的技术积累<br>缺点：耗时较长，需要调研问题较多，要把windows关于DirectShow驱动设置流程与linux摄像头驱动设置流程进行分析，再结合wine代码对其进行补充。</p>
+<p>方案2：与开发厂商进行沟通，在程序启动时，提供默认设置，设置属性窗口可不弹出也可使用软件。<br>优点：可快速有效解决厂商问题。<br>缺点：在wine中根据图4代码，只能设置基础项，可能无法满足用户设置并且此方案为临时方案不通用。。</p>
