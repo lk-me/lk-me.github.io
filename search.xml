@@ -3,8 +3,7 @@
   <entry>
     <title>【Linux技术分享】呼叫器窗口问题分析</title>
     <url>/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/</url>
-    <content><![CDATA[<p>s</p>
-<h2 id="问题概述"><a href="#问题概述" class="headerlink" title="问题概述"></a>问题概述</h2><p>呼叫器在nfs系统中启动后，在菜单栏无图标显示，但窗口正常显示，用户在最小化窗口时无法找到窗口再启动</p>
+    <content><![CDATA[<h2 id="问题概述"><a href="#问题概述" class="headerlink" title="问题概述"></a>问题概述</h2><p>呼叫器在nfs系统中启动后，在菜单栏无图标显示，但窗口正常显示，用户在最小化窗口时无法找到窗口再启动</p>
 <p>正常现象如下图：</p>
 <p><img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/1.png"></p>
 <p>异常现象如下图：</p>
