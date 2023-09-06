@@ -191,6 +191,121 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Mecry">
+      <meta itemprop="description" content="在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Link Mecry">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">【Linux技术分享】呼叫器窗口问题分析</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-09-06 20:05:30 / 修改时间：14:29:27" itemprop="dateCreated datePublished" datetime="2023-09-06T20:05:30+08:00">2023-09-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/wine/" itemprop="url" rel="index"><span itemprop="name">wine</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>s</p>
+<h2 id="问题概述"><a href="#问题概述" class="headerlink" title="问题概述"></a>问题概述</h2><p>呼叫器在nfs系统中启动后，在菜单栏无图标显示，但窗口正常显示，用户在最小化窗口时无法找到窗口再启动</p>
+<p>正常现象如下图：</p>
+<p><img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/1.png"></p>
+<p>异常现象如下图：</p>
+<p><img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/2.png"></p>
+<p><em><strong>经验证问题复现环境为：</strong></em></p>
+<p><em>软件环境</em>：amd架构，nfs-5.0-G212p版本</p>
+<p><em>硬件环境</em>：需要amd架构处理器</p>
+<p><em>wine版本</em>：上游wine-8.6</p>
+<h2 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h2><ol>
+<li>观察现象，根据曾经的mfc，x11编程经验来看，该类问题的出现有两种可能的原因：<ul>
+<li>猜测1：在linux下怀疑启动窗口存在隐藏图标属性</li>
+<li>猜测2：是在创建菜单栏时，加载rc的api在wine下不支持或者存在bug</li>
+<li>猜测3：在nfs系统下，任务栏加载这个进程时图标显示失败</li>
+</ul>
+</li>
+</ol>
+<h2 id="分析验证"><a href="#分析验证" class="headerlink" title="分析验证"></a>分析验证</h2><h3 id="猜测1："><a href="#猜测1：" class="headerlink" title="猜测1："></a>猜测1：</h3><ol>
+<li>介绍两个观察x窗口的工具,xprop与xwininfo<pre><code> - xwininfo：列出窗口的基本几何信息和状态，简单用法是在终端里面执行命令 `xwininfo` 之后， 此时系统鼠标光标被 `xwininfo` 捕获，光标变成十字星形状，移动鼠标点击要查看的窗口的任意区域，执行`xwininfo`的终端输出了该窗口的这些 X11 属性.
+ - 列出窗口的全部X11属性，简单用法是在终端里面执行命令 `xprop` 之后， 此时系统鼠标光标被 `xprop` 捕获，光标变成十字星形状，移动鼠标点击要查看的窗口的任意区域，执行`xprop`的终端输出了该窗口的所有 X11 属性.
+</code></pre>
+</li>
+<li>通过xwininfo获取窗口id，再通过xprop -id <window_id> _NET_WM_STATE | grep “_NET_WM_STATE_SKIP_TASKBAR”，判断呼叫器窗口未设置隐藏菜单栏窗口属性</window_id></li>
+</ol>
+<h3 id="猜测2："><a href="#猜测2：" class="headerlink" title="猜测2："></a>猜测2：</h3><ol>
+<li>开启api monitor监控，按照问题在nfs上复现的步骤在windows上操作呼叫器，关注<code>loadicon</code>，<code>loadimge</code>，<code>createicon</code>,等关于hfont创建加载的函数，发现有两个创建有<code>icon</code>资源加载<br><img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/3.png"><br><img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/4.png"></li>
+<li>发现存在两个窗口都有<code>icon</code>资源加载，通过<code>spy++</code>确定目标创建句柄，通过<code>api monitor</code>或者<code>od</code>观察句柄创建后的函数，发现窗口调用<code>ole.dll</code>的<code>OleLoadPictureExt</code>函数加载资源并在<code>createwindow</code>下进行赋值。<br><img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/5.png"></li>
+<li>本地实现简单demo，加载图片资源然后创建窗口进行赋值，如下（/呼叫器/code/demo.c）： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 加载图像并设置为窗口图标</span></span><br><span class="line"><span class="function">HICON <span class="title">LoadAndSetWindowIcon</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">CoInitialize</span>(<span class="literal">NULL</span>);</span><br><span class="line">    <span class="comment">// 假设pStream已经被初始化并包含了图片数据</span></span><br><span class="line">    IStream *pStream = <span class="built_in">ReadImageToLPSTREAM</span>();</span><br><span class="line">    <span class="comment">// 图片的宽度和高度（设为0表示使用默认的图片尺寸）</span></span><br><span class="line">    LONG width = <span class="number">0</span>;</span><br><span class="line">    LONG height = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">// 是否保持图片的比例</span></span><br><span class="line">    BOOL keepAspectRatio = TRUE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 加载图片</span></span><br><span class="line">    IPicture *pPicture = <span class="literal">NULL</span>;</span><br><span class="line">    HRESULT hr = <span class="built_in">OleLoadPictureEx</span>(pStream, <span class="number">0</span>, FALSE, IID_IMyInterface, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, (<span class="keyword">void</span> **)&amp;pPicture);</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">SUCCEEDED</span>(hr))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 获取图标句柄</span></span><br><span class="line">        HICON hIcon = <span class="literal">NULL</span>;</span><br><span class="line">        pPicture-&gt;<span class="built_in">get_Handle</span>((OLE_HANDLE*)&amp;hIcon);</span><br><span class="line">        <span class="keyword">return</span> hIcon;</span><br><span class="line">        <span class="comment">// 设置窗口类的图标</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>发现图标显示正常显示，日志也与呼叫器窗口创建保持一致</li>
+</ol>
+<h3 id="猜测3："><a href="#猜测3：" class="headerlink" title="猜测3："></a>猜测3：</h3><ol>
+<li>菜单栏图标显示简介：菜单栏在对系统来说也是一个进程，每个进程在菜单栏进行显示需要进程提供窗口类型，窗口消息，窗口图标等，同样菜单栏移除显示也会遵循某种规则</li>
+<li>通过猜测1中的<code>xwininfo</code>的<code>xwininfo -tree -root</code>命令获取到系统菜单栏的进程是<code>cods-desktop</code><br><img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/6.png"></li>
+<li><code>cdos</code>是Cromemco 推出的一种类似 CP/M 的操作系统，猜测方德是桌面系统是沿用cdos系统源码，但菜单栏属于深度diy的代码，上游开源代码可能与nfs相差比较大，所以暂未考虑查看上游代码进行排查问题</li>
+<li><code>cdos-desktop --help</code>发现增加参数可以输出日志，编写脚本将日志输出至终端<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">/bin/sh</span></span><br><span class="line">export GTK_DEBUG=all</span><br><span class="line">killall cdos-desktop</span><br><span class="line">cdos-desktop -b</span><br></pre></td></tr></table></figure></li>
+<li>运行程序捕捉日志，发现呼叫器启动后菜单栏将其进行移除<br><img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/7.png"></li>
+<li>通过猜测2中的源码观察，大致可以理清呼叫器窗口创建流程，创建父窗口-&gt;创建子窗口-&gt;隐藏父窗口，编写demo进行验证，demo较简单（/呼叫器/code/win.c） <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">hwndParent = <span class="built_in">CreateWindowEx</span>(<span class="number">0</span>, parentClassName, <span class="string">&quot;Parent&quot;</span>, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, <span class="number">800</span>, <span class="number">800</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, hInstance, <span class="literal">NULL</span>);</span><br><span class="line"><span class="built_in">ShowWindow</span>(hwndParent, nCmdShow);</span><br><span class="line"><span class="built_in">UpdateWindow</span>(hwndParent);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建子窗口</span></span><br><span class="line">hwndChild = <span class="built_in">CreateWindowEx</span>(<span class="number">0</span>, childClassName, <span class="string">&quot;child&quot;</span>, WS_OVERLAPPEDWINDOW, <span class="number">200</span>, <span class="number">200</span>, <span class="number">200</span>, <span class="number">150</span>, hwndParent, <span class="literal">NULL</span>, hInstance, <span class="literal">NULL</span>);</span><br><span class="line"><span class="built_in">ShowWindow</span>(hwndParent, SW_HIDE);</span><br><span class="line"><span class="built_in">ShowWindow</span>(hwndChild, nCmdShow);</span><br><span class="line"><span class="built_in">UpdateWindow</span>(hwndChild);</span><br></pre></td></tr></table></figure></li>
+<li>在nfs系统上进行验证，发现同样菜单栏下无法显示图标</li>
+</ol>
+<h2 id="分析结论"><a href="#分析结论" class="headerlink" title="分析结论"></a>分析结论</h2><pre><code>通过上述分析与验证代码，可以初步猜测在nfs系统上使用wine创建子窗口与父窗口时隐藏父窗口，会使cdos-desktop程序将进程任务栏图标进行移除。在nfs验证后，将同样wine代码与测试代码在deepin进行验证，未发现异常问题，图标正常显示。
+</code></pre>
+<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><ul>
+<li>方案1： 与系统组沟通修改cdos-desktop的bug（时间较长，暂不考虑）</li>
+<li>方案2：修改父窗口属性，在父窗口被移除时的窗口属性中，不增加<code>_NET_WM_STATE_SKIP_TASKBAR</code>代码如下<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">@@ <span class="number">-1059</span>,<span class="number">6</span> +<span class="number">1059</span>,<span class="number">9</span> @@ <span class="function"><span class="keyword">void</span> <span class="title">update_net_wm_states</span><span class="params">( struct x11drv_win_data *data )</span></span></span><br><span class="line"><span class="function">             <span class="title">if</span> <span class="params">(!(new_state &amp; (<span class="number">1</span> &lt;&lt; i)))</span> <span class="keyword">continue</span></span>;</span><br><span class="line">             TRACE( <span class="string">&quot;setting wm state %u for unmapped window %p/%lx\n&quot;</span>,</span><br><span class="line">                    i, data-&gt;hwnd, data-&gt;whole_window );</span><br><span class="line">+	    <span class="keyword">if</span>(i == NET_WM_STATE_SKIP_TASKBAR) &#123;</span><br><span class="line">+		    <span class="keyword">continue</span>;</span><br><span class="line">+	    &#125;</span><br><span class="line">             atoms[count++] = X11DRV_Atoms[net_wm_state_atoms[i] - FIRST_XATOM];</span><br><span class="line">             <span class="keyword">if</span> (net_wm_state_atoms[i] == XATOM__NET_WM_STATE_MAXIMIZED_VERT)</span><br><span class="line">                 atoms[count++] = x11drv_atom(_NET_WM_STATE_MAXIMIZED_HORZ);</span><br></pre></td></tr></table></figure>
+修改后效果如下：<br>  <img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/8.png"></li>
+</ul>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>一个问题产生后，可以先看看问题现象，找到产生问题的操作规律，从操作上可以大胆推测问题出现的可能出现的几种原因，然后再通过测试用例或者其它手段一一排除。同样的功能，代码实现的方法有多种，写测试用例前，可以网上查看下实现一个功能比较常见的几种手法，这样可以缩小apimonitor监控的过滤范围。结合apimonitor调用的接口，再写测试用例就可以比较准确的复现问题。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2023/08/07/go%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0dbus/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -355,7 +470,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/13/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/13/wine-%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
@@ -369,7 +484,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/06/13/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">【Linux技术分享】deepin实现boot分区加密</a>
+            <a href="/2023/06/13/wine-%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">【Linux技术分享】无法打开视频驱动设置弹窗根因分析</a>
         </h2>
 
         <div class="post-meta">
@@ -378,10 +493,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2023-06-13 20:05:30 / 修改时间：20:29:59" itemprop="dateCreated datePublished" datetime="2023-06-13T20:05:30+08:00">2023-06-13</time>
+              <time title="创建时间：2023-06-13 20:05:30" itemprop="dateCreated datePublished" datetime="2023-06-13T20:05:30+08:00">2023-06-13</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-09-06 14:29:00" itemprop="dateModified" datetime="2023-09-06T14:29:00+08:00">2023-09-06</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -403,9 +524,9 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="问题现象"><a href="#问题现象" class="headerlink" title="问题现象"></a>问题现象</h1><p>用户在使用摄像头捕捉软件时，windows下点击属性设置button时，可以弹出关于设置当前使用摄像头属性窗口，在wine下点击无响应，在windows显示弹窗如下：<br><img src="/2023/06/13/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/1.png" alt="图1"><br>经测试在不同摄像头插入时，弹出窗口界面展示不同。</p>
+          <h1 id="问题现象"><a href="#问题现象" class="headerlink" title="问题现象"></a>问题现象</h1><p>用户在使用摄像头捕捉软件时，windows下点击属性设置button时，可以弹出关于设置当前使用摄像头属性窗口，在wine下点击无响应，在windows显示弹窗如下：<br><img src="/2023/06/13/wine-%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/1.png" alt="图1"><br>经测试在不同摄像头插入时，弹出窗口界面展示不同。</p>
 <h1 id="问题定位"><a href="#问题定位" class="headerlink" title="问题定位"></a>问题定位</h1><ol>
-<li>使用spy++分析窗口组成，发现组成窗口都是由windows api绘制<br><img src="/2023/06/13/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/2.png" alt="图2"></li>
+<li>使用spy++分析窗口组成，发现组成窗口都是由windows api绘制<br><img src="/2023/06/13/wine-%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/2.png" alt="图2"></li>
 <li>通过google搜图，发现此窗口为通用窗口，在obs等摄像头捕捉软件都存在。</li>
 </ol>
 <p>根据以上确定此窗口非当前软件绘制，为windows的提供的摄像头设置窗口。</p>
@@ -423,7 +544,7 @@
 </li>
 </ol>
 <ol start="3">
-<li>将windows的demo移动至wine中进行运行，发现设置弹出未弹出，通过日志观察，发现运行至vfw_capture_query_interface函数中获取com接口时，返回E_NOINTERFACE<br><img src="/2023/06/13/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/3.png" alt="图3"><br><img src="/2023/06/13/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/4.png" alt="图4"></li>
+<li>将windows的demo移动至wine中进行运行，发现设置弹出未弹出，通过日志观察，发现运行至vfw_capture_query_interface函数中获取com接口时，返回E_NOINTERFACE<br><img src="/2023/06/13/wine-%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/3.png" alt="图3"><br><img src="/2023/06/13/wine-%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/4.png" alt="图4"></li>
 </ol>
 <h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>wine未实现IID_ISpecifyPropertyPages接口，导致点击设置属性button无响应。窗口显示流程可以大致为 <code>用户点击属性设置窗口-&gt;windows获取驱动可设置参数-&gt;根据参数组成设置界面-&gt;显示至用户</code>。目前wine在<code>windows获取驱动可设置参数</code>步骤中未实现。</p>
 <h1 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h1><p>方案1：调研windows获取驱动可设置参数接口如何实现，在wine中进行代码补充<br>优点：彻底解决窗口无法弹出问题，可对wine的DirectShow有较大的技术积累<br>缺点：耗时较长，需要调研问题较多，要把windows关于DirectShow驱动设置流程与linux摄像头驱动设置流程进行分析，再结合wine代码对其进行补充。</p>
@@ -893,87 +1014,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/03/%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
-      <meta itemprop="name" content="Mecry">
-      <meta itemprop="description" content="在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Link Mecry">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/07/03/%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA/" class="post-title-link" itemprop="url">【问题解决】科学上网简单搭建</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-07-03 11:05:30" itemprop="dateCreated datePublished" datetime="2022-07-03T11:05:30+08:00">2022-07-03</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-07-20 17:41:18" itemprop="dateModified" datetime="2022-07-20T17:41:18+08:00">2022-07-20</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/" itemprop="url" rel="index"><span itemprop="name">问题解决</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="linux下科学上网简单搭建"><a href="#linux下科学上网简单搭建" class="headerlink" title="linux下科学上网简单搭建"></a>linux下科学上网简单搭建</h1><p><em><strong>linux下利用shadowsock+kcptun+udp2raw的科学上网搭建。</strong></em></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/07/03/%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1045,7 +1085,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">34</span>
+          <span class="site-state-item-count">35</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
