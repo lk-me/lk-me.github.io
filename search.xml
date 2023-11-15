@@ -2,12 +2,15 @@
 <search>
   <entry>
     <title>【Linux技术分享】呼叫器窗口问题分析</title>
-    <url>/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/</url>
-    <content><![CDATA[<h2 id="问题概述"><a href="#问题概述" class="headerlink" title="问题概述"></a>问题概述</h2><p>呼叫器在nfs系统中启动后，在菜单栏无图标显示，但窗口正常显示，用户在最小化窗口时无法找到窗口再启动</p>
+    <url>/2023/09/13/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/</url>
+    <content><![CDATA[<h1 id="呼叫器窗口问题分析"><a href="#呼叫器窗口问题分析" class="headerlink" title="呼叫器窗口问题分析"></a>呼叫器窗口问题分析</h1><span id="more"></span>
+
+
+<h2 id="问题概述"><a href="#问题概述" class="headerlink" title="问题概述"></a>问题概述</h2><p>呼叫器在nfs系统中启动后，在菜单栏无图标显示，但窗口正常显示，用户在最小化窗口时无法找到窗口再启动</p>
 <p>正常现象如下图：</p>
-<p><img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/1.png"></p>
+<p><img src="/2023/09/13/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/1.png" alt="图1"></p>
 <p>异常现象如下图：</p>
-<p><img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/2.png"></p>
+<p><img src="/2023/09/13/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/2.png" alt="图2"></p>
 <p><em><strong>经验证问题复现环境为：</strong></em></p>
 <p><em>软件环境</em>：amd架构，nfs-5.0-G212p版本</p>
 <p><em>硬件环境</em>：需要amd架构处理器</p>
@@ -28,17 +31,17 @@
 <li>通过xwininfo获取窗口id，再通过xprop -id <window_id> _NET_WM_STATE | grep “_NET_WM_STATE_SKIP_TASKBAR”，判断呼叫器窗口未设置隐藏菜单栏窗口属性</window_id></li>
 </ol>
 <h3 id="猜测2："><a href="#猜测2：" class="headerlink" title="猜测2："></a>猜测2：</h3><ol>
-<li>开启api monitor监控，按照问题在nfs上复现的步骤在windows上操作呼叫器，关注<code>loadicon</code>，<code>loadimge</code>，<code>createicon</code>,等关于hfont创建加载的函数，发现有两个创建有<code>icon</code>资源加载<br><img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/3.png"><br><img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/4.png"></li>
-<li>发现存在两个窗口都有<code>icon</code>资源加载，通过<code>spy++</code>确定目标创建句柄，通过<code>api monitor</code>或者<code>od</code>观察句柄创建后的函数，发现窗口调用<code>ole.dll</code>的<code>OleLoadPictureExt</code>函数加载资源并在<code>createwindow</code>下进行赋值。<br><img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/5.png"></li>
+<li>开启api monitor监控，按照问题在nfs上复现的步骤在windows上操作呼叫器，关注<code>loadicon</code>，<code>loadimge</code>，<code>createicon</code>,等关于hfont创建加载的函数，发现有两个创建有<code>icon</code>资源加载<br><img src="/2023/09/13/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/3.png" alt="图3"><br><img src="/2023/09/13/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/4.png" alt="图4"></li>
+<li>发现存在两个窗口都有<code>icon</code>资源加载，通过<code>spy++</code>确定目标创建句柄，通过<code>api monitor</code>或者<code>od</code>观察句柄创建后的函数，发现窗口调用<code>ole.dll</code>的<code>OleLoadPictureExt</code>函数加载资源并在<code>createwindow</code>下进行赋值。<br><img src="/2023/09/13/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/5.png" alt="图5"></li>
 <li>本地实现简单demo，加载图片资源然后创建窗口进行赋值，如下（/呼叫器/code/demo.c）： <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 加载图像并设置为窗口图标</span></span><br><span class="line"><span class="function">HICON <span class="title">LoadAndSetWindowIcon</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">CoInitialize</span>(<span class="literal">NULL</span>);</span><br><span class="line">    <span class="comment">// 假设pStream已经被初始化并包含了图片数据</span></span><br><span class="line">    IStream *pStream = <span class="built_in">ReadImageToLPSTREAM</span>();</span><br><span class="line">    <span class="comment">// 图片的宽度和高度（设为0表示使用默认的图片尺寸）</span></span><br><span class="line">    LONG width = <span class="number">0</span>;</span><br><span class="line">    LONG height = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">// 是否保持图片的比例</span></span><br><span class="line">    BOOL keepAspectRatio = TRUE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 加载图片</span></span><br><span class="line">    IPicture *pPicture = <span class="literal">NULL</span>;</span><br><span class="line">    HRESULT hr = <span class="built_in">OleLoadPictureEx</span>(pStream, <span class="number">0</span>, FALSE, IID_IMyInterface, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, (<span class="keyword">void</span> **)&amp;pPicture);</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">SUCCEEDED</span>(hr))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 获取图标句柄</span></span><br><span class="line">        HICON hIcon = <span class="literal">NULL</span>;</span><br><span class="line">        pPicture-&gt;<span class="built_in">get_Handle</span>((OLE_HANDLE*)&amp;hIcon);</span><br><span class="line">        <span class="keyword">return</span> hIcon;</span><br><span class="line">        <span class="comment">// 设置窗口类的图标</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
 <li>发现图标显示正常显示，日志也与呼叫器窗口创建保持一致</li>
 </ol>
 <h3 id="猜测3："><a href="#猜测3：" class="headerlink" title="猜测3："></a>猜测3：</h3><ol>
 <li>菜单栏图标显示简介：菜单栏在对系统来说也是一个进程，每个进程在菜单栏进行显示需要进程提供窗口类型，窗口消息，窗口图标等，同样菜单栏移除显示也会遵循某种规则</li>
-<li>通过猜测1中的<code>xwininfo</code>的<code>xwininfo -tree -root</code>命令获取到系统菜单栏的进程是<code>cods-desktop</code><br><img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/6.png"></li>
+<li>通过猜测1中的<code>xwininfo</code>的<code>xwininfo -tree -root</code>命令获取到系统菜单栏的进程是<code>cods-desktop</code><br><img src="/2023/09/13/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/6.png" alt="图6"></li>
 <li><code>cdos</code>是Cromemco 推出的一种类似 CP/M 的操作系统，猜测方德是桌面系统是沿用cdos系统源码，但菜单栏属于深度diy的代码，上游开源代码可能与nfs相差比较大，所以暂未考虑查看上游代码进行排查问题</li>
 <li><code>cdos-desktop --help</code>发现增加参数可以输出日志，编写脚本将日志输出至终端<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">/bin/sh</span></span><br><span class="line">export GTK_DEBUG=all</span><br><span class="line">killall cdos-desktop</span><br><span class="line">cdos-desktop -b</span><br></pre></td></tr></table></figure></li>
-<li>运行程序捕捉日志，发现呼叫器启动后菜单栏将其进行移除<br><img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/7.png"></li>
+<li>运行程序捕捉日志，发现呼叫器启动后菜单栏将其进行移除<br><img src="/2023/09/13/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/7.png" alt="图7"></li>
 <li>通过猜测2中的源码观察，大致可以理清呼叫器窗口创建流程，创建父窗口-&gt;创建子窗口-&gt;隐藏父窗口，编写demo进行验证，demo较简单（/呼叫器/code/win.c） <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">hwndParent = <span class="built_in">CreateWindowEx</span>(<span class="number">0</span>, parentClassName, <span class="string">&quot;Parent&quot;</span>, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, <span class="number">800</span>, <span class="number">800</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, hInstance, <span class="literal">NULL</span>);</span><br><span class="line"><span class="built_in">ShowWindow</span>(hwndParent, nCmdShow);</span><br><span class="line"><span class="built_in">UpdateWindow</span>(hwndParent);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建子窗口</span></span><br><span class="line">hwndChild = <span class="built_in">CreateWindowEx</span>(<span class="number">0</span>, childClassName, <span class="string">&quot;child&quot;</span>, WS_OVERLAPPEDWINDOW, <span class="number">200</span>, <span class="number">200</span>, <span class="number">200</span>, <span class="number">150</span>, hwndParent, <span class="literal">NULL</span>, hInstance, <span class="literal">NULL</span>);</span><br><span class="line"><span class="built_in">ShowWindow</span>(hwndParent, SW_HIDE);</span><br><span class="line"><span class="built_in">ShowWindow</span>(hwndChild, nCmdShow);</span><br><span class="line"><span class="built_in">UpdateWindow</span>(hwndChild);</span><br></pre></td></tr></table></figure></li>
 <li>在nfs系统上进行验证，发现同样菜单栏下无法显示图标</li>
 </ol>
@@ -47,7 +50,7 @@
 <h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><ul>
 <li>方案1： 与系统组沟通修改cdos-desktop的bug（时间较长，暂不考虑）</li>
 <li>方案2：修改父窗口属性，在父窗口被移除时的窗口属性中，不增加<code>_NET_WM_STATE_SKIP_TASKBAR</code>代码如下<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">@@ <span class="number">-1059</span>,<span class="number">6</span> +<span class="number">1059</span>,<span class="number">9</span> @@ <span class="function"><span class="keyword">void</span> <span class="title">update_net_wm_states</span><span class="params">( struct x11drv_win_data *data )</span></span></span><br><span class="line"><span class="function">             <span class="title">if</span> <span class="params">(!(new_state &amp; (<span class="number">1</span> &lt;&lt; i)))</span> <span class="keyword">continue</span></span>;</span><br><span class="line">             TRACE( <span class="string">&quot;setting wm state %u for unmapped window %p/%lx\n&quot;</span>,</span><br><span class="line">                    i, data-&gt;hwnd, data-&gt;whole_window );</span><br><span class="line">+	    <span class="keyword">if</span>(i == NET_WM_STATE_SKIP_TASKBAR) &#123;</span><br><span class="line">+		    <span class="keyword">continue</span>;</span><br><span class="line">+	    &#125;</span><br><span class="line">             atoms[count++] = X11DRV_Atoms[net_wm_state_atoms[i] - FIRST_XATOM];</span><br><span class="line">             <span class="keyword">if</span> (net_wm_state_atoms[i] == XATOM__NET_WM_STATE_MAXIMIZED_VERT)</span><br><span class="line">                 atoms[count++] = x11drv_atom(_NET_WM_STATE_MAXIMIZED_HORZ);</span><br></pre></td></tr></table></figure>
-修改后效果如下：<br>  <img src="/2023/09/06/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/png/8.png"></li>
+修改后效果如下：<br>  <img src="/2023/09/13/wine-%E5%91%BC%E5%8F%AB%E5%99%A8%E7%AA%97%E5%8F%A3%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/8.png" alt="图8"></li>
 </ul>
 <h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>一个问题产生后，可以先看看问题现象，找到产生问题的操作规律，从操作上可以大胆推测问题出现的可能出现的几种原因，然后再通过测试用例或者其它手段一一排除。同样的功能，代码实现的方法有多种，写测试用例前，可以网上查看下实现一个功能比较常见的几种手法，这样可以缩小apimonitor监控的过滤范围。结合apimonitor调用的接口，再写测试用例就可以比较准确的复现问题。</p>
 ]]></content>
@@ -102,39 +105,12 @@
       </tags>
   </entry>
   <entry>
-    <title></title>
-    <url>/2023/06/13/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/</url>
-    <content><![CDATA[<h1 id="问题现象"><a href="#问题现象" class="headerlink" title="问题现象"></a>问题现象</h1><p>用户在使用摄像头捕捉软件时，windows下点击属性设置button时，可以弹出关于设置当前使用摄像头属性窗口，在wine下点击无响应，在windows显示弹窗如下：<br><img src="/2023/06/13/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/1.png" alt="图1"><br>经测试在不同摄像头插入时，弹出窗口界面展示不同。</p>
-<h1 id="问题定位"><a href="#问题定位" class="headerlink" title="问题定位"></a>问题定位</h1><ol>
-<li>使用spy++分析窗口组成，发现组成窗口都是由windows api绘制<br><img src="/2023/06/13/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/2.png" alt="图2"></li>
-<li>通过google搜图，发现此窗口为通用窗口，在obs等摄像头捕捉软件都存在。</li>
-</ol>
-<p>根据以上确定此窗口非当前软件绘制，为windows的提供的摄像头设置窗口。</p>
-<h1 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h1><ol>
-<li><p>根据<code>问题定位</code>，发现设置属性窗口为windows提供。通过google可以了解windows视频录制框架大致为Windows Media Foundation（WMF）与DirectShow，在wine中通过模块开启发现应用通过DirectShow框架捕捉视频</p>
-<ul>
-<li>DirectShow：DirectShow 是一种基于 COM 的框架，可用于创建和管理音频和视频流。它提供了一组可编程的组件，称为过滤器，用于捕获、压缩、转换和渲染音频和视频流。应用程序可以使用 DirectShow 来捕获和编码视频，然后将其保存为文件或流式传输到网络。</li>
-</ul>
-</li>
-<li><p>查询msdn，了解DirectShow属性页弹出基本原理，编写demo（demo代码见文件夹demo），发现弹出界面与应用弹出设置界面一致</p>
-<ul>
-<li><p>属性页原理：DirectShow滤镜是一个COM对象，因此它实现了IUnknown接口，包括QueryInterface方法。在DirectShow中，每个滤镜都可以实现不同的接口来提供不同的功能，例如播放音频和视频、录制视频、捕获窗口等等。为了获取滤镜支持的特定接口，您可以使用滤镜对象的QueryInterface方法，并提供要获取的接口的IID（接口标识符）。ISpecifyPropertyPages接口是DirectShow中用于获取滤镜属性页的接口之一。当您调用pFilter-&gt;QueryInterface(IID_ISpecifyPropertyPages, (void**)&amp;pSpecPropPages)函数时，DirectShow会检查该滤镜是否支持ISpecifyPropertyPages接口。如果滤镜支持该接口，则DirectShow会返回S_OK，并将ISpecifyPropertyPages接口的指针存储在pSpecPropPages变量中。</p>
-  <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">hr = pBaseFilter-&gt;<span class="built_in">QueryInterface</span>(IID_ISpecifyPropertyPages, (<span class="keyword">void</span>**)&amp;pSpecPropPages);</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">SUCCEEDED</span>(hr)) &#123;</span><br><span class="line">    hr = pSpecPropPages-&gt;<span class="built_in">GetPages</span>(pCaGUID);</span><br><span class="line">    pSpecPropPages-&gt;<span class="built_in">Release</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-</ul>
-</li>
-</ol>
-<ol start="3">
-<li>将windows的demo移动至wine中进行运行，发现设置弹出未弹出，通过日志观察，发现运行至vfw_capture_query_interface函数中获取com接口时，返回E_NOINTERFACE<br><img src="/2023/06/13/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/3.png" alt="图3"><br><img src="/2023/06/13/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/4.png" alt="图4"></li>
-</ol>
-<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>wine未实现IID_ISpecifyPropertyPages接口，导致点击设置属性button无响应。窗口显示流程可以大致为 <code>用户点击属性设置窗口-&gt;windows获取驱动可设置参数-&gt;根据参数组成设置界面-&gt;显示至用户</code>。目前wine在<code>windows获取驱动可设置参数</code>步骤中未实现。</p>
-<h1 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h1><p>方案1：调研windows获取驱动可设置参数接口如何实现，在wine中进行代码补充<br>优点：彻底解决窗口无法弹出问题，可对wine的DirectShow有较大的技术积累<br>缺点：耗时较长，需要调研问题较多，要把windows关于DirectShow驱动设置流程与linux摄像头驱动设置流程进行分析，再结合wine代码对其进行补充。</p>
-<p>方案2：与开发厂商进行沟通，在程序启动时，提供默认设置，设置属性窗口可不弹出也可使用软件。<br>优点：可快速有效解决厂商问题。<br>缺点：在wine中根据图4代码，只能设置基础项，可能无法满足用户设置并且此方案为临时方案不通用。。</p>
-]]></content>
-  </entry>
-  <entry>
-    <title>【Linux技术分享】无法打开视频驱动设置弹窗根因分析</title>
+    <title>【Linux技术分享】wine-无法打开视频驱动设置弹窗根因分析</title>
     <url>/2023/06/13/wine-%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/</url>
-    <content><![CDATA[<h1 id="问题现象"><a href="#问题现象" class="headerlink" title="问题现象"></a>问题现象</h1><p>用户在使用摄像头捕捉软件时，windows下点击属性设置button时，可以弹出关于设置当前使用摄像头属性窗口，在wine下点击无响应，在windows显示弹窗如下：<br><img src="/2023/06/13/wine-%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/1.png" alt="图1"><br>经测试在不同摄像头插入时，弹出窗口界面展示不同。</p>
+    <content><![CDATA[<h1 id="wine-无法打开视频驱动设置弹窗根因分析"><a href="#wine-无法打开视频驱动设置弹窗根因分析" class="headerlink" title="wine-无法打开视频驱动设置弹窗根因分析"></a>wine-无法打开视频驱动设置弹窗根因分析</h1><span id="more"></span>
+
+
+<h1 id="问题现象"><a href="#问题现象" class="headerlink" title="问题现象"></a>问题现象</h1><p>用户在使用摄像头捕捉软件时，windows下点击属性设置button时，可以弹出关于设置当前使用摄像头属性窗口，在wine下点击无响应，在windows显示弹窗如下：<br><img src="/2023/06/13/wine-%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/1.png" alt="图1"><br>经测试在不同摄像头插入时，弹出窗口界面展示不同。</p>
 <h1 id="问题定位"><a href="#问题定位" class="headerlink" title="问题定位"></a>问题定位</h1><ol>
 <li>使用spy++分析窗口组成，发现组成窗口都是由windows api绘制<br><img src="/2023/06/13/wine-%E6%97%A0%E6%B3%95%E6%89%93%E5%BC%80%E8%A7%86%E9%A2%91%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E5%BC%B9%E7%AA%97%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90/2.png" alt="图2"></li>
 <li>通过google搜图，发现此窗口为通用窗口，在obs等摄像头捕捉软件都存在。</li>
@@ -206,7 +182,7 @@
   <entry>
     <title>【Linux技术分享】原子更新调研分析（二）deepin原子更新调研开发</title>
     <url>/2023/04/18/%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94%E5%88%86%E6%9E%90%EF%BC%88%E4%BA%8C%EF%BC%89deepin%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94/</url>
-    <content><![CDATA[<h1 id="原子更新调研分析（一）deepin原子更新调研开发"><a href="#原子更新调研分析（一）deepin原子更新调研开发" class="headerlink" title="原子更新调研分析（一）deepin原子更新调研开发"></a>原子更新调研分析（一）deepin原子更新调研开发</h1><p><em><strong>deepin的原子开发告一段落，项目已经交给社区维护，仓库在：<a href="https://github.com/linuxdeepin/deepin-upgrade-manager%E3%80%82%E9%A2%84%E8%AE%A1%E5%86%99%E5%87%A0%E7%AF%87%E6%96%87%E6%A1%A3%E8%AE%B0%E5%BD%95%E4%B8%8B%E5%BC%80%E5%8F%91%E7%9A%84%E7%BB%86%E8%8A%82%E4%B8%8E%E5%88%9D%E8%A1%B7%EF%BC%8C%E7%AE%97%E6%98%AF%E5%AF%B9%E8%BF%99%E4%B8%AA%E9%A1%B9%E7%9B%AE%E7%9A%84%E6%80%BB%E7%BB%93%E5%8F%AD%E3%80%82">https://github.com/linuxdeepin/deepin-upgrade-manager。预计写几篇文档记录下开发的细节与初衷，算是对这个项目的总结叭。</a></strong></em></p>
+    <content><![CDATA[<h1 id="原子更新调研分析（二）deepin原子更新调研开发"><a href="#原子更新调研分析（二）deepin原子更新调研开发" class="headerlink" title="原子更新调研分析（二）deepin原子更新调研开发"></a>原子更新调研分析（二）deepin原子更新调研开发</h1><p><em><strong>deepin的原子开发告一段落，项目已经交给社区维护，仓库在：<a href="https://github.com/linuxdeepin/deepin-upgrade-manager%E3%80%82%E9%A2%84%E8%AE%A1%E5%86%99%E5%87%A0%E7%AF%87%E6%96%87%E6%A1%A3%E8%AE%B0%E5%BD%95%E4%B8%8B%E5%BC%80%E5%8F%91%E7%9A%84%E7%BB%86%E8%8A%82%E4%B8%8E%E5%88%9D%E8%A1%B7%EF%BC%8C%E7%AE%97%E6%98%AF%E5%AF%B9%E8%BF%99%E4%B8%AA%E9%A1%B9%E7%9B%AE%E7%9A%84%E6%80%BB%E7%BB%93%E5%8F%AD%E3%80%82">https://github.com/linuxdeepin/deepin-upgrade-manager。预计写几篇文档记录下开发的细节与初衷，算是对这个项目的总结叭。</a></strong></em></p>
 <span id="more"></span>
 <h2 id="原子更新是什么"><a href="#原子更新是什么" class="headerlink" title="原子更新是什么"></a>原子更新是什么</h2><pre><code>原子更新是对deepin系统级别的备份方案，为什么叫原子更新呢？原子说明本次操作是不可中断的，连一起意思就是本次系统更新是可靠的，可逆的，不可中断的意思，旨在解决deepin的系统更新不稳定的问题，若存在系统更新崩溃可随时回到之前备份的任意节点，保证系统数据。
 </code></pre>
