@@ -3,7 +3,7 @@
   <entry>
     <title>【Linux技术分享】栈溢出漏洞-shellcode学习</title>
     <url>/2023/11/21/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%BC%8F%E6%B4%9E-shellcode%E5%AD%A6%E4%B9%A0/</url>
-    <content><![CDATA[<h1 id="栈溢出漏洞-shellcode学习"><a href="#栈溢出漏洞-shellcode学习" class="headerlink" title="栈溢出漏洞-shellcode学习"></a>栈溢出漏洞-shellcode学习</h1><p><em><strong>最近在wine开发中发现一些关于漏洞点,很有意思记录一下。<a href="https://evilpan.com/2018/03/17/exploit-the-stack/">参考</a></strong></em></p>
+    <content><![CDATA[<h1 id="栈溢出漏洞-shellcode学习"><a href="#栈溢出漏洞-shellcode学习" class="headerlink" title="栈溢出漏洞-shellcode学习"></a>栈溢出漏洞-shellcode学习</h1><p><em><strong>最近在wine开发中发现一些关于漏洞知识点,很有意思记录一下。<a href="https://evilpan.com/2018/03/17/exploit-the-stack/">参考</a></strong></em></p>
 <span id="more"></span>
 
 <h2 id="esp-ebp"><a href="#esp-ebp" class="headerlink" title="esp/ebp"></a>esp/ebp</h2><ul>
