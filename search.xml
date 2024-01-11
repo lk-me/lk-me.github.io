@@ -1,6 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【Linux技术分享】理解ASCII，Unicode，UTF-8，wchar，char</title>
+    <url>/2024/04/11/%E5%AD%97%E7%AC%A6%E7%90%86%E8%A7%A3/</url>
+    <content><![CDATA[<h1 id="利用C-实现链表基础代码"><a href="#利用C-实现链表基础代码" class="headerlink" title="利用C++实现链表基础代码"></a>利用C++实现链表基础代码</h1><p><a href="http://www.ruanyifeng.com/blog/2007/10/ascii_unicode_and_utf-8.html">字符编码笔记：ASCII，Unicode 和 UTF-8</a><br><a href="https://r12a.github.io/app-conversion/">各种编码在线转换工具</a></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><h2 id="一、ASCII-码"><a href="#一、ASCII-码" class="headerlink" title="一、ASCII 码"></a>一、ASCII 码</h2><p>只有128个，只占用了一个字节的后面7位，最前面的一位统一规定为0（01000000-01111111）</p>
+<h2 id="二、非-ASCII-编码"><a href="#二、非-ASCII-编码" class="headerlink" title="二、非 ASCII 编码"></a>二、非 ASCII 编码</h2><p>不同的国家有不同的字母，有256个，占用了一个完整的字节八位（00000000-11111111）</p>
+<h2 id="三、-Unicode"><a href="#三、-Unicode" class="headerlink" title="三、 Unicode"></a>三、 Unicode</h2><p>Unicode 是一个很大的集合，现在的规模可以容纳100多万个符号，但存在字节浪费问题。比如，汉字严的 Unicode 是十六进制数4E25，转换成二进制数足足有15位（100111000100101），也就是说，这个符号的表示至少需要2个字节。表示其他更大的符号，可能需要3个字节或者4个字节，甚至更多。</p>
+<h2 id="四、UTF-8"><a href="#四、UTF-8" class="headerlink" title="四、UTF-8"></a>四、UTF-8</h2><p>UTF-8 就是在互联网上使用最广的一种 Unicode 的实现方式。对于n字节的符号（n &gt; 1），第一个字节的前n位都设为1，第n + 1位设为0，后面字节的前两位一律设为10。剩下的没有提及的二进制位，全部为这个符号的 Unicode 码。</p>
+<h2 id="五、char"><a href="#五、char" class="headerlink" title="五、char"></a>五、char</h2><p>char 是 8 位类型，只能存储单字节字符，例如ASCII 码，单字节UTF-8，单字节Unicode，无法存放中文，中文为双字节字符，例如：<code>char code = L&#39;a&#39;;</code></p>
+<h2 id="六、wchar"><a href="#六、wchar" class="headerlink" title="六、wchar"></a>六、wchar</h2><p>wchar 是 一个 16 位宽字符，用于存储编码为 UTF-16LE 的 Unicode，可以存储中文，例如：<code>wchar_t chineseChar = L&#39;中&#39;;</code></p>
+]]></content>
+      <categories>
+        <category>C++</category>
+      </categories>
+      <tags>
+        <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【Linux技术分享】栈溢出漏洞-shellcode学习</title>
     <url>/2023/11/21/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%BC%8F%E6%B4%9E-shellcode%E5%AD%A6%E4%B9%A0/</url>
     <content><![CDATA[<h1 id="栈溢出漏洞-shellcode学习"><a href="#栈溢出漏洞-shellcode学习" class="headerlink" title="栈溢出漏洞-shellcode学习"></a>栈溢出漏洞-shellcode学习</h1><p><em><strong>最近在wine开发中发现一些关于漏洞知识点,很有意思记录一下。<a href="https://evilpan.com/2018/03/17/exploit-the-stack/">参考</a></strong></em></p>
