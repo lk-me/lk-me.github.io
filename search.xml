@@ -20,6 +20,25 @@
       </tags>
   </entry>
   <entry>
+    <title>【旅游】厦门行</title>
+    <url>/2024/02/23/%E5%8E%A6%E9%97%A8%E8%A1%8C/</url>
+    <content><![CDATA[<h1 id="过年逛逛厦门"><a href="#过年逛逛厦门" class="headerlink" title="过年逛逛厦门"></a>过年逛逛厦门</h1><span id="more"></span>
+
+<h3 id="过程"><a href="#过程" class="headerlink" title="过程"></a>过程</h3><p>过年在厦门值班顺便逛逛厦门</p>
+<h4 id="楚雨荨他家"><a href="#楚雨荨他家" class="headerlink" title="楚雨荨他家"></a>楚雨荨他家</h4><p><img src="/2024/02/23/%E5%8E%A6%E9%97%A8%E8%A1%8C/%E5%9B%BE1.jpg" alt="图1"></p>
+<h4 id="泉州扎花"><a href="#泉州扎花" class="headerlink" title="泉州扎花"></a>泉州扎花</h4><p><img src="/2024/02/23/%E5%8E%A6%E9%97%A8%E8%A1%8C/%E5%9B%BE2.jpg" alt="图2"></p>
+<h4 id="厦门植物园植物"><a href="#厦门植物园植物" class="headerlink" title="厦门植物园植物"></a>厦门植物园植物</h4><p><img src="/2024/02/23/%E5%8E%A6%E9%97%A8%E8%A1%8C/%E5%9B%BE3.jpg" alt="图3"></p>
+<h4 id="回家路上"><a href="#回家路上" class="headerlink" title="回家路上"></a>回家路上</h4><p><img src="/2024/02/23/%E5%8E%A6%E9%97%A8%E8%A1%8C/%E5%9B%BE4.jpg" alt="图4"></p>
+<p>总结：厦门不愧是南方城市，天气暖和空气清新，过年只要是叫得出名字的地方都是人挨人</p>
+]]></content>
+      <categories>
+        <category>运动</category>
+      </categories>
+      <tags>
+        <tag>旅游</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【Linux技术分享】栈溢出漏洞-shellcode学习</title>
     <url>/2023/11/21/%E6%A0%88%E6%BA%A2%E5%87%BA%E6%BC%8F%E6%B4%9E-shellcode%E5%AD%A6%E4%B9%A0/</url>
     <content><![CDATA[<h1 id="栈溢出漏洞-shellcode学习"><a href="#栈溢出漏洞-shellcode学习" class="headerlink" title="栈溢出漏洞-shellcode学习"></a>栈溢出漏洞-shellcode学习</h1><p><em><strong>最近在wine开发中发现一些关于漏洞知识点,很有意思记录一下。<a href="https://evilpan.com/2018/03/17/exploit-the-stack/">参考</a></strong></em></p>
