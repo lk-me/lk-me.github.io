@@ -20,6 +20,34 @@
       </tags>
   </entry>
   <entry>
+    <title>【Linux技术分享】sock模块显示0xc000000d错误码问题分析</title>
+    <url>/2024/03/19/wine-sock%E6%A8%A1%E5%9D%97%E6%98%BE%E7%A4%BA0xc000000d%E9%94%99%E8%AF%AF%E7%A0%81%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/</url>
+    <content><![CDATA[<h1 id="sock模块显示0xc000000d错误码问题分析"><a href="#sock模块显示0xc000000d错误码问题分析" class="headerlink" title="sock模块显示0xc000000d错误码问题分析"></a>sock模块显示0xc000000d错误码问题分析</h1><span id="more"></span>
+
+
+<h2 id="问题概述"><a href="#问题概述" class="headerlink" title="问题概述"></a>问题概述</h2><p>在机房监控应用启动时，ws2_32.dll模块中报错<code>connect failed, status 0xc000000d</code></p>
+<h2 id="分析逻辑"><a href="#分析逻辑" class="headerlink" title="分析逻辑"></a>分析逻辑</h2><ol>
+<li>错误日志为：connect failed, status 0xc000000d，0xc000000d是系统中的一个常见错误代码，表示 “INVALID_PARAMETER”，即无效的参数</li>
+<li>打印server与winsock日志，发现winsock在connect函数报错，server在ioctl中报错，同样返回为参数错误问题，在<code>connect</code>函数日志中参数传入为<code>socket 0x50,&#123; family AF_INET, address 192.0.xxx.xxx, port xxxxx &#125;, len 40</code>，经验判断传入参数无问题</li>
+<li>编写demo验证，并传入相同参数，验证connect成功未报错</li>
+<li>查看 winsock 日志，其中观察socket 0x50 创建流程，发现其在connet前调用bind函数</li>
+<li>查看bind日志参数，<code>socket 0x50,&#123; family AF_INET, address 127.0.1.1, port 0 &#125;</code>，查看此日志基本就发现出现原因了</li>
+<li>问题原因：<code>127.0.1.1</code>地址为回环地址，通常使用本地应用sock,当创建sock绑定此地址时，不能访问非本机地址</li>
+<li>继续分析日志发现其通过<code>getaddrinfo</code>函数获取当前系统ip,但在wine下通过此函数返回<code>127.0.1.1</code>，如下图<br><img src="/2024/03/19/wine-sock%E6%A8%A1%E5%9D%97%E6%98%BE%E7%A4%BA0xc000000d%E9%94%99%E8%AF%AF%E7%A0%81%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/1.png" alt="图1"><br><img src="/2024/03/19/wine-sock%E6%A8%A1%E5%9D%97%E6%98%BE%E7%A4%BA0xc000000d%E9%94%99%E8%AF%AF%E7%A0%81%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/2.png" alt="图2"></li>
+<li>经demo验证发现在nfs下的getaddrinfo函数无法获取到当前系统所有ip地址，但在deepin通过此函数是可行的</li>
+<li>getaddrinfo函数首先是通过系统中<code>/etc/hosts</code>文件中获取，若此文件中存在当传入的主机名称对应ip地址时则直接返回，在nfs上系统安装时，会默认将<code>127.0.1.1</code>与主机名称写入至当前系统<code>/etc/hosts</code>，</li>
+<li><a href="https://www.debian.org/doc/manuals/debian-reference/ch05.en.html#_the_hostname_resolution">debian官方文档</a>显示当系统安装的时候若没有设置ip地址则会将<code>127.0.1.1</code>设置为系统ip以防止某些软件存在bug，若存在固定ip则需要进行替换</li>
+<li>修改应用安装包的preinstall,将hosts文件中的127.0.1.1替换为当前系统ip解决此问题</li>
+</ol>
+]]></content>
+      <categories>
+        <category>wine</category>
+      </categories>
+      <tags>
+        <tag>wine</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【旅游】厦门行</title>
     <url>/2024/02/23/%E5%8E%A6%E9%97%A8%E8%A1%8C/</url>
     <content><![CDATA[<h1 id="过年逛逛厦门"><a href="#过年逛逛厦门" class="headerlink" title="过年逛逛厦门"></a>过年逛逛厦门</h1><span id="more"></span>
