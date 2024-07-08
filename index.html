@@ -191,7 +191,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2024/05/29/wine-%E5%85%B3%E4%BA%8E%E5%AF%B9%E8%B5%9B%E6%89%AC%E8%87%AA%E5%8A%A9%E6%9C%BA%E7%B3%BB%E7%BB%9F%E6%89%AB%E7%A0%81%E5%A4%A7%E5%B0%8F%E5%BC%82%E5%B8%B8%E9%97%AE%E9%A2%98/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/06/29/wine-%E6%98%93%E8%81%94%E4%BC%97%E6%89%AB%E7%A0%81%E4%B8%A2%E5%A4%B1%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
@@ -205,7 +205,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/05/29/wine-%E5%85%B3%E4%BA%8E%E5%AF%B9%E8%B5%9B%E6%89%AC%E8%87%AA%E5%8A%A9%E6%9C%BA%E7%B3%BB%E7%BB%9F%E6%89%AB%E7%A0%81%E5%A4%A7%E5%B0%8F%E5%BC%82%E5%B8%B8%E9%97%AE%E9%A2%98/" class="post-title-link" itemprop="url">【Linux技术分享】赛扬自助机系统扫码大小异常问题</a>
+            <a href="/2024/06/29/wine-%E6%98%93%E8%81%94%E4%BC%97%E6%89%AB%E7%A0%81%E4%B8%A2%E5%A4%B1%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">【Linux技术分享】易联众扫码丢失问题分析</a>
         </h2>
 
         <div class="post-meta">
@@ -214,10 +214,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2024-05-29 20:05:30 / 修改时间：10:31:49" itemprop="dateCreated datePublished" datetime="2024-05-29T20:05:30+08:00">2024-05-29</time>
+              <time title="创建时间：2024-06-29 20:05:30" itemprop="dateCreated datePublished" datetime="2024-06-29T20:05:30+08:00">2024-06-29</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-07-01 09:47:21" itemprop="dateModified" datetime="2024-07-01T09:47:21+08:00">2024-07-01</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -239,94 +245,96 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="赛扬自助机系统扫码大小异常问题"><a href="#赛扬自助机系统扫码大小异常问题" class="headerlink" title="赛扬自助机系统扫码大小异常问题"></a>赛扬自助机系统扫码大小异常问题</h1><h2 id="问题概述"><a href="#问题概述" class="headerlink" title="问题概述"></a>问题概述</h2><p>赛扬自助机上的易联众三代扫码机器扫描门诊就诊指引单时大小存在异常</p>
-<p>window下输入框正常现象如下图：</p>
-<p><img src="/2024/05/29/wine-%E5%85%B3%E4%BA%8E%E5%AF%B9%E8%B5%9B%E6%89%AC%E8%87%AA%E5%8A%A9%E6%9C%BA%E7%B3%BB%E7%BB%9F%E6%89%AB%E7%A0%81%E5%A4%A7%E5%B0%8F%E5%BC%82%E5%B8%B8%E9%97%AE%E9%A2%98/1.png"></p>
-<p>nfs下wine异常现象如下图：</p>
-<p><img src="/2024/05/29/wine-%E5%85%B3%E4%BA%8E%E5%AF%B9%E8%B5%9B%E6%89%AC%E8%87%AA%E5%8A%A9%E6%9C%BA%E7%B3%BB%E7%BB%9F%E6%89%AB%E7%A0%81%E5%A4%A7%E5%B0%8F%E5%BC%82%E5%B8%B8%E9%97%AE%E9%A2%98/2.png"></p>
-<p><em><strong>经验证问题复现环境为：</strong></em></p>
-<p><em>软件环境</em>：amd架构，nfs-5.0-U212版本</p>
-<p><em>硬件环境</em>：cpu J1900</p>
-<p><em>wine版本</em>：上游wine-8.6</p>
-<h2 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h2><p>从问题截图猜测该问题大致原因可能为：</p>
-<ul>
-<li>猜测1：驱动不正确导致机器未能正确发送事件至应用</li>
-<li>猜测2：窗管未能正常发送事件至目标窗口</li>
-<li>猜测3：wine自身存在问题导致显示错误</li>
-</ul>
-<h2 id="分析验证"><a href="#分析验证" class="headerlink" title="分析验证"></a>分析验证</h2><h3 id="验证准备"><a href="#验证准备" class="headerlink" title="验证准备"></a>验证准备</h3><ol>
-<li><p>为了方便验证首先需要排除是该应用问题还是通用输入框问题，简单实现了一个输入框窗口，简单代码如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">HWND hwnd = <span class="built_in">CreateWindow</span>(<span class="string">&quot;MyClass&quot;</span>, <span class="string">&quot;输入框示例&quot;</span>, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, <span class="number">300</span>, <span class="number">200</span>,</span><br><span class="line">                         <span class="literal">NULL</span>, <span class="literal">NULL</span>, hInstance, <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建输入框</span></span><br><span class="line">HWND hEdit = <span class="built_in">CreateWindow</span>(<span class="string">&quot;EDIT&quot;</span>, <span class="string">&quot;&quot;</span>, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, <span class="number">50</span>, <span class="number">50</span>, <span class="number">200</span>, <span class="number">25</span>,</span><br><span class="line">                          hwnd, <span class="literal">NULL</span>, hInstance, <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 显示窗口</span></span><br><span class="line"><span class="built_in">ShowWindow</span>(hwnd, nCmdShow);</span><br><span class="line"><span class="built_in">UpdateWindow</span>(hwnd);</span><br></pre></td></tr></table></figure></li>
-<li><p>运行后如下图，发现wine下的输入框在该硬件上现象保持一致，存在同样大小写丢失问题<br><img src="/2024/05/29/wine-%E5%85%B3%E4%BA%8E%E5%AF%B9%E8%B5%9B%E6%89%AC%E8%87%AA%E5%8A%A9%E6%9C%BA%E7%B3%BB%E7%BB%9F%E6%89%AB%E7%A0%81%E5%A4%A7%E5%B0%8F%E5%BC%82%E5%B8%B8%E9%97%AE%E9%A2%98/3.png"></p>
-<h3 id="猜测1"><a href="#猜测1" class="headerlink" title="猜测1"></a>猜测1</h3></li>
-<li><p>介绍一个观察linux系统下硬件事件工具evtest</p>
-<ul>
-<li>evtest：evtest是打印evdev内核事件的工具，它直接从内核设备读取并打印设备描述的带有值和符号名的事件，可以用来调试鼠标、键盘、触摸板等输入设备evtest通常用于在X.org中调试输入设备的问题，evtest提供了内核的处理信息，根据这些信息。可以判断是内核问题还是X.org问题 输出数据中，“type”是input类型，可以是“EV KEY”、“EV SW”、“EV SND”、“EV LED”或数值<br>value可以是十进制也可以是十六进制，或者是查询的kev/开关/声音/LED的常量名。</li>
-</ul>
-</li>
-<li><p>通过evtest监听指定的硬件发送至内核的事件如图：<br><img src="/2024/05/29/wine-%E5%85%B3%E4%BA%8E%E5%AF%B9%E8%B5%9B%E6%89%AC%E8%87%AA%E5%8A%A9%E6%9C%BA%E7%B3%BB%E7%BB%9F%E6%89%AB%E7%A0%81%E5%A4%A7%E5%B0%8F%E5%BC%82%E5%B8%B8%E9%97%AE%E9%A2%98/4.png"></p>
-</li>
-<li><p>其中value值是按下与松开code值代表按键码，从evtest内核监听看”j”的按下与松开事件与”C”按下与松开事件一致，证明驱动正确的发送事件至内核。</p>
-</li>
-</ol>
-<h3 id="猜测2："><a href="#猜测2：" class="headerlink" title="猜测2："></a>猜测2：</h3><ol>
-<li><p>介绍一个观察linux窗口事件的工具xev与查看linux窗口信息工具xwininfo</p>
-<ul>
-<li>xwininfo：列出窗口的基本几何信息和状态，简单用法是在终端里面执行命令 <code>xwininfo</code> 之后， 此时系统鼠标光标被 <code>xwininfo</code> 捕获，光标变成十字星形状，移动鼠标点击要查看的窗口的任意区域，执行<code>xwininfo</code>的终端输出了该窗口的这些 X11 属性.</li>
-<li>xev：xev是一个X Window System的实用程序，用于查看键盘和鼠标的输入事件。</li>
-</ul>
-</li>
-<li><p>通过xwindow获取目标窗口window id再通过xev监听系统发送至窗口消息，如下图：<br><img src="/2024/05/29/wine-%E5%85%B3%E4%BA%8E%E5%AF%B9%E8%B5%9B%E6%89%AC%E8%87%AA%E5%8A%A9%E6%9C%BA%E7%B3%BB%E7%BB%9F%E6%89%AB%E7%A0%81%E5%A4%A7%E5%B0%8F%E5%BC%82%E5%B8%B8%E9%97%AE%E9%A2%98/5.png"></p>
-</li>
-<li><p>其中XmbLookupString与XLookupString获取的值均为”J”，证明窗管发送事件无误</p>
-</li>
-</ol>
-<h3 id="猜测3："><a href="#猜测3：" class="headerlink" title="猜测3："></a>猜测3：</h3><ol>
-<li>开启wine下关于键盘输入的日志<blockquote>
-<p>WINEDEBUG=+timestamp,+pid,+tid,+key,+keyboard,+imm WINEPREFIX=”/opt/winux/hotpot/appstore/drawbloodsef-win-u-1.0nfs1” /opt/winux/wine-all/wine8.6/bin/wine  /home/xm174/桌面/demo.exe &amp;&gt;~/222.txt</p>
-</blockquote>
-</li>
-</ol>
-<ol start="2">
-<li>过滤KeyRelease|KeyPress事件<blockquote>
-<p>grep -a -E “KeyRelease|KeyPress” ~/222.txt<br><img src="/2024/05/29/wine-%E5%85%B3%E4%BA%8E%E5%AF%B9%E8%B5%9B%E6%89%AC%E8%87%AA%E5%8A%A9%E6%9C%BA%E7%B3%BB%E7%BB%9F%E6%89%AB%E7%A0%81%E5%A4%A7%E5%B0%8F%E5%BC%82%E5%B8%B8%E9%97%AE%E9%A2%98/6.png"></p>
-</blockquote>
-</li>
-<li>发现当前应用在按下“J”时，已经提前将Shift_L释放，其异常总体流程为:</li>
-</ol>
-<ul>
-<li>KeyPress(Shift_L)-&gt;KeyPress (J)-&gt;KeyRelease(Shift_L)-&gt;KeyRelease(j)</li>
-</ul>
-<ol start="4">
-<li>正常的“P”大写按键流程为：</li>
-</ol>
-<ul>
-<li>KeyPress(Shift_L)-&gt;KeyPress(P)-&gt;KeyRelease(Shift_L)-&gt;KeyRelease”p”</li>
-</ul>
-<ol start="5">
-<li><p>通过3,4发现按键事件存在异常，通过<a target="_blank" rel="noopener" href="https://www.x.org/releases/X11R7.6/doc/libX11/specs/XIM/xim.html#filtering_events">The Input Method Protocol</a>文档中发现如果使用xim协议注册了xic,就会先将事件提供至输入法框架，如下图：<br><img src="/2024/05/29/wine-%E5%85%B3%E4%BA%8E%E5%AF%B9%E8%B5%9B%E6%89%AC%E8%87%AA%E5%8A%A9%E6%9C%BA%E7%B3%BB%E7%BB%9F%E6%89%AB%E7%A0%81%E5%A4%A7%E5%B0%8F%E5%BC%82%E5%B8%B8%E9%97%AE%E9%A2%98/7.png"></p>
-</li>
-<li><p>开启输入法日志，查看接收的事件变化</p>
-<blockquote>
-<p>fcitx5 -r –verbose *=5</p>
-</blockquote>
-</li>
-<li><p>如下图，其中<code>XIM Key Event: 2</code>为按下事件，发现当前系统中输入法是正常发送<code>shift+j</code>事件至应用中的，但应用日志存在大量KeyRelease(Shift_L)事件，将KeyPress(Shift_L)事件提前释放<br><img src="/2024/05/29/wine-%E5%85%B3%E4%BA%8E%E5%AF%B9%E8%B5%9B%E6%89%AC%E8%87%AA%E5%8A%A9%E6%9C%BA%E7%B3%BB%E7%BB%9F%E6%89%AB%E7%A0%81%E5%A4%A7%E5%B0%8F%E5%BC%82%E5%B8%B8%E9%97%AE%E9%A2%98/8.png"><br><img src="/2024/05/29/wine-%E5%85%B3%E4%BA%8E%E5%AF%B9%E8%B5%9B%E6%89%AC%E8%87%AA%E5%8A%A9%E6%9C%BA%E7%B3%BB%E7%BB%9F%E6%89%AB%E7%A0%81%E5%A4%A7%E5%B0%8F%E5%BC%82%E5%B8%B8%E9%97%AE%E9%A2%98/9.png"></p>
-</li>
-<li><p>查看wine下的事件代码，在<code>/dlls/winex11.drv/event.c</code>的<code>process_events</code>函数中处理窗口事件</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (XCheckIfEvent( display, &amp;event, filter, (<span class="keyword">char</span> *)arg ))</span><br><span class="line">   &#123;</span><br><span class="line">       count++;</span><br><span class="line">       <span class="keyword">if</span> (XFilterEvent( &amp;event, None ))</span><br><span class="line">       &#123;</span><br><span class="line">           <span class="comment">//continue;</span></span><br><span class="line">           <span class="comment">/*</span></span><br><span class="line"><span class="comment">            * SCIM on linux filters key events strangely. It does not filter the</span></span><br><span class="line"><span class="comment">            * KeyPress events for these keys however it does filter the</span></span><br><span class="line"><span class="comment">            * KeyRelease events. This causes wine to become very confused as</span></span><br><span class="line"><span class="comment">            * to the keyboard state.</span></span><br><span class="line"><span class="comment">            *</span></span><br><span class="line"><span class="comment">            * We need to let those KeyRelease events be processed so that the</span></span><br><span class="line"><span class="comment">            * keyboard state is correct.</span></span><br><span class="line"><span class="comment">            */</span></span><br><span class="line">           <span class="keyword">if</span> (event.type == KeyRelease)</span><br><span class="line">           &#123;</span><br><span class="line">               KeySym keysym = <span class="number">0</span>;</span><br><span class="line">               XKeyEvent *keyevent = &amp;event.xkey;</span><br><span class="line"></span><br><span class="line">               XLookupString(keyevent, <span class="literal">NULL</span>, <span class="number">0</span>, &amp;keysym, <span class="literal">NULL</span>);</span><br><span class="line">               <span class="keyword">if</span> (!(keysym == XK_Shift_L ||</span><br><span class="line">                   keysym == XK_Shift_R ||</span><br><span class="line">                   keysym == XK_Control_L ||</span><br><span class="line">                   keysym == XK_Control_R ||</span><br><span class="line">                   keysym == XK_Alt_R ||</span><br><span class="line">                   keysym == XK_Alt_L ||</span><br><span class="line">                   keysym == XK_Meta_R ||</span><br><span class="line">                   keysym == XK_Meta_L))</span><br><span class="line">                       <span class="keyword">continue</span>; <span class="comment">/* not a key we care about, ignore it */</span></span><br><span class="line">           &#125;</span><br><span class="line">           <span class="keyword">else</span></span><br><span class="line">               <span class="keyword">continue</span>;  <span class="comment">/* filtered, ignore it */</span></span><br><span class="line">       &#125;</span><br><span class="line">       get_event_data( &amp;event );</span><br><span class="line">       <span class="keyword">if</span> (prev_event.type) action = merge_events( &amp;prev_event, &amp;event );</span><br><span class="line">       ...</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></li>
-<li><p>发现代码中通过“XFilterEvent”过滤事件时，未将KeyRelease事件全部过滤，XK_Control_L也会进入函数正常处理，如第五点中的图中所示，程序如果使用xim并且注册xic，会将输入法需要的按键事件（XK_Control_L释放消息）通过XFilterEvent与XNextEvent发送至输入法再转发至应用。通过wine下的注释得知，此过滤操作是特殊处理输入法框架SCIM，因为其框架未能正常处理KeyRelease消息需要wine中特殊处理完成。</p>
-</li>
-</ol>
-<h2 id="分析结论"><a href="#分析结论" class="headerlink" title="分析结论"></a>分析结论</h2><pre><code>通过上述分析与验证代码，可以初步猜测在nfs系统上如果存在输入法并在较慢芯片硬件上，快速触发按键释放消息，会导致wine应用接收消息错乱，导致应用未能正确处理按键按下释放消息。
-</code></pre>
-<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><ul>
-<li>方案1： 卸载输入法，将按键消息直接通过窗管发送至应用，即XFilterEvent不会过滤窗管发送至应用的KeyRelease消息，经验证可以解决大小写问题。</li>
-<li>方案2：读取系统中环境变量XMODIFIERS，若其设置为SCIM，则进入此判断循环，若不是则不进入，大致代码如下：<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">char</span>* env = getenv(<span class="string">&quot;XMODIFIERS&quot;</span>);</span><br><span class="line"><span class="keyword">while</span> (XCheckIfEvent( display, &amp;event, filter, (<span class="keyword">char</span> *)arg ))</span><br><span class="line">&#123;</span><br><span class="line">    count++;</span><br><span class="line">    <span class="keyword">if</span> (XFilterEvent( &amp;event, None ))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span>(<span class="literal">NULL</span> == env || <span class="built_in">strcmp</span>(env, <span class="string">&quot;@im=SCIM&quot;</span>))&#123;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    ‘’‘‘’‘</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-修改后效果如下：<br>  <img src="/2024/05/29/wine-%E5%85%B3%E4%BA%8E%E5%AF%B9%E8%B5%9B%E6%89%AC%E8%87%AA%E5%8A%A9%E6%9C%BA%E7%B3%BB%E7%BB%9F%E6%89%AB%E7%A0%81%E5%A4%A7%E5%B0%8F%E5%BC%82%E5%B8%B8%E9%97%AE%E9%A2%98/10.png"></li>
-</ul>
-<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>这个问题通过对于x11窗口分析的几个工具与wine中的日志进行分析定位，该问题是需要开发者熟悉输入法与wine中的交互关系，理清其中消息处理步骤，才能把握问题根本原因。</p>
+          <h1 id="易联众扫码丢失问题分析"><a href="#易联众扫码丢失问题分析" class="headerlink" title="易联众扫码丢失问题分析"></a>易联众扫码丢失问题分析</h1>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/06/29/wine-%E6%98%93%E8%81%94%E4%BC%97%E6%89%AB%E7%A0%81%E4%B8%A2%E5%A4%B1%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
 
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/05/29/wine-%E8%B5%9B%E6%89%AC%E8%87%AA%E5%8A%A9%E6%9C%BA%E7%B3%BB%E7%BB%9F%E6%89%AB%E7%A0%81%E5%A4%A7%E5%B0%8F%E5%BC%82%E5%B8%B8%E9%97%AE%E9%A2%98/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Mecry">
+      <meta itemprop="description" content="在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Link Mecry">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/05/29/wine-%E8%B5%9B%E6%89%AC%E8%87%AA%E5%8A%A9%E6%9C%BA%E7%B3%BB%E7%BB%9F%E6%89%AB%E7%A0%81%E5%A4%A7%E5%B0%8F%E5%BC%82%E5%B8%B8%E9%97%AE%E9%A2%98/" class="post-title-link" itemprop="url">【Linux技术分享】赛扬自助机系统扫码大小异常问题</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-05-29 20:05:30" itemprop="dateCreated datePublished" datetime="2024-05-29T20:05:30+08:00">2024-05-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-07-01 09:46:27" itemprop="dateModified" datetime="2024-07-01T09:46:27+08:00">2024-07-01</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/wine/" itemprop="url" rel="index"><span itemprop="name">wine</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="赛扬自助机系统扫码大小异常问题"><a href="#赛扬自助机系统扫码大小异常问题" class="headerlink" title="赛扬自助机系统扫码大小异常问题"></a>赛扬自助机系统扫码大小异常问题</h1>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/05/29/wine-%E8%B5%9B%E6%89%AC%E8%87%AA%E5%8A%A9%E6%9C%BA%E7%B3%BB%E7%BB%9F%E6%89%AB%E7%A0%81%E5%A4%A7%E5%B0%8F%E5%BC%82%E5%B8%B8%E9%97%AE%E9%A2%98/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -971,87 +979,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/04/18/%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94%E5%88%86%E6%9E%90%EF%BC%88%E4%BA%8C%EF%BC%89deepin%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
-      <meta itemprop="name" content="Mecry">
-      <meta itemprop="description" content="在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Link Mecry">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/04/18/%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94%E5%88%86%E6%9E%90%EF%BC%88%E4%BA%8C%EF%BC%89deepin%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94/" class="post-title-link" itemprop="url">【Linux技术分享】原子更新调研分析（二）deepin原子更新调研开发</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-04-18 14:05:30" itemprop="dateCreated datePublished" datetime="2023-04-18T14:05:30+08:00">2023-04-18</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-09-06 14:37:11" itemprop="dateModified" datetime="2023-09-06T14:37:11+08:00">2023-09-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0/" itemprop="url" rel="index"><span itemprop="name">原子更新</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="原子更新调研分析（二）deepin原子更新调研开发"><a href="#原子更新调研分析（二）deepin原子更新调研开发" class="headerlink" title="原子更新调研分析（二）deepin原子更新调研开发"></a>原子更新调研分析（二）deepin原子更新调研开发</h1><p><em><strong>deepin的原子开发告一段落，项目已经交给社区维护，仓库在：<a target="_blank" rel="noopener" href="https://github.com/linuxdeepin/deepin-upgrade-manager%E3%80%82%E9%A2%84%E8%AE%A1%E5%86%99%E5%87%A0%E7%AF%87%E6%96%87%E6%A1%A3%E8%AE%B0%E5%BD%95%E4%B8%8B%E5%BC%80%E5%8F%91%E7%9A%84%E7%BB%86%E8%8A%82%E4%B8%8E%E5%88%9D%E8%A1%B7%EF%BC%8C%E7%AE%97%E6%98%AF%E5%AF%B9%E8%BF%99%E4%B8%AA%E9%A1%B9%E7%9B%AE%E7%9A%84%E6%80%BB%E7%BB%93%E5%8F%AD%E3%80%82">https://github.com/linuxdeepin/deepin-upgrade-manager。预计写几篇文档记录下开发的细节与初衷，算是对这个项目的总结叭。</a></strong></em></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/04/18/%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94%E5%88%86%E6%9E%90%EF%BC%88%E4%BA%8C%EF%BC%89deepin%E5%8E%9F%E5%AD%90%E6%9B%B4%E6%96%B0%E8%B0%83%E7%A0%94/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1123,7 +1050,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">39</span>
+          <span class="site-state-item-count">40</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
