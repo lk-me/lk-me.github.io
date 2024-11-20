@@ -1,6 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【Linux技术分享】将简易脚本打包为服务</title>
+    <url>/2024/11/20/%E5%B0%86%E7%AE%80%E6%98%93%E8%84%9A%E6%9C%AC%E6%89%93%E5%8C%85%E4%B8%BA%E6%9C%8D%E5%8A%A1/</url>
+    <content><![CDATA[<h1 id="将简易脚本打包为服务"><a href="#将简易脚本打包为服务" class="headerlink" title="将简易脚本打包为服务"></a>将简易脚本打包为服务</h1><p><em><strong>使用debian+makefile将脚本实现为服务文件，并进行打包，<a href="https://github.com/lk-me/nfs-clean-log">代码地址</a>。</strong></em></p>
+<span id="more"></span>
+
+<h1 id="nfs-clean-log"><a href="#nfs-clean-log" class="headerlink" title="nfs-clean-log"></a>nfs-clean-log</h1><pre><code>`nfs-clean-log`为简易程序，将一个删除日志缓存的批处理文件脚本使用服务进行便捷启动，并增加将其用debian的contral控制打包。
+</code></pre>
+<h3 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h3><ul>
+<li>重启后删除 /var/cache/apt/archives/*.deb，/var/crash/*，/var/log/journal/*文件</li>
+</ul>
+<h3 id="debian-ubuntu"><a href="#debian-ubuntu" class="headerlink" title="/debian/ubuntu"></a>/debian/ubuntu</h3><ul>
+<li> sudo dpkg-buildpackage -us -uc -b</li>
+</ul>
+<h3 id="todo"><a href="#todo" class="headerlink" title="todo"></a>todo</h3><ul>
+<li>对文件判断，并补充脚本功能</li>
+</ul>
+]]></content>
+      <categories>
+        <category>C++</category>
+      </categories>
+      <tags>
+        <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【Linux技术分享】ida修改dll并进行保存</title>
     <url>/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/</url>
     <content><![CDATA[<h1 id="ida修改目标dll"><a href="#ida修改目标dll" class="headerlink" title="ida修改目标dll"></a>ida修改目标dll</h1><span id="more"></span>
