@@ -105,6 +105,267 @@
       </tags>
   </entry>
   <entry>
+    <title>【Linux技术分享】wine9下的字体加载显示学习</title>
+    <url>/2024/08/26/wine-wine9%E4%B8%8B%E7%9A%84%E5%AD%97%E4%BD%93%E5%8A%A0%E8%BD%BD%E6%98%BE%E7%A4%BA%E5%AD%A6%E4%B9%A0/</url>
+    <content><![CDATA[<h1 id="wine9下的字体加载显示学习"><a href="#wine9下的字体加载显示学习" class="headerlink" title="wine9下的字体加载显示学习"></a>wine9下的字体加载显示学习</h1><span id="more"></span>
+
+<h1 id="字体与字形"><a href="#字体与字形" class="headerlink" title="字体与字形"></a>字体与字形</h1><p>字符的图像称为字形（glyphs），而一个字符可以有多个字形。而一个字形，也可用于多个字符（不同的字符，写法可能一样）。</p>
+<p>我们可以只关注两个概念：</p>
+<ol>
+<li><p>一个字体文件包含多个字形，每一个都可以储存为位图、矢量、或其他任何方案。而我们通过字形索引访问。</p>
+</li>
+<li><p>字体文件包含一到多个表，称为字符表（character maps）。它可以将字符编码（ASCII、Unicode、GB2312、BIG5等）转为字形索引。（通过字形索引就能获取到字形，便可获得字符的图像）</p>
+</li>
+</ol>
+<h1 id="字形"><a href="#字形" class="headerlink" title="字形"></a>字形</h1><h2 id="衬线（Serif"><a href="#衬线（Serif" class="headerlink" title="衬线（Serif)"></a>衬线（Serif)</h2><p>一些字体中的字母笔画首尾具有装饰性的细节，称为衬线。具有衬线的字体称为衬线体，不具有衬线的字体称为无衬线体。(“衬线体”是用于欧洲文字字体的纯粹装饰性特征，而阿拉伯语或东亚文字中使用的字形具有在某些方面可能相似的特征（例如笔画宽度），但不能称为衬线。)</p>
+<h2 id="宽度比例（Proportion）"><a href="#宽度比例（Proportion）" class="headerlink" title="宽度比例（Proportion）"></a>宽度比例（Proportion）</h2><p>比例字体（proportional typeface）字形的宽度富有变化，等宽字体（定宽字体）中的字形具有相同的宽度。一些字体中，西文字母为等宽，而符号和汉字等正好是西文的两倍宽这类字体称为duospaced字体，在中文语境下往往也被称作等宽字体。</p>
+<h2 id="字体度量（Metric）"><a href="#字体度量（Metric）" class="headerlink" title="字体度量（Metric）"></a>字体度量（Metric）</h2><p>对于拉丁字母、希腊字母、西里尔字母等西文字母，基线（Baseline）指的是多数字母排列的基准线，通常为 n, x, h 等字母的下沿所在的横线。x, u, w 等字母上沿所在的横线称为主线（mean line），其与基线距离称为x字高（x-height）。基线以下的垂直空间称为降部（descender）；主线到以上的垂直空间称为升部（ascender）。一些字母的变音符号位于降部和升部中。升部高度与x字高的比例会对字体的可读性和外观影响很大，并常常用于表征某一字体。</p>
+<h1 id="linux下字体"><a href="#linux下字体" class="headerlink" title="linux下字体"></a>linux下字体</h1><h2 id="系统中的默认字体"><a href="#系统中的默认字体" class="headerlink" title="系统中的默认字体"></a>系统中的默认字体</h2><p>比如我系统中的默认”Noto Sans CJK TC” 字体，用于支持中文（简体和繁体）、日文和韩文字符的显示。它是 Google 公司开发的 Noto 字体系列的一部分，旨在提供跨多个东亚语言的一致字体支持。</p>
+<ol>
+<li>“Noto Sans CJK TC” 中的 “Noto” 是“No Tofu”的简称。在部分缺失某些字体的Windows、Linux等系统中，无法显示的字符会变成方块“□”，一般惯称为“tofu”，即“豆腐”之意。因此Noto的开发宗旨即为消除所有无法显示的字符，实现“No tofu”的目标。</li>
+<li>“Sans” 表示这是一种无衬线字体（Sans-serif），即字母没有额外的装饰线条。</li>
+<li>“CJK” 是一个缩写，代表中文（Chinese）、日文（Japanese）和韩文（Korean）。</li>
+<li>“TC” 是 “Traditional Chinese” 的缩写，表示该字体主要用于显示繁体中文字符。<br>因此，”Noto Sans CJK TC” 是一种无衬线字体，专为支持中文、日文和韩文的显示而设计，特别适用于繁体中文。它是一个开源字体，可用于各种平台和应用程序，以确保东亚语言字符的正确显示和一致性。</li>
+</ol>
+<h2 id="linux字体加载"><a href="#linux字体加载" class="headerlink" title="linux字体加载"></a>linux字体加载</h2><h3 id="简单的一次字体加载"><a href="#简单的一次字体加载" class="headerlink" title="简单的一次字体加载"></a>简单的一次字体加载</h3><p>Linux桌面程序使fontconfig控制字体，当我们给桌面程序设置字体后，桌面程序会以font pattern（用于描述字体属性和信息的数据结构）的形式将设置传递给fontconfig，fontconfig会按照自身配置的规则对这个font pattern进行修改，输出返回结果给桌面程序，然后桌面程序就知道该系统使用的字体，并通过 FreeType 等渲染引擎绘制文字。</p>
+<p>增加font的日志启动一个x11客户端，观察linux字体的简单加载流程。</p>
+<ul>
+<li>FC_DEBUG=4  <code>wine应用</code> &amp;&gt;./1.txt</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">FcConfigSubstitute Pattern has 2 elts (size 16)</span><br><span class="line">	lang: &quot;zh-CN&quot;(w)</span><br><span class="line">	prgname: &quot;wine-preloader&quot;(s)</span><br></pre></td></tr></table></figure>
+<ol>
+<li>在wine启动wine-preloader时，传递给 fontconfig 的 font pattern 有 2 个元素 (elts)，其中 family 的值， lang就是传入的语言，prgname则是进程名称，因为这里的通过wine-preloader加载的其他应用所以只能看到这个一个单个进程</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Rule Set: &#x2F;etc&#x2F;fonts&#x2F;conf.d&#x2F;69-unifont.conf</span><br><span class="line"></span><br><span class="line">FcConfigSubstitute donePattern has 5 elts (size 16)</span><br><span class="line">	family: &quot;DejaVu Sans&quot;(w) &quot;Bitstream Vera Sans&quot;(w) &quot;DejaVu Sans&quot;(w) &quot;Verdana&quot;(w) &quot;Arial&quot;(w) &quot;Albany AMT&quot;(w) &quot;Luxi Sans&quot;(w) &quot;Nimbus Sans L&quot;(w) &quot;Nimbus Sans&quot;(w) &quot;Nimbus Sans&quot;(w) &quot;Helvetica&quot;(w) &quot;Nimbus Sans&quot;(w) &quot;Nimbus Sans L&quot;(w) &quot;Lucida Sans Unicode&quot;(w) &quot;BPG Glaho International&quot;(w) &quot;Tahoma&quot;(w) &quot;URW Gothic&quot;(w) &quot;Nimbus Sans&quot;(w) &quot;Nimbus Sans Narrow&quot;(w) &quot;Nachlieli&quot;(w) &quot;Lucida Sans Unicode&quot;(w) &quot;Yudit Unicode&quot;(w) &quot;Kerkis&quot;(w) &quot;ArmNet Helvetica&quot;(w) &quot;Artsounk&quot;(w) &quot;BPG UTF8 M&quot;(w) &quot;Waree&quot;(w) &quot;Loma&quot;(w) &quot;Garuda&quot;(w) &quot;Umpush&quot;(w) &quot;Saysettha Unicode&quot;(w) &quot;JG Lao Old Arial&quot;(w) &quot;GF Zemen Unicode&quot;(w) &quot;Pigiarniq&quot;(w) &quot;B Davat&quot;(w) &quot;B Compset&quot;(w) &quot;Kacst-Qr&quot;(w) &quot;Urdu Nastaliq Unicode&quot;(w) &quot;Raghindi&quot;(w) &quot;Mukti Narrow&quot;(w) &quot;padmaa&quot;(w) &quot;Hapax Berb猫re&quot;(w) &quot;MS Gothic&quot;(w) &quot;UmePlus P Gothic&quot;(w) &quot;Microsoft YaHei&quot;(w) &quot;Microsoft JhengHei&quot;(w) &quot;WenQuanYi Zen Hei&quot;(w) &quot;WenQuanYi Bitmap Song&quot;(w) &quot;AR PL ShanHeiSun Uni&quot;(w) &quot;AR PL New Sung&quot;(w) &quot;MgOpen Moderna&quot;(w) &quot;MgOpen Modata&quot;(w) &quot;MgOpen Cosmetica&quot;(w) &quot;VL Gothic&quot;(w) &quot;IPAMonaGothic&quot;(w) &quot;IPAGothic&quot;(w) &quot;Sazanami Gothic&quot;(w) &quot;Kochi Gothic&quot;(w) &quot;AR PL KaitiM GB&quot;(w) &quot;AR PL KaitiM Big5&quot;(w) &quot;AR PL ShanHeiSun Uni&quot;(w) &quot;AR PL SungtiL GB&quot;(w) &quot;AR PL Mingti2L Big5&quot;(w) &quot;锛汲 銈淬偡銉冦偗&quot;(w) &quot;ZYSong18030&quot;(w) &quot;NanumGothic&quot;(w) &quot;UnDotum&quot;(w) &quot;Baekmuk Dotum&quot;(w) &quot;Baekmuk Gulim&quot;(w) &quot;KacstQura&quot;(w) &quot;Lohit Bengali&quot;(w) &quot;Lohit Gujarati&quot;(w) &quot;Lohit Hindi&quot;(w) &quot;Lohit Marathi&quot;(w) &quot;Lohit Maithili&quot;(w) &quot;Lohit Kashmiri&quot;(w) &quot;Lohit Konkani&quot;(w) &quot;Lohit Nepali&quot;(w) &quot;Lohit Sindhi&quot;(w) &quot;Lohit Punjabi&quot;(w) &quot;Lohit Tamil&quot;(w) &quot;Meera&quot;(w) &quot;Lohit Malayalam&quot;(w) &quot;Lohit Kannada&quot;(w) &quot;Lohit Telugu&quot;(w) &quot;Lohit Oriya&quot;(w) &quot;LKLUG&quot;(w) &quot;FreeSans&quot;(w) &quot;Arial Unicode MS&quot;(w) &quot;Arial Unicode&quot;(w) &quot;Code2000&quot;(w) &quot;Code2001&quot;(w) &quot;sans-serif&quot;(w) &quot;Roya&quot;(w) &quot;Koodak&quot;(w) &quot;Terafik&quot;(w) &quot;sans-serif&quot;(w) &quot;ITC Avant Garde Gothic&quot;(w) &quot;URW Gothic&quot;(w) &quot;sans-serif&quot;(w) &quot;sans-serif&quot;(w) &quot;Helvetica&quot;(w) &quot;Helvetica Narrow&quot;(w) &quot;Nimbus Sans Narrow&quot;(w)</span><br><span class="line">	hintstyle: 1(i)(w)</span><br><span class="line">	lang: &quot;zh-CN&quot;(w)</span><br><span class="line">	lcdfilter: 1(i)(w)</span><br><span class="line">	prgname: &quot;wine-preloader&quot;(s)</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>这个是fontconfig处理后返回的五个元素，里面有重复的字体，也有好多系统上不存在的字体。 fontconfig 在 font pattern 中添加的字体，是可以不存在于系统上的。Rule Set，则是当前规则的路径，fontconfig通过这个配置文件进行对字体处理。这个信息中的family中的字体顺序，就是wine启动进程的字体匹配顺序。</li>
+</ol>
+<h3 id="fontconfig配置"><a href="#fontconfig配置" class="headerlink" title="fontconfig配置"></a>fontconfig配置</h3><p>fontconfig 主要读取/etc/fonts/fonts.conf，/etc/fonts/conf.d/<em>.conf， <del>/.config/fontconfig/fonts.conf，</del>/config/fontconfig/conf.d/</em>.conf，上述四个路径的配置文件顺序可以通/etc/fonts/conf.d/目录控制，我们查看其目录下50-user.conf配置文件可以发现其中的语句：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot;?&gt;</span><br><span class="line">&lt;!DOCTYPE fontconfig SYSTEM &quot;fonts.dtd&quot;&gt;</span><br><span class="line">&lt;fontconfig&gt;</span><br><span class="line">  &lt;its:rules xmlns:its&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2005&#x2F;11&#x2F;its&quot; version&#x3D;&quot;1.0&quot;&gt;</span><br><span class="line">    &lt;its:translateRule translate&#x3D;&quot;no&quot; selector&#x3D;&quot;&#x2F;fontconfig&#x2F;*[not(self::description)]&quot;&#x2F;&gt;</span><br><span class="line">  &lt;&#x2F;its:rules&gt;</span><br><span class="line"></span><br><span class="line">  &lt;description&gt;Load per-user customization files&lt;&#x2F;description&gt;</span><br><span class="line">	&lt;include ignore_missing&#x3D;&quot;yes&quot; prefix&#x3D;&quot;xdg&quot;&gt;fontconfig&#x2F;conf.d&lt;&#x2F;include&gt;</span><br><span class="line">	&lt;include ignore_missing&#x3D;&quot;yes&quot; prefix&#x3D;&quot;xdg&quot;&gt;fontconfig&#x2F;fonts.conf&lt;&#x2F;include&gt;</span><br><span class="line">	&lt;!-- the following elements will be removed in the future --&gt;</span><br><span class="line">	&lt;include ignore_missing&#x3D;&quot;yes&quot; deprecated&#x3D;&quot;yes&quot;&gt;~&#x2F;.fonts.conf.d&lt;&#x2F;include&gt;</span><br><span class="line">	&lt;include ignore_missing&#x3D;&quot;yes&quot; deprecated&#x3D;&quot;yes&quot;&gt;~&#x2F;.fonts.conf&lt;&#x2F;include&gt;</span><br><span class="line">&lt;&#x2F;fontconfig&gt;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p> 语句中的属性值prefix=”xdg”，代表 XDG_CONFIG_HOME 目录，默认是我们熟悉的~/.config/目录。fontconfig 在读取家目录的配置文件后， 再接着读取完/etc/fonts/conf.d/中剩余的配置文件。</p>
+<h3 id="系统字体路径存放路径"><a href="#系统字体路径存放路径" class="headerlink" title="系统字体路径存放路径"></a>系统字体路径存放路径</h3><p>目前系统的字体存放在 <code>/usr/share/fonts/</code>下面，wine字体在此目录的hotpot下。此目录是由<code>/etc/fonts/fonts.conf</code>文件控制。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;dir&gt;&#x2F;usr&#x2F;share&#x2F;fonts&lt;&#x2F;dir&gt;</span><br><span class="line">&lt;dir&gt;&#x2F;usr&#x2F;local&#x2F;share&#x2F;fonts&lt;&#x2F;dir&gt;</span><br><span class="line">&lt;dir prefix&#x3D;&quot;xdg&quot;&gt;fonts&lt;&#x2F;dir&gt;</span><br><span class="line">&lt;!-- the following element will be removed in the future --&gt;</span><br><span class="line">&lt;dir&gt;~&#x2F;.fonts&lt;&#x2F;dir&gt;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="手动增加配置文件"><a href="#手动增加配置文件" class="headerlink" title="手动增加配置文件"></a>手动增加配置文件</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot;?&gt;</span><br><span class="line">&lt;!DOCTYPE fontconfig SYSTEM &quot;fonts.dtd&quot;&gt;</span><br><span class="line">&lt;fontconfig&gt;</span><br><span class="line">  &lt;its:rules xmlns:its&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2005&#x2F;11&#x2F;its&quot; version&#x3D;&quot;1.0&quot;&gt;</span><br><span class="line">    &lt;its:translateRule translate&#x3D;&quot;no&quot; selector&#x3D;&quot;&#x2F;fontconfig&#x2F;*[not(self::description)]&quot;&#x2F;&gt;</span><br><span class="line">  &lt;&#x2F;its:rules&gt;</span><br><span class="line"></span><br><span class="line">&lt;match target&#x3D;&quot;pattern&quot;&gt;</span><br><span class="line">	&lt;test name&#x3D;&quot;lang&quot;&gt;</span><br><span class="line">		&lt;string&gt;zh-CN&lt;&#x2F;string&gt;</span><br><span class="line">	&lt;&#x2F;test&gt;</span><br><span class="line">	&lt;edit name&#x3D;&quot;family&quot; mode&#x3D;&quot;prepend&quot; binding&#x3D;&quot;strong&quot;&gt;</span><br><span class="line">		&lt;string&gt;SimSun&lt;&#x2F;string&gt;</span><br><span class="line">	&lt;&#x2F;edit&gt;</span><br><span class="line">&lt;&#x2F;match&gt;</span><br><span class="line"></span><br><span class="line">&lt;&#x2F;fontconfig&gt;</span><br></pre></td></tr></table></figure>
+
+<p>增加文件100-wine.conf，存放至/etc/fonts/conf.d，此配置文件意思是当fontconfig收到元素lang为zh-CN时，优先匹配宋体，当增加此文件时记得刷新系统字体缓存<code>fc -v -f</code>,运行结束后会发现当前系统的汉字均修改为宋体。</p>
+<h1 id="wine下的字体加载"><a href="#wine下的字体加载" class="headerlink" title="wine下的字体加载"></a>wine下的字体加载</h1><h2 id="wine下字体分类"><a href="#wine下字体分类" class="headerlink" title="wine下字体分类"></a>wine下字体分类</h2><ul>
+<li>wine下的字体存储是根据字体的family分为一个总类，再往下细分字体的face（字体面）。例如字体中的宋体的family（标识）是：SimSun（英文名）和 宋体（中文名），其中的字体面包含：<ol>
+<li>常规体（Regular）：常规的宋体字体样式，用于正常的文本显示和打印。</li>
+<li>粗体（Bold）：加粗的宋体字体样式，用于强调或突出显示文本。</li>
+<li>斜体（Italic）：倾斜的宋体字体样式，用于强调或以不同的视觉效果显示文本。</li>
+<li>粗斜体（Bold Italic）：加粗且倾斜的宋体字体样式，常用于强调、标题或其他特殊效果。</li>
+</ol>
+</li>
+</ul>
+<h2 id="wine9字体加载流程详细分析"><a href="#wine9字体加载流程详细分析" class="headerlink" title="wine9字体加载流程详细分析"></a>wine9字体加载流程详细分析</h2><p>当前是使用wine9观察其运行逻辑，wine下的字体初始化是在win32u的 font.c 的 font_init 函数中，以下重要函数流程详细分析。</p>
+<ul>
+<li><p>load_system_bitmap_fonts：</p>
+<ul>
+<li>函数功能：读取HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Hardware Profiles\Current\Software\Fonts下的{ “FONTS.FON”, “OEMFONT.FON”, “FIXEDFON.FON” };获取字体信息。</li>
+<li>关键信息：<ol>
+<li>FONTS.FON: 这是 Windows 系统默认字体文件之一。它包含了用于显示系统界面和用户界面元素（如窗口标题、按钮、菜单等）的字体信息。系统使用 “FONTS.FON” 字体文件来确保在各种语言环境下都能正确显示系统界面。</li>
+<li>OEMFONT.FON: “OEMFONT.FON” 是用于显示命令行界面（例如命令提示符）的字体文件。它定义了命令行窗口中使用的字符集和字体样式。</li>
+<li>FIXEDFON.FON: “FIXEDFON.FON” 是另一个用于命令行界面的字体文件。它提供了终端窗口中使用的固定宽度字体，这意味着每个字符都占据相同的空间。</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>load_file_system_fonts：</p>
+<ul>
+<li>函数功能：读取容器下C:\windows\fonts\目录字体。</li>
+<li>关键信息：<ol>
+<li>get_fonts_data_dir_path：如果WINEDATADIR有值则读取环境变量WINEDATADIR下的/usr/local/share/wine /usr/local/share/wine/fonts的字体，如果WINEBUILDDIR环境变量有值则读取这个目录下的font文件。</li>
+<li>加载HKEY_CURRENT_USER\Software\Wine\Fonts中配置的字体目录，hotpot下的安装字体路径就存入这里。</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>font_funcs-&gt;load_fonts：</p>
+<ul>
+<li>函数功能：调用的是freetype_load_fonts，这函数会调用系统下的字体初始化，例如linux就是fontconfig的加载字体函数，FcConfigGetCurrent,FcStrSetCreate，FcConfigGetFontDirs,FcDirCacheRead函数获取系统下的字体并通过add_gdi_face函数向Wine的字体系统中添加一个GDI字体，如果该字体有两个名称，则将其写入至系统中的<code>font_subst_list</code>列表，在写入过程中second_name与name是在载入中是相反的，在linux可以用命令<code>fc-list -b</code>查看同一个字体存在两个名称<code>fullname: &quot;宋体&quot;(s) &quot;SimSun&quot;(s)</code>。</li>
+</ul>
+</li>
+<li><p>load_registry_fonts：</p>
+<ul>
+<li>函数功能：加载容器下注册表中 HKEY_LOCAL_MACHINE\Software\Microsoft\Windows[ NT]\CurrentVersion\Fonts字体。</li>
+</ul>
+</li>
+<li><p>update_external_font_keys：</p>
+<ul>
+<li>函数功能：读取 HKEY_CURRENT_USER\Software\Microsoft\Windows[ NT]\CurrentVersion\Fonts\External Fonts下的字体并将字体中重复的路径信息进行删除，如果这个操作已经被执行了一次，则调用load_font_list_from_cache函数直接读取缓存即可，其内容是使用注册表存储字体的绝对路径。</li>
+<li>关键信息：<ol>
+<li>如果已经存在HKEY_CURRENT_USER\Software\Microsoft\Windows[ NT]\CurrentVersion\Fonts\External Fonts 该项则不会执行这个函数。</li>
+<li>非wine自带的字体与容器下的字体均为扩展字体。</li>
+<li>这里会将已经获取的字体写入注册表中HKEY_LOCAL_MACHINE\Software\Microsoft\Windows[ NT]\CurrentVersion\Fonts，与HKEY_CURRENT_USER\Software\Microsoft\Windows[ NT]\CurrentVersion\Fonts\External Fonts注册表中。</li>
+<li>只会将扩展字体写入至注册表，系统自带字体（window/fonts）与wine字体内容加载至wine中，但注册表未写入。</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>load_gdi_font_subst：</p>
+<ul>
+<li>函数功能：读取HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes注册表的字体，如果当前左边字体不存在则用右边字体替换左边字体，将其信息写入<code>font_subst_list</code>列表中。</li>
+</ul>
+</li>
+<li><p>load_gdi_font_replacements：</p>
+<ul>
+<li>函数功能：读取[HKEY_CURRENT_USER\Software\Wine\Fonts\Replacements]注册表下字体信息，也是操作字体替换的，这个注册表与上一个区别是必须被替换的字体是不存在的，否则无法替换成功。</li>
+</ul>
+</li>
+<li><p>load_system_links：</p>
+<ul>
+<li>函数功能： 初始化注册表 HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fontlink 中的 systemlink 键是用于配置 Windows 系统中的字体链接（Font Linking）。在 systemlink 键下，你可以找到一系列的注册表项，每个项都对应于一个特定的字体。这些注册表项包含一个或多个字体名称，表示当特定字体不可用时，应使用哪些备用字体。</li>
+<li>关键信息：<ol>
+<li>MS SHELL Dlg：用于在对话框和窗口控件中显示文本，如按钮、标签、文本框等，wine下默认使用宋体，在注册表HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes中存在，winecfg的修改针对这个地方。</li>
+<li>system：”System” 字体是指 Windows 操作系统中用于显示用户界面元素的默认字体。它是用于显示对话框、菜单、按钮、标签、窗口标题等各种界面组件的字体。wine下默认使用tahoma.ttf，此字体是wine自带字体，在wine进程目录中。</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+<p>使用上述函数就将系统的显示字体与替换字体加载完毕。</p>
+<h1 id="wine下界面显示字体选择"><a href="#wine下界面显示字体选择" class="headerlink" title="wine下界面显示字体选择"></a>wine下界面显示字体选择</h1><ul>
+<li><p>NtGdiSelectFont：</p>
+<ul>
+<li>函数功能：该函数用于在设备上下文 (DC, Device Context) 中选择指定的字体对象。它是 GDI 渲染流程的一部分，用于在绘图操作中定义字体的外观和行为</li>
+<li>关键信息<ol>
+<li>该函数传入HDC关键参数，HDC 是设备上下文句柄 (Device Context Handle) 的缩写。它是一个指向设备上下文的指针，用于在应用程序中与图形设备进行交互。HDC 用于执行绘图操作，例如绘制文本、绘制图形、位图操作等。使用 GetDC 函数可以获取一个窗口或设备的设备上下文句柄。</li>
+<li>通过<code>GET_DC_PHYSDEV</code>这个宏获取关键结构图<code>PHYSDEV</code>， <code>PHYSDEV</code>是物理设备结构体 (Physical Device) 的缩写。它是一个指向物理设备结构体的指针，表示与物理设备相关的信息。在 GDI 编程中，PHYSDEV 可以用于访问和操作底层设备的特定功能。它通常用于开发自定义的设备驱动程序或扩展 GDI 功能。</li>
+<li>调用<code>physdev-&gt;funcs-&gt;pSelectFont</code>函数，实际为<code>dlls/win32u</code>下的<code>font_SelectFont</code>函数，获取到<code>HFONT</code>， <code>HFONT</code>是 Windows GDI (图形设备接口) 中用于表示字体的句柄类型。它是一个指向字体对象的指针。</li>
+<li>其中获取到<code>aa_flags</code>参数，其参数是要传递给GetGlyphOutline的当前字体的抗锯齿标志。</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>font_SelectFont：</p>
+<ul>
+<li> 函数功能：该其主要作用是在设备上下文 (Device Context, DC) 中选择一个字体，并配置与字体渲染相关的参数。这个函数是字体渲染系统的关键一环，用于从可用字体中选择最合适的字体，确保在文本绘制时正确显示。</li>
+<li>关键信息<ol>
+<li>dcmat： DC transform（设备上下文变换）是指对设备上下文（Device Context, DC）应用的一种变换，用于在图形设备接口 (GDI) 中控制文本和图形的缩放、旋转以及其他变换效果。</li>
+<li>bitmap：在字体处理和渲染中，bitmap 是一种基于像素的字体表示方式。它与矢量字体（如 TrueType 或 OpenType）不同，bitmap 字体直接存储了每个字符在特定大小和分辨率下的像素阵列。当设置 GGO_BITMAP 参数时，表示渲染引擎会返回字符的 bitmap 表示。bitmap 在字体处理中是一种直接、高效但不灵活的表示方式。它适合在特定环境和分辨率下显示。</li>
+<li>该函数中<code>关键调用select_font</code>函数，获取目标字体。</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>select_font：</p>
+<ul>
+<li>函数功能：根据指定的字体属性选择一个最佳匹配的字体对象。</li>
+<li>关键信息<ol>
+<li>facename_compare： 函数处理符号匹配的问题，暂时跳过。</li>
+<li>find_cached_gdi_font：第一次调用的时候是匹配现有已经在缓存中的字体，每次一次的select_font都会把匹配字体加入缓存中，该函数的匹配成功通过<code>字符名称 lf-&gt;lfFaceName</code>，当然字体的矩阵，位图必须的一致。</li>
+<li>find_matching_face：该函数为<code>关键函数</code>，其功能是根据 LOGFONTW 结构的内容（字符集与名称），找到与请求的字体属性匹配的字体。</li>
+<li>垂直字体（名称以 @ 开头）：垂直字体是专门为东亚语言（如中文、日文和韩文）的垂直书写设计的字体</li>
+<li>create_gdi_font：找到字体后，在创建一个font的缓存，通过<code>cache_gdi_font( font );</code>函数存入到cache中，让<code>find_cached_gdi_font</code>使用</li>
+<li>create_child_font_list：该函数是通过用来为了处理无字体或者存在该字体无指定字功能的列表，当系统不存在指定字体时，wine中默认使用Microsoft Sans Serif当做回退字体，当系统存在指定字体但该字体中单一字不存在字体库中，就会通过child_font来显示（暂未找到这块函数实现）。</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>find_matching_face：</p>
+<ul>
+<li>函数功能：指定条件（如字体名称、字体替换、样式和字符集兼容性）最匹配的字面。</li>
+<li>关键信息<ol>
+<li>获取subst数据，subst为备用字体，通过<code>get_gdi_font_subst</code>函数获取，其数据通过<code>HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes</code>注册表与系统中字体获取，系统中的second_name与name是在载入中是相反的，在linux可以用命令<code>fc-list -b</code>查看同一个字体存在两个名称，例如系统下的宋体：<code>fullname: &quot;宋体&quot;(s) &quot;SimSun&quot;(s)</code>。</li>
+<li>该函数中<code>关键调用find_matching_face_by_name</code>函数，获取目标字体。</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>find_matching_face_by_name：</p>
+<ul>
+<li>函数功能：根据指定的字体名称，找到最符合的字体面。</li>
+<li>关键信息<ol>
+<li>find_family_from_any_name：通过字体名称查询该字体的family，方案是遍历<code>family_name_tree</code>进行比对查找。<ul>
+<li>family_name_tree：在字体加载时，系统会扫描注册表路径 Fonts，构建一个字体族的树状结构，该字体包含linux系统中的字体，wine自身的字体，容器中的字体。</li>
+</ul>
+</li>
+<li>find_best_matching_face：该函数通过遍历第1步获取的字体family中所有可用的字体面，并根据计算系统中的字体面和目标字体在斜体 (italic) 和粗体 (bold) 属性上的差异，获取匹配度最高目标字体，如果该字体存在family，则通过该函数进行匹配，若能匹配成功则直接返回。</li>
+<li>第三步没找到则通过循环按字体面完整名称查找，通过遍历family_name_tree，再遍历字体家族树（family_name_tree），从每个字体家族的字体面列表中查找是否存在与 name 匹配的完整字体面名称（face-&gt;full_name）。</li>
+<li>can_select_face：在第3步中判断循环中找到的字体面中的字体判断是否能使用。<ul>
+<li>if (!face-&gt;scalable &amp;&amp; !can_use_bitmap) return FALSE：如果字体不是矢量字体（face-&gt;scalable == FALSE），且不允许位图字体，返回FALSE。</li>
+<li>if (!fs.fsCsb[0]) return TRUE：检查是否有字符集要求，果请求的字符集标志（fs.fsCsb[0]）为 0，表示没有具体字符集要求，返回 TRUE。</li>
+<li>if (fs.fsCsb[0] &amp; face-&gt;fs.fsCsb[0]) return TRUE：如果字体面支持请求的字符集（通过位与运算检查），返回 TRUE。</li>
+<li>find_gdi_font_link( face-&gt;family-&gt;family_name )：看一下是否有替代的字体，替代字体通过<code>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fontlink</code>查找。</li>
+</ul>
+</li>
+<li>find_family_from_font_links：如果通过 2,3 步骤没找到合适的字体，则比对传入的字体名称、<code>subst</code>字体名称与系统字体(HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fontlink)是否能匹配上，找到其对应的字体家族，从该字体家族中调用<code>find_best_matching_face</code>，找到最匹配的字体。</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h1><ol>
+<li>wine下的字体加载修改wine的config配置文件是否有效果？<ul>
+<li>wine下的文字是通过自己的逻辑进行加载匹配，不使用fontconfig所以就不生效。</li>
+</ul>
+</li>
+<li>wine 自身使用fontconfig的api了吗<ul>
+<li>使用了。</li>
+</ul>
+</li>
+<li>wine下fontconfig的api会走配置文件吗<ul>
+<li>wine下match逻辑是不是(加载-&gt;通过api进行match)不走配置文件。</li>
+</ul>
+</li>
+<li>fc-match的匹配与wine的匹配逻辑一致吗？<ul>
+<li>fc-match是会走配置文件的，GTK 程序、Qt 程序、虚拟终端的配置文件中 设置它们使用的字体，和设置 fontconfig 的配置文件是两码事，在使用api或者上层界面程序配置字体时可以选择兼容当前系统配置或者不使用当前系统的fontconfig,若双方设置冲突则遵循上层api配置。</li>
+</ul>
+</li>
+<li>容器内window/fonts/下字体有但是没有写入注册表？<ul>
+<li>是的，会在update_external_font_keys函数进行处理。</li>
+</ul>
+</li>
+<li>在应用中如果存在两份宋体，其中一份宋体中存在应用所需要的字体，wine下如何处理加载的？<ul>
+<li>按照顺序加载第一份，与是否缺字无关。</li>
+</ul>
+</li>
+<li>在记事本中为什么输入文字为宋体？<ul>
+<li>由记事本中设置的字体控制，当设置为宋体后无论输入法输入或外部复制粘贴，记事本中均为宋体。</li>
+</ul>
+</li>
+<li>wine下是如何找到应用所需要的目标字体？<ul>
+<li><ol>
+<li>从缓存中查找，命中则返回。</li>
+</ol>
+</li>
+<li><ol start="2">
+<li>先获取字体的家族，在从该字体家族中通过wine自身的字体评分，找到最匹配的字体面，命中则返回。</li>
+</ol>
+</li>
+<li><ol start="3">
+<li>与第2步一样，但是从获取的备用字体的字体家族，命中则返回。</li>
+</ol>
+</li>
+<li><ol start="3">
+<li>与已加载字体开始比对字体面完整名称，命中则返回。</li>
+</ol>
+</li>
+<li><ol start="4">
+<li>对传入的字体名称、<code>subst</code>字体名称与系统字体、热门字体进行字体名称进行比对，命中则返回。</li>
+</ol>
+</li>
+<li><ol start="5">
+<li>返回NULL，显示方框。</li>
+</ol>
+</li>
+</ul>
+</li>
+<li>应用中设置使用宋体，但是宋体无目标生僻字，其他字体有所需要生僻字，wine下如何处理？<ul>
+<li>如果字体是同一份文件，仅是多了某些字体，那么按照字体加载顺序选第一份文件。</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>wine</category>
+      </categories>
+      <tags>
+        <tag>wine</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【Linux技术分享】关闭wine下崩溃窗口</title>
     <url>/2024/08/05/wine-%E5%85%B3%E9%97%ADwine%E4%B8%8B%E5%B4%A9%E6%BA%83%E7%AA%97%E5%8F%A3/</url>
     <content><![CDATA[<h1 id="关闭wine下崩溃窗口"><a href="#关闭wine下崩溃窗口" class="headerlink" title="关闭wine下崩溃窗口"></a>关闭wine下崩溃窗口</h1><span id="more"></span>
