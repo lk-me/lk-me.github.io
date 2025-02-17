@@ -1,112 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>【Linux技术分享】将x11窗口创建与window句柄关联</title>
-    <url>/2024/12/12/wine-%E5%B0%86x11%E7%AA%97%E5%8F%A3%E5%88%9B%E5%BB%BA%E4%B8%8Ewindow%E5%8F%A5%E6%9F%84%E5%85%B3%E8%81%94/</url>
-    <content><![CDATA[<h1 id="将x11窗口创建与window句柄关联"><a href="#将x11窗口创建与window句柄关联" class="headerlink" title="将x11窗口创建与window句柄关联"></a>将x11窗口创建与window句柄关联</h1><span id="more"></span>
-<h2 id="问题概述"><a href="#问题概述" class="headerlink" title="问题概述"></a>问题概述</h2><p>wine下窗口创建是通过window下的<code>createwindow创建-&gt;调用x11的xcreatewindow</code>流程，在linux下有很多观察窗口的工具，如何将x11下的<code>window id</code>与wine下窗口进行关联？</p>
-<h2 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h2><ol>
-<li>wine启动一个notepad窗口，通过<code>xwininfo</code>获取到窗口的id<br><img src="/2024/12/12/wine-%E5%B0%86x11%E7%AA%97%E5%8F%A3%E5%88%9B%E5%BB%BA%E4%B8%8Ewindow%E5%8F%A5%E6%9F%84%E5%85%B3%E8%81%94/1.png" alt="图1"></li>
-<li>学习wine源码发现wine中窗口创建是在winex11.drv模块下，准确来说是在该模块的<code>window.c</code>函数中</li>
-</ol>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (!(cx = data-&gt;whole_rect.right - data-&gt;whole_rect.left)) cx = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (cx &gt; <span class="number">65535</span>) cx = <span class="number">65535</span>;</span><br><span class="line"><span class="keyword">if</span> (!(cy = data-&gt;whole_rect.bottom - data-&gt;whole_rect.top)) cy = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (cy &gt; <span class="number">65535</span>) cy = <span class="number">65535</span>;</span><br><span class="line"></span><br><span class="line">pos = virtual_screen_to_root( data-&gt;whole_rect.left, data-&gt;whole_rect.top );</span><br><span class="line">data-&gt;whole_window = XCreateWindow( data-&gt;display, root_window, pos.x, pos.y,</span><br><span class="line">                                    cx, cy, <span class="number">0</span>, data-&gt;vis.depth, InputOutput,</span><br><span class="line">                                    data-&gt;vis.visual, mask, &amp;attr );</span><br><span class="line"><span class="keyword">if</span> (!data-&gt;whole_window) <span class="keyword">goto</span> done;</span><br><span class="line"></span><br><span class="line">set_initial_wm_hints( data-&gt;display, data-&gt;whole_window );</span><br><span class="line">set_wm_hints( data );</span><br></pre></td></tr></table></figure>
-
-<ol start="3">
-<li><p><code>XCreateWindow</code>窗口创建返回<code>data-&gt;whole_window</code>的值为窗口创建后的窗口id,通过第一步会发现与该值一致。</p>
-</li>
-<li><p>通过源码学习该函数下面使用<code>XSaveContext( data-&gt;display, data-&gt;whole_window, winContext, (char *)data-&gt;hwnd );</code>函数，将窗口x11创建的id与window下的hwnd进行关联</p>
-</li>
-<li><p>通过打印<code>WIN_CreateWindowEx</code>函数创建的句柄，发现就是该窗口</p>
-</li>
-</ol>
-]]></content>
-      <categories>
-        <category>wine</category>
-      </categories>
-      <tags>
-        <tag>wine</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>【Linux技术分享】将简易脚本转换为服务文件并打包</title>
-    <url>/2024/11/20/%E5%B0%86%E7%AE%80%E6%98%93%E8%84%9A%E6%9C%AC%E8%BD%AC%E6%8D%A2%E4%B8%BA%E6%9C%8D%E5%8A%A1%E6%96%87%E4%BB%B6%E5%B9%B6%E6%89%93%E5%8C%85/</url>
-    <content><![CDATA[<h1 id="将简易脚本转换为服务文件并打包"><a href="#将简易脚本转换为服务文件并打包" class="headerlink" title="将简易脚本转换为服务文件并打包"></a>将简易脚本转换为服务文件并打包</h1><p><em><strong>使用debian+makefile将脚本实现为服务文件，并进行打包，<a href="https://github.com/lk-me/nfs-clean-log">代码地址</a>。</strong></em></p>
-<span id="more"></span>
-
-<h1 id="nfs-clean-log"><a href="#nfs-clean-log" class="headerlink" title="nfs-clean-log"></a>nfs-clean-log</h1><pre><code>`nfs-clean-log`为简易程序，将一个删除日志缓存的批处理文件脚本使用服务进行便捷启动，并增加将其用debian的contral控制打包。
-</code></pre>
-<h3 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h3><ul>
-<li>重启后删除 /var/cache/apt/archives/*.deb，/var/crash/*，/var/log/journal/*文件</li>
-</ul>
-<h3 id="debian-ubuntu"><a href="#debian-ubuntu" class="headerlink" title="/debian/ubuntu"></a>/debian/ubuntu</h3><ul>
-<li> sudo dpkg-buildpackage -us -uc -b</li>
-</ul>
-<h3 id="todo"><a href="#todo" class="headerlink" title="todo"></a>todo</h3><ul>
-<li>对文件判断，并补充脚本功能</li>
-</ul>
-]]></content>
-      <categories>
-        <category>C++</category>
-      </categories>
-      <tags>
-        <tag>Linux技术分享</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>【Linux技术分享】ida修改dll并进行保存</title>
-    <url>/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/</url>
-    <content><![CDATA[<h1 id="ida修改目标dll"><a href="#ida修改目标dll" class="headerlink" title="ida修改目标dll"></a>ida修改目标dll</h1><span id="more"></span>
-
-<h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p>使用ida修改pb工具开发的一款应用中的打印模块，该应用会在打印中会弹出 “1 of 1 ….”对话框，已知该字符串通过”set_window_text”函数实现对话框显示</p>
-<h2 id="问题解决"><a href="#问题解决" class="headerlink" title="问题解决"></a>问题解决</h2><ol>
-<li><p>该应用使用pb进行开发，根据学习PowerBuilder发现在 PowerBuilder 中，打印功能通常由 DataWindow 模块处理。pbdwe90.dll 是与 DataWindow 相关的一个核心动态链接库，负责 DataWindow 的渲染和数据处理。打印操作会通过 DataWindow 进行，因为 DataWindow 提供了格式化数据、生成报表和处理打印的功能。</p>
-</li>
-<li><p>通过ida打开该dll文件，弹出选择界面，该界面是选择不同架构类型处理器，由于不同架构处理器对其指令集有不同，我这里选择Metapc，通用性x86架构进行打开</p>
-</li>
-</ol>
-<p><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/3.png" alt="图3"></p>
-<ol start="3">
-<li>根据wine下日志发现调用set_window_text函数附近是调用StartDocW，在该dll中调用打印函数较少，根据这个调用找到其中上下文</li>
-</ol>
-<p><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/4.png" alt="图4"></p>
-<ol start="4">
-<li>从ida下打开导入表，找到StartDoc函数</li>
-</ol>
-<p><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/5.png" alt="图5"><br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/111.png" alt="图111"><br>5. 双击该函数，右键点击<code>Jump to xref to operand</code><br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/6.png"></p>
-<ol start="6">
-<li><p>键盘按键f5，生成反汇编窗口中的函数对应的伪代码<br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/7.png" alt="图7"></p>
-</li>
-<li><p>根据对伪代码学习，发现其调用<code>SetDlgItemTextA</code>函数，比较像是弹窗中的文本内容，这边在wine中增加该函数日志</p>
-</li>
-</ol>
-<p><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/8.png" alt="图8"></p>
-<ol start="8">
-<li><p>发现函数中的字符串内容与弹窗的内容一致，为<code>set_window_text</code>函数中的内容<br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/9.png" alt="图9"></p>
-</li>
-<li><p>SetDlgItemTextA函数为设置文本框内容，第一个参数为窗口句柄，在伪代码中找到创建该句柄位置<br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/10.png" alt="图10"></p>
-</li>
-<li><p>该对话框在if判断中进行窗口创建，目前准备修改if判断让其无法进入判断。首先将该语句变成指令汇编<br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/15.png"></p>
-</li>
-<li><p>找到该if判断语句地址，该汇编为cmp-&gt;jnz,意思为比较若不为0则跳转<br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/15.png" alt="图15"></p>
-</li>
-<li><p>修改很简单，将其判断改反即可，把jnz修改为jz，修改完如下图<br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/12.png" alt="图12"><br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/13.png" alt="图13"></p>
-</li>
-<li><p>将其修改的patch进行保存即可</p>
-</li>
-</ol>
-<p><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/16.png" alt="图16"></p>
-<h2 id="方案验证"><a href="#方案验证" class="headerlink" title="方案验证"></a>方案验证</h2><p>将修改的dll替换至容器进行打印，对话框在打印过程中未显示，set_window_text函数也为调用，修改成功</p>
-]]></content>
-      <categories>
-        <category>ida</category>
-      </categories>
-      <tags>
-        <tag>wine</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>【Linux技术分享】wine9下的字体加载显示学习</title>
-    <url>/2024/08/26/wine-wine9%E4%B8%8B%E7%9A%84%E5%AD%97%E4%BD%93%E5%8A%A0%E8%BD%BD%E6%98%BE%E7%A4%BA%E5%AD%A6%E4%B9%A0/</url>
+    <url>/2025/02/17/wine-wine9%E4%B8%8B%E7%9A%84%E5%AD%97%E4%BD%93%E5%8A%A0%E8%BD%BD%E6%98%BE%E7%A4%BA%E5%AD%A6%E4%B9%A0/</url>
     <content><![CDATA[<h1 id="wine9下的字体加载显示学习"><a href="#wine9下的字体加载显示学习" class="headerlink" title="wine9下的字体加载显示学习"></a>wine9下的字体加载显示学习</h1><span id="more"></span>
 
 <h1 id="字体与字形"><a href="#字体与字形" class="headerlink" title="字体与字形"></a>字体与字形</h1><p>字符的图像称为字形（glyphs），而一个字符可以有多个字形。而一个字形，也可用于多个字符（不同的字符，写法可能一样）。</p>
@@ -360,6 +256,110 @@
 ]]></content>
       <categories>
         <category>wine</category>
+      </categories>
+      <tags>
+        <tag>wine</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>【Linux技术分享】将x11窗口创建与window句柄关联</title>
+    <url>/2024/12/12/wine-%E5%B0%86x11%E7%AA%97%E5%8F%A3%E5%88%9B%E5%BB%BA%E4%B8%8Ewindow%E5%8F%A5%E6%9F%84%E5%85%B3%E8%81%94/</url>
+    <content><![CDATA[<h1 id="将x11窗口创建与window句柄关联"><a href="#将x11窗口创建与window句柄关联" class="headerlink" title="将x11窗口创建与window句柄关联"></a>将x11窗口创建与window句柄关联</h1><span id="more"></span>
+<h2 id="问题概述"><a href="#问题概述" class="headerlink" title="问题概述"></a>问题概述</h2><p>wine下窗口创建是通过window下的<code>createwindow创建-&gt;调用x11的xcreatewindow</code>流程，在linux下有很多观察窗口的工具，如何将x11下的<code>window id</code>与wine下窗口进行关联？</p>
+<h2 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h2><ol>
+<li>wine启动一个notepad窗口，通过<code>xwininfo</code>获取到窗口的id<br><img src="/2024/12/12/wine-%E5%B0%86x11%E7%AA%97%E5%8F%A3%E5%88%9B%E5%BB%BA%E4%B8%8Ewindow%E5%8F%A5%E6%9F%84%E5%85%B3%E8%81%94/1.png" alt="图1"></li>
+<li>学习wine源码发现wine中窗口创建是在winex11.drv模块下，准确来说是在该模块的<code>window.c</code>函数中</li>
+</ol>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (!(cx = data-&gt;whole_rect.right - data-&gt;whole_rect.left)) cx = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (cx &gt; <span class="number">65535</span>) cx = <span class="number">65535</span>;</span><br><span class="line"><span class="keyword">if</span> (!(cy = data-&gt;whole_rect.bottom - data-&gt;whole_rect.top)) cy = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (cy &gt; <span class="number">65535</span>) cy = <span class="number">65535</span>;</span><br><span class="line"></span><br><span class="line">pos = virtual_screen_to_root( data-&gt;whole_rect.left, data-&gt;whole_rect.top );</span><br><span class="line">data-&gt;whole_window = XCreateWindow( data-&gt;display, root_window, pos.x, pos.y,</span><br><span class="line">                                    cx, cy, <span class="number">0</span>, data-&gt;vis.depth, InputOutput,</span><br><span class="line">                                    data-&gt;vis.visual, mask, &amp;attr );</span><br><span class="line"><span class="keyword">if</span> (!data-&gt;whole_window) <span class="keyword">goto</span> done;</span><br><span class="line"></span><br><span class="line">set_initial_wm_hints( data-&gt;display, data-&gt;whole_window );</span><br><span class="line">set_wm_hints( data );</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li><p><code>XCreateWindow</code>窗口创建返回<code>data-&gt;whole_window</code>的值为窗口创建后的窗口id,通过第一步会发现与该值一致。</p>
+</li>
+<li><p>通过源码学习该函数下面使用<code>XSaveContext( data-&gt;display, data-&gt;whole_window, winContext, (char *)data-&gt;hwnd );</code>函数，将窗口x11创建的id与window下的hwnd进行关联</p>
+</li>
+<li><p>通过打印<code>WIN_CreateWindowEx</code>函数创建的句柄，发现就是该窗口</p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>wine</category>
+      </categories>
+      <tags>
+        <tag>wine</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>【Linux技术分享】将简易脚本转换为服务文件并打包</title>
+    <url>/2024/11/20/%E5%B0%86%E7%AE%80%E6%98%93%E8%84%9A%E6%9C%AC%E8%BD%AC%E6%8D%A2%E4%B8%BA%E6%9C%8D%E5%8A%A1%E6%96%87%E4%BB%B6%E5%B9%B6%E6%89%93%E5%8C%85/</url>
+    <content><![CDATA[<h1 id="将简易脚本转换为服务文件并打包"><a href="#将简易脚本转换为服务文件并打包" class="headerlink" title="将简易脚本转换为服务文件并打包"></a>将简易脚本转换为服务文件并打包</h1><p><em><strong>使用debian+makefile将脚本实现为服务文件，并进行打包，<a href="https://github.com/lk-me/nfs-clean-log">代码地址</a>。</strong></em></p>
+<span id="more"></span>
+
+<h1 id="nfs-clean-log"><a href="#nfs-clean-log" class="headerlink" title="nfs-clean-log"></a>nfs-clean-log</h1><pre><code>`nfs-clean-log`为简易程序，将一个删除日志缓存的批处理文件脚本使用服务进行便捷启动，并增加将其用debian的contral控制打包。
+</code></pre>
+<h3 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h3><ul>
+<li>重启后删除 /var/cache/apt/archives/*.deb，/var/crash/*，/var/log/journal/*文件</li>
+</ul>
+<h3 id="debian-ubuntu"><a href="#debian-ubuntu" class="headerlink" title="/debian/ubuntu"></a>/debian/ubuntu</h3><ul>
+<li> sudo dpkg-buildpackage -us -uc -b</li>
+</ul>
+<h3 id="todo"><a href="#todo" class="headerlink" title="todo"></a>todo</h3><ul>
+<li>对文件判断，并补充脚本功能</li>
+</ul>
+]]></content>
+      <categories>
+        <category>C++</category>
+      </categories>
+      <tags>
+        <tag>Linux技术分享</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>【Linux技术分享】ida修改dll并进行保存</title>
+    <url>/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/</url>
+    <content><![CDATA[<h1 id="ida修改目标dll"><a href="#ida修改目标dll" class="headerlink" title="ida修改目标dll"></a>ida修改目标dll</h1><span id="more"></span>
+
+<h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p>使用ida修改pb工具开发的一款应用中的打印模块，该应用会在打印中会弹出 “1 of 1 ….”对话框，已知该字符串通过”set_window_text”函数实现对话框显示</p>
+<h2 id="问题解决"><a href="#问题解决" class="headerlink" title="问题解决"></a>问题解决</h2><ol>
+<li><p>该应用使用pb进行开发，根据学习PowerBuilder发现在 PowerBuilder 中，打印功能通常由 DataWindow 模块处理。pbdwe90.dll 是与 DataWindow 相关的一个核心动态链接库，负责 DataWindow 的渲染和数据处理。打印操作会通过 DataWindow 进行，因为 DataWindow 提供了格式化数据、生成报表和处理打印的功能。</p>
+</li>
+<li><p>通过ida打开该dll文件，弹出选择界面，该界面是选择不同架构类型处理器，由于不同架构处理器对其指令集有不同，我这里选择Metapc，通用性x86架构进行打开</p>
+</li>
+</ol>
+<p><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/3.png" alt="图3"></p>
+<ol start="3">
+<li>根据wine下日志发现调用set_window_text函数附近是调用StartDocW，在该dll中调用打印函数较少，根据这个调用找到其中上下文</li>
+</ol>
+<p><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/4.png" alt="图4"></p>
+<ol start="4">
+<li>从ida下打开导入表，找到StartDoc函数</li>
+</ol>
+<p><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/5.png" alt="图5"><br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/111.png" alt="图111"><br>5. 双击该函数，右键点击<code>Jump to xref to operand</code><br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/6.png"></p>
+<ol start="6">
+<li><p>键盘按键f5，生成反汇编窗口中的函数对应的伪代码<br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/7.png" alt="图7"></p>
+</li>
+<li><p>根据对伪代码学习，发现其调用<code>SetDlgItemTextA</code>函数，比较像是弹窗中的文本内容，这边在wine中增加该函数日志</p>
+</li>
+</ol>
+<p><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/8.png" alt="图8"></p>
+<ol start="8">
+<li><p>发现函数中的字符串内容与弹窗的内容一致，为<code>set_window_text</code>函数中的内容<br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/9.png" alt="图9"></p>
+</li>
+<li><p>SetDlgItemTextA函数为设置文本框内容，第一个参数为窗口句柄，在伪代码中找到创建该句柄位置<br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/10.png" alt="图10"></p>
+</li>
+<li><p>该对话框在if判断中进行窗口创建，目前准备修改if判断让其无法进入判断。首先将该语句变成指令汇编<br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/15.png"></p>
+</li>
+<li><p>找到该if判断语句地址，该汇编为cmp-&gt;jnz,意思为比较若不为0则跳转<br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/15.png" alt="图15"></p>
+</li>
+<li><p>修改很简单，将其判断改反即可，把jnz修改为jz，修改完如下图<br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/12.png" alt="图12"><br><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/13.png" alt="图13"></p>
+</li>
+<li><p>将其修改的patch进行保存即可</p>
+</li>
+</ol>
+<p><img src="/2024/08/26/wine-IDA%E4%BF%AE%E6%94%B9dll%E6%96%87%E4%BB%B6/16.png" alt="图16"></p>
+<h2 id="方案验证"><a href="#方案验证" class="headerlink" title="方案验证"></a>方案验证</h2><p>将修改的dll替换至容器进行打印，对话框在打印过程中未显示，set_window_text函数也为调用，修改成功</p>
+]]></content>
+      <categories>
+        <category>ida</category>
       </categories>
       <tags>
         <tag>wine</tag>
