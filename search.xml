@@ -1,6 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【Linux技术分享】 关于使用思源宋体显示生僻字&#39;䶮&#39;调研报告</title>
+    <url>/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/</url>
+    <content><![CDATA[<h1 id="在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。"><a href="#在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。" class="headerlink" title="在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。"></a>在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。</h1><span id="more"></span>
+
+<h1 id="关于使用思源宋体显示生僻字’䶮’调研报告"><a href="#关于使用思源宋体显示生僻字’䶮’调研报告" class="headerlink" title="关于使用思源宋体显示生僻字’䶮’调研报告"></a>关于使用思源宋体显示生僻字’䶮’调研报告</h1><h2 id="调研目标"><a href="#调研目标" class="headerlink" title="调研目标"></a>调研目标</h2><p>在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。</p>
+<h2 id="应用现状"><a href="#应用现状" class="headerlink" title="应用现状"></a>应用现状</h2><p>当前应用界面中文显示使用为字体为<code>宋体</code>，在应用最初版本中无法显示生僻字’䶮’，在与北京同事协助下，通过对系统中宋体的字体文件进行修改后可以显示目标字体。</p>
+<p>初始版本宋体无法显示如下图：<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/1.png" alt="图1"></p>
+<p>北京同事提供宋体文件修改后正常显示如下图：<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/2.png" alt="图2"></p>
+<p><em><strong>调研测试环境为：</strong></em></p>
+<p><em>软件环境</em>：amd架构，nfs-5.0-G212p版本</p>
+<p><em>硬件环境</em>：需要amd架构处理器</p>
+<p><em>wine版本</em>：上游wine-8.6</p>
+<p><em>容器应用</em>：病案管理系统</p>
+<h2 id="设置思源宋体"><a href="#设置思源宋体" class="headerlink" title="设置思源宋体"></a>设置思源宋体</h2><ol>
+<li>思源宋体可以从官网下载，<a href="https://source.typekit.com/source-han-serif/cn/%EF%BC%8C%E4%B8%8B%E8%BD%BD%E4%B9%8B%E5%90%8E%E5%BE%88%E5%A4%9A%E6%96%87%E4%BB%B6%E5%A4%B9%EF%BC%8C%E5%A6%82%E4%B8%8B%EF%BC%9A">https://source.typekit.com/source-han-serif/cn/，下载之后很多文件夹，如下：</a><br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/3.png" alt="图3"></li>
+</ol>
+<p>QA：在wine下我使用 otc下无法识别，这个跟wine的读取字体实现有关系，系统是可以正常使用这个字体的，但是wine下只能识别otf,关于这个细节差距我会在《wine下字体模块实现调研》详细说明，这里就不再赘述</p>
+<ol start="2">
+<li>从官网下载的思源宋体中取出<code>SourceHanSerifSC-Regular.otf</code>字体文件，现需获取’䶮’在wine中的编码并将此字体文件的编码设置此生僻字，在wine中开启font的通道，过滤日志读取生僻字’䶮’的UTF16编码为0xE0FA<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/4.png" alt="图4"></li>
+</ol>
+<ol start="3">
+<li>网上对于字体编辑常用的两个工具，一个是开源的fontforge（多平台并免费），fontcreator（仅支持windonw并收费但容易上手），由于是实验阶段我就使用fontcreator工具，将目标字体打开<code>SourceHanSerifSC-Regular.otf</code>，搜索后发现’䶮’编码为0xE863，使用工具中的insert功能，设置编码0xE0FA为’䶮’字并导出字体文件。<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/5.png" alt="图5"></li>
+</ol>
+<p><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/12.png"></p>
+<h2 id="设置wine注册表进行字体加载"><a href="#设置wine注册表进行字体加载" class="headerlink" title="设置wine注册表进行字体加载"></a>设置wine注册表进行字体加载</h2><ol>
+<li><p>wine的字体加载有多种路径大致分为四种</p>
+<ol>
+<li>通过系统注册表中的指定路径</li>
+<li>加载容器下的window/fonts路径字体</li>
+<li>加载系统中的已存在字体</li>
+<li>加载wine打包中的字体</li>
+</ol>
+</li>
+<li><p>为了不影响系统下显示方便字体设置，修改容器下注册表<code>HKEY_CURRENT_USER\Software\Wine\Fonts</code>，增加加载字体路径，并把思源宋体字体放在目标路径下，火锅的字体wfont也存放在此文件夹<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/6.png" alt="图6"></p>
+</li>
+<li><p>在容器应用启动后发现容器已加载目标字体<code>思源宋体</code><br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/7.png" alt="图7"></p>
+</li>
+</ol>
+<ol start="4">
+<li><p>需要修改系统注册表，将系统的宋体全部替换为<code>思源宋体</code>，注册表路径为HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/9.png" alt="图9"></p>
+</li>
+<li><p>显示现象如下<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/10.png" alt="图10"></p>
+</li>
+</ol>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>wine下的字体显示是通过匹配度进行匹配的，在实际应用匹配时，思源字体与宋体差异度较大暂无法直接匹配上，需要通过注册表修改进行替换。在修改后也无法像原版宋体一样显示，但在字体官网展示对比中，宋体与思源宋体显示差异并不大，此方向需要继续调研，猜测宋体与思源宋体中的字体文件内容差距较大，列如字体衬线，宽度比例等导致。</p>
+]]></content>
+      <categories>
+        <category>wine</category>
+      </categories>
+      <tags>
+        <tag>wine</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【读书有感】摘抄叔本华《爱与生活的苦恼》</title>
     <url>/2025/03/12/%E8%AF%BB%E7%88%B1%E4%B8%8E%E7%94%9F%E6%B4%BB%E7%9A%84%E8%8B%A6%E6%81%BC/</url>
     <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p><em><strong>爱情的主要目的，不是爱的交流，而是相互占有，即肉体的享乐。纯洁的爱若脱离肉体的爱，是无法维持和保存的。落到这般境地，人多半是以自杀了却一生。</strong></em></p>

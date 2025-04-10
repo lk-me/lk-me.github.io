@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Linux技术分享】 关于使用思源宋体显示生僻字&#39;䶮&#39;调研报告">
+<meta property="og:url" content="http://example.com/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/index.html">
+<meta property="og:site_name" content="Link Mecry">
+<meta property="og:description" content="在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/1.png">
+<meta property="og:image" content="http://example.com/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/2.png">
+<meta property="og:image" content="http://example.com/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/3.png">
+<meta property="og:image" content="http://example.com/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/4.png">
+<meta property="og:image" content="http://example.com/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/5.png">
+<meta property="og:image" content="http://example.com/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/12.png">
+<meta property="og:image" content="http://example.com/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/6.png">
+<meta property="og:image" content="http://example.com/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/7.png">
+<meta property="og:image" content="http://example.com/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/9.png">
+<meta property="og:image" content="http://example.com/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/10.png">
+<meta property="article:published_time" content="2025-04-10T00:05:30.000Z">
+<meta property="article:modified_time" content="2025-04-10T01:00:46.752Z">
+<meta property="article:author" content="Mecry">
+<meta property="article:tag" content="wine">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/1.png">
+
+<link rel="canonical" href="http://example.com/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Linux技术分享】 关于使用思源宋体显示生僻字'䶮'调研报告 | Link Mecry</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div id="id-header-inner" class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Link Mecry</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Mecry Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Mecry">
+      <meta itemprop="description" content="在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Link Mecry">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Linux技术分享】 关于使用思源宋体显示生僻字'䶮'调研报告
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2025-04-10 08:05:30 / 修改时间：09:00:46" itemprop="dateCreated datePublished" datetime="2025-04-10T08:05:30+08:00">2025-04-10</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/wine/" itemprop="url" rel="index"><span itemprop="name">wine</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。"><a href="#在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。" class="headerlink" title="在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。"></a>在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。</h1><span id="more"></span>
+
+<h1 id="关于使用思源宋体显示生僻字’䶮’调研报告"><a href="#关于使用思源宋体显示生僻字’䶮’调研报告" class="headerlink" title="关于使用思源宋体显示生僻字’䶮’调研报告"></a>关于使用思源宋体显示生僻字’䶮’调研报告</h1><h2 id="调研目标"><a href="#调研目标" class="headerlink" title="调研目标"></a>调研目标</h2><p>在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。</p>
+<h2 id="应用现状"><a href="#应用现状" class="headerlink" title="应用现状"></a>应用现状</h2><p>当前应用界面中文显示使用为字体为<code>宋体</code>，在应用最初版本中无法显示生僻字’䶮’，在与北京同事协助下，通过对系统中宋体的字体文件进行修改后可以显示目标字体。</p>
+<p>初始版本宋体无法显示如下图：<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/1.png" alt="图1"></p>
+<p>北京同事提供宋体文件修改后正常显示如下图：<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/2.png" alt="图2"></p>
+<p><em><strong>调研测试环境为：</strong></em></p>
+<p><em>软件环境</em>：amd架构，nfs-5.0-G212p版本</p>
+<p><em>硬件环境</em>：需要amd架构处理器</p>
+<p><em>wine版本</em>：上游wine-8.6</p>
+<p><em>容器应用</em>：病案管理系统</p>
+<h2 id="设置思源宋体"><a href="#设置思源宋体" class="headerlink" title="设置思源宋体"></a>设置思源宋体</h2><ol>
+<li>思源宋体可以从官网下载，<a target="_blank" rel="noopener" href="https://source.typekit.com/source-han-serif/cn/%EF%BC%8C%E4%B8%8B%E8%BD%BD%E4%B9%8B%E5%90%8E%E5%BE%88%E5%A4%9A%E6%96%87%E4%BB%B6%E5%A4%B9%EF%BC%8C%E5%A6%82%E4%B8%8B%EF%BC%9A">https://source.typekit.com/source-han-serif/cn/，下载之后很多文件夹，如下：</a><br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/3.png" alt="图3"></li>
+</ol>
+<p>QA：在wine下我使用 otc下无法识别，这个跟wine的读取字体实现有关系，系统是可以正常使用这个字体的，但是wine下只能识别otf,关于这个细节差距我会在《wine下字体模块实现调研》详细说明，这里就不再赘述</p>
+<ol start="2">
+<li>从官网下载的思源宋体中取出<code>SourceHanSerifSC-Regular.otf</code>字体文件，现需获取’䶮’在wine中的编码并将此字体文件的编码设置此生僻字，在wine中开启font的通道，过滤日志读取生僻字’䶮’的UTF16编码为0xE0FA<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/4.png" alt="图4"></li>
+</ol>
+<ol start="3">
+<li>网上对于字体编辑常用的两个工具，一个是开源的fontforge（多平台并免费），fontcreator（仅支持windonw并收费但容易上手），由于是实验阶段我就使用fontcreator工具，将目标字体打开<code>SourceHanSerifSC-Regular.otf</code>，搜索后发现’䶮’编码为0xE863，使用工具中的insert功能，设置编码0xE0FA为’䶮’字并导出字体文件。<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/5.png" alt="图5"></li>
+</ol>
+<p><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/12.png"></p>
+<h2 id="设置wine注册表进行字体加载"><a href="#设置wine注册表进行字体加载" class="headerlink" title="设置wine注册表进行字体加载"></a>设置wine注册表进行字体加载</h2><ol>
+<li><p>wine的字体加载有多种路径大致分为四种</p>
+<ol>
+<li>通过系统注册表中的指定路径</li>
+<li>加载容器下的window/fonts路径字体</li>
+<li>加载系统中的已存在字体</li>
+<li>加载wine打包中的字体</li>
+</ol>
+</li>
+<li><p>为了不影响系统下显示方便字体设置，修改容器下注册表<code>HKEY_CURRENT_USER\Software\Wine\Fonts</code>，增加加载字体路径，并把思源宋体字体放在目标路径下，火锅的字体wfont也存放在此文件夹<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/6.png" alt="图6"></p>
+</li>
+<li><p>在容器应用启动后发现容器已加载目标字体<code>思源宋体</code><br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/7.png" alt="图7"></p>
+</li>
+</ol>
+<ol start="4">
+<li><p>需要修改系统注册表，将系统的宋体全部替换为<code>思源宋体</code>，注册表路径为HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/9.png" alt="图9"></p>
+</li>
+<li><p>显示现象如下<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/10.png" alt="图10"></p>
+</li>
+</ol>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>wine下的字体显示是通过匹配度进行匹配的，在实际应用匹配时，思源字体与宋体差异度较大暂无法直接匹配上，需要通过注册表修改进行替换。在修改后也无法像原版宋体一样显示，但在字体官网展示对比中，宋体与思源宋体显示差异并不大，此方向需要继续调研，猜测宋体与思源宋体中的字体文件内容差距较大，列如字体衬线，宽度比例等导致。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/wine/" rel="tag"># wine</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/03/12/%E8%AF%BB%E7%88%B1%E4%B8%8E%E7%94%9F%E6%B4%BB%E7%9A%84%E8%8B%A6%E6%81%BC/" rel="prev" title="【读书有感】摘抄叔本华《爱与生活的苦恼》">
+      <i class="fa fa-chevron-left"></i> 【读书有感】摘抄叔本华《爱与生活的苦恼》
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9C%A8%E7%97%85%E6%A1%88%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F%E4%B8%AD%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%9D%A5%E6%9B%BF%E4%BB%A3%E5%AE%8B%E4%BD%93%E8%BF%9B%E8%A1%8C%E5%BA%94%E7%94%A8%E4%B8%AD%E7%9A%84%E4%B8%AD%E6%96%87%E6%98%BE%E7%A4%BA%EF%BC%8C%E5%B9%B6%E8%B0%83%E7%A0%94%E7%94%9F%E5%83%BB%E5%AD%97%E6%98%BE%E7%A4%BA%E9%80%BB%E8%BE%91%EF%BC%8C%E8%83%BD%E5%A4%9F%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E2%80%99%E4%B6%AE%E2%80%99%EF%BC%8C%E6%96%87%E6%A1%A3%E5%86%85%E5%AE%B9%E6%8C%89%E7%85%A7%E4%B8%A4%E6%AD%A5%E6%89%A7%E8%A1%8C%EF%BC%8C%E7%AC%AC%E4%B8%80%E6%AD%A5%E6%98%AF%E5%B0%86%E7%94%9F%E5%83%BB%E5%AD%97%E5%8A%A0%E8%BD%BD%E8%87%B3%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E4%B8%AD%EF%BC%8C%E7%AC%AC%E4%BA%8C%E6%AD%A5%E6%98%AF%E5%B0%86%E7%B3%BB%E7%BB%9F%E5%AE%8B%E4%BD%93%E6%9B%BF%E6%8D%A2%E4%B8%BA%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E3%80%82"><span class="nav-number">1.</span> <span class="nav-text">在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E2%80%99%E4%B6%AE%E2%80%99%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A"><span class="nav-number">2.</span> <span class="nav-text">关于使用思源宋体显示生僻字’䶮’调研报告</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B0%83%E7%A0%94%E7%9B%AE%E6%A0%87"><span class="nav-number">2.1.</span> <span class="nav-text">调研目标</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E7%8E%B0%E7%8A%B6"><span class="nav-number">2.2.</span> <span class="nav-text">应用现状</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%BE%E7%BD%AE%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93"><span class="nav-number">2.3.</span> <span class="nav-text">设置思源宋体</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%BE%E7%BD%AEwine%E6%B3%A8%E5%86%8C%E8%A1%A8%E8%BF%9B%E8%A1%8C%E5%AD%97%E4%BD%93%E5%8A%A0%E8%BD%BD"><span class="nav-number">2.4.</span> <span class="nav-text">设置wine注册表进行字体加载</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-number">2.5.</span> <span class="nav-text">结论</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mecry"
+      src="/images/%E5%A4%B4%E5%83%8F.jpg">
+  <p class="site-author-name" itemprop="name">Mecry</p>
+  <div class="site-description" itemprop="description">在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">47</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lk-me/" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lk-me&#x2F;" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:linkmecry@gmail.com" title="E-Mail → mailto:linkmecry@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        <img src="https://static.dy208.cn/o_1dfilp8ruo521thr1hvf18ji17soa.png">
+<a href="https://beian.miit.gov.cn/"  style="color:#f72b07" target="_blank">鄂ICP备2021006857号-1</a>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mecry</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+}
+}
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>
