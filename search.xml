@@ -1,11 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【问题解决】博客的https红锁解决</title>
+    <url>/2025/04/27/blog%E7%9A%84https%E7%BA%A2%E9%94%81%E8%A7%A3%E5%86%B3/</url>
+    <content><![CDATA[<h1 id="blog的搭建"><a href="#blog的搭建" class="headerlink" title="blog的搭建"></a>blog的搭建</h1><p><em><strong>此博客是github+hexo，域名是通过腾讯云申请。</strong></em></p>
+<span id="more"></span>
+
+<p><strong>使用cloudflare进行反向代理也可以解决红锁问题，但是为中转方案存在部分问题</strong></p>
+<h2 id="问题解决"><a href="#问题解决" class="headerlink" title="问题解决"></a>问题解决</h2><ol>
+<li><p>在腾讯云申请免费的域名证书，有效期为90天<br><img src="/2025/04/27/blog%E7%9A%84https%E7%BA%A2%E9%94%81%E8%A7%A3%E5%86%B3/1.png" alt="图1"></p>
+</li>
+<li><p>选择手动dns验证<br><img src="/2025/04/27/blog%E7%9A%84https%E7%BA%A2%E9%94%81%E8%A7%A3%E5%86%B3/2.png" alt="图2"></p>
+</li>
+<li><p>手动添加一条解析<br><img src="/2025/04/27/blog%E7%9A%84https%E7%BA%A2%E9%94%81%E8%A7%A3%E5%86%B3/3.png" alt="图3"></p>
+</li>
+<li><p>添加完成后进行证书验证</p>
+</li>
+<li><p>在github的设置界面勾选<code>Enforce HTTPS</code><br><img src="/2025/04/27/blog%E7%9A%84https%E7%BA%A2%E9%94%81%E8%A7%A3%E5%86%B3/4.png" alt="图4"></p>
+</li>
+</ol>
+<p>注意：勾选的时候若显示：<code>Unavailable for your site because your domain is not properly configured to support HTTPS</code>，则在腾讯云的域名解析增加以下解析，参考<a href="https://github.com/orgs/community/discussions/23049">https://github.com/orgs/community/discussions/23049</a></p>
+<ul>
+<li>185.199.108.153</li>
+<li>185.199.109.153</li>
+<li>185.199.110.153</li>
+<li>185.199.111.153<br><img src="/2025/04/27/blog%E7%9A%84https%E7%BA%A2%E9%94%81%E8%A7%A3%E5%86%B3/5.png" alt="图5"></li>
+</ul>
+<ol start="6">
+<li>最终效果如下图：</li>
+</ol>
+<p><img src="/2025/04/27/blog%E7%9A%84https%E7%BA%A2%E9%94%81%E8%A7%A3%E5%86%B3/10.png" alt="图10"></p>
+]]></content>
+      <categories>
+        <category>问题解决</category>
+      </categories>
+      <tags>
+        <tag>问题解决</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【Linux技术分享】 关于使用思源宋体显示生僻字&#39;䶮&#39;调研报告</title>
     <url>/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/</url>
-    <content><![CDATA[<h1 id="在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。"><a href="#在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。" class="headerlink" title="在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。"></a>在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。</h1><span id="more"></span>
-
-<h1 id="关于使用思源宋体显示生僻字’䶮’调研报告"><a href="#关于使用思源宋体显示生僻字’䶮’调研报告" class="headerlink" title="关于使用思源宋体显示生僻字’䶮’调研报告"></a>关于使用思源宋体显示生僻字’䶮’调研报告</h1><h2 id="调研目标"><a href="#调研目标" class="headerlink" title="调研目标"></a>调研目标</h2><p>在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。</p>
+    <content><![CDATA[<h1 id="关于使用思源宋体显示生僻字’䶮’调研报告"><a href="#关于使用思源宋体显示生僻字’䶮’调研报告" class="headerlink" title="关于使用思源宋体显示生僻字’䶮’调研报告"></a>关于使用思源宋体显示生僻字’䶮’调研报告</h1><span id="more"></span>
+<h2 id="调研目标"><a href="#调研目标" class="headerlink" title="调研目标"></a>调研目标</h2><p>在病案管理系统中使用思源宋体来替代宋体进行应用中的中文显示，并调研生僻字显示逻辑，能够使用思源宋体显示生僻字’䶮’，文档内容按照两步执行，第一步是将生僻字加载至思源宋体中，第二步是将系统宋体替换为思源宋体。</p>
 <h2 id="应用现状"><a href="#应用现状" class="headerlink" title="应用现状"></a>应用现状</h2><p>当前应用界面中文显示使用为字体为<code>宋体</code>，在应用最初版本中无法显示生僻字’䶮’，在与北京同事协助下，通过对系统中宋体的字体文件进行修改后可以显示目标字体。</p>
 <p>初始版本宋体无法显示如下图：<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/1.png" alt="图1"></p>
 <p>北京同事提供宋体文件修改后正常显示如下图：<br><img src="/2025/04/10/wine-%E5%85%B3%E4%BA%8E%E4%BD%BF%E7%94%A8%E6%80%9D%E6%BA%90%E5%AE%8B%E4%BD%93%E6%98%BE%E7%A4%BA%E7%94%9F%E5%83%BB%E5%AD%97%E4%B6%AE%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/2.png" alt="图2"></p>
