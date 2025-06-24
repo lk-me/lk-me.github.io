@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="wine下目前不支持smb下拷贝，目前遇到wine下某应用启动后升级需要拷贝目标smb文件至指定文件夹中">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Linux技术分享】简单处理wine下smb无法使用问题">
+<meta property="og:url" content="http://example.com/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="Link Mecry">
+<meta property="og:description" content="wine下目前不支持smb下拷贝，目前遇到wine下某应用启动后升级需要拷贝目标smb文件至指定文件夹中">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/2.png">
+<meta property="og:image" content="http://example.com/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/3.png">
+<meta property="og:image" content="http://example.com/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/4.png">
+<meta property="og:image" content="http://example.com/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/5.png">
+<meta property="og:image" content="http://example.com/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/upgrade.png">
+<meta property="og:image" content="http://example.com/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/6.png">
+<meta property="article:published_time" content="2025-06-24T01:05:30.000Z">
+<meta property="article:modified_time" content="2025-06-24T01:46:44.882Z">
+<meta property="article:author" content="Mecry">
+<meta property="article:tag" content="wine">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/2.png">
+
+<link rel="canonical" href="http://example.com/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Linux技术分享】简单处理wine下smb无法使用问题 | Link Mecry</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div id="id-header-inner" class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Link Mecry</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Mecry Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Mecry">
+      <meta itemprop="description" content="在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Link Mecry">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Linux技术分享】简单处理wine下smb无法使用问题
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2025-06-24 09:05:30 / 修改时间：09:46:44" itemprop="dateCreated datePublished" datetime="2025-06-24T09:05:30+08:00">2025-06-24</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/wine/" itemprop="url" rel="index"><span itemprop="name">wine</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="wine下目前不支持smb下拷贝，目前遇到wine下某应用启动后升级需要拷贝目标smb文件至指定文件夹中"><a href="#wine下目前不支持smb下拷贝，目前遇到wine下某应用启动后升级需要拷贝目标smb文件至指定文件夹中" class="headerlink" title="wine下目前不支持smb下拷贝，目前遇到wine下某应用启动后升级需要拷贝目标smb文件至指定文件夹中"></a>wine下目前不支持smb下拷贝，目前遇到wine下某应用启动后升级需要拷贝目标smb文件至指定文件夹中</h1><span id="more"></span>
+
+<h2 id="问题概述"><a href="#问题概述" class="headerlink" title="问题概述"></a>问题概述</h2><p>启动升级失败，现象如下图<br><img src="/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/2.png" alt="图2"></p>
+<h2 id="升级流程"><a href="#升级流程" class="headerlink" title="升级流程"></a>升级流程</h2><ol>
+<li><p>与应用厂商沟通发现该应用升级首先调用<code>WNetAddConnection2A</code>函数</p>
+</li>
+<li><p>wine启动增加mpr日志通道，日志输出如下，发现该函数调用三次<br><img src="/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/3.png" alt="图3"></p>
+</li>
+<li><p>WNetAddConnection2： 函数与网络资源建立连接，并且可以将本地设备重定向到网络资源。在该流程中此函数是建立与smb的服务器连接，从而访问服务器文件。</p>
+</li>
+<li><p>学习wine下源码，发现该函数在<code>if (!providerTable || providerTable-&gt;numProviders == 0)</code>判断时已返回，而<code>providerTable</code>是在<code>wnetInit</code>函数中进行初始化，源码大致如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">HKEY hKey;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">if</span> (RegOpenKeyExW(HKEY_LOCAL_MACHINE, <span class="string">L&quot;System\\CurrentControlSet\\Control\\NetworkProvider\\Order&quot;</span>,</span><br><span class="line">                     <span class="number">0</span>, KEY_READ, &amp;hKey) == ERROR_SUCCESS)</span><br><span class="line">   &#123;</span><br><span class="line">       DWORD size = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">       RegQueryValueExW(hKey, <span class="string">L&quot;ProviderOrder&quot;</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, &amp;size);</span><br><span class="line">       <span class="keyword">if</span> (size)</span><br><span class="line">       &#123;</span><br><span class="line">           ......</span><br><span class="line">                   providerTable =</span><br><span class="line">                    HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,</span><br><span class="line">                    <span class="keyword">sizeof</span>(WNetProviderTable)</span><br><span class="line">                    + (numToAllocate - <span class="number">1</span>) * <span class="keyword">sizeof</span>(WNetProvider));</span><br><span class="line">           ......</span><br><span class="line">       &#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>打开wine下注册表发现<code>System\\CurrentControlSet\\Control\\NetworkProvider\\Order\\NetworkProvider</code>缺失，从window下注册表发现该项中<code>LanmanWorkstation</code>这项存在，</p>
+<ul>
+<li>LanmanWorkstation 是 Windows 操作系统中的一个服务，正式名称为 ​Workstation 服务。它的主要功能是管理客户端与网络资源（如文件共享和打印机共享）的连接。具体来说，Workstation 服务负责处理与 SMB（Server Message Block）协议相关的操作，使客户端能够访问远程服务器上的共享资源。<br><img src="/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/4.png" alt="图4"></li>
+</ul>
+</li>
+<li><p>将该注册表与相关dll导入至wine容器中，发现无法启动报错。</p>
+</li>
+<li><p>调研开发原生的wine下smb服务实现时间较长，不符合现场项目速度要求，所以尝试其他快速平替方案，暂时将该函数不返回错误码，代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">@@ <span class="number">-2183</span>,<span class="number">6</span> +<span class="number">2183</span>,<span class="number">9</span> @@ <span class="function">DWORD WINAPI <span class="title">WNetUseConnectionA</span><span class="params">( HWND hwndOwner, NETRESOURCEA *resource,</span></span></span><br><span class="line"><span class="function"><span class="params">     TRACE( <span class="string">&quot;(%p, %p, %p, %s, 0x%08lX, %p, %p, %p)\n&quot;</span>, hwndOwner, resource, password, debugstr_a(userid), flags,</span></span></span><br><span class="line"><span class="function"><span class="params">         accessname, buffer_size, result );</span></span></span><br><span class="line"><span class="function"><span class="params"></span></span></span><br><span class="line"><span class="function"><span class="params">+    <span class="keyword">if</span>(userid &amp;&amp; !<span class="built_in">strcmp</span>(userid, <span class="string">&quot;ZEMR_USER&quot;</span>))&#123;</span></span></span><br><span class="line"><span class="function"><span class="params">+        <span class="keyword">return</span> <span class="number">0</span>;</span></span></span><br><span class="line"><span class="function"><span class="params">+    &#125;</span></span></span><br><span class="line"><span class="function"><span class="params">     netresource_a_to_w(resource, &amp;resourceW);</span></span></span><br><span class="line"><span class="function"><span class="params"></span></span></span><br><span class="line"><span class="function"><span class="params">     ctxt.hwndOwner = hwndOwner;</span></span></span><br></pre></td></tr></table></figure></li>
+<li><p>在wine启动时增加file日志通道，发现升级时访问路径<code>\\192.0.1.80\\nurse.update时</code>，在wine中替换为<code>UNC\\192.0.1.80\\nurse.update</code>路径</p>
+<ul>
+<li>在 Windows 系统中，​UNC（Universal Naming Convention，通用命名约定）​ 是一种用于标识网络资源的标准化路径格式。UNC 路径通常用于访问网络共享资源，例如文件共享或打印机。</li>
+<li>UNC 路径的基本格式如下：\ServerName\ShareName\Path</li>
+</ul>
+</li>
+</ol>
+<p><img src="/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/5.png" alt="图5"></p>
+<h3 id="具体方案"><a href="#具体方案" class="headerlink" title="具体方案"></a>具体方案</h3><ol>
+<li><p>根据上述流程分析可以暂定一个方案，可以在系统开机时将目标服务器文件挂载至容器中，在wine中代码将<code>UNC+服务器地址</code>路径转换为本地路径中，细节交互图如下：<br><img src="/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/upgrade.png" alt="图6"></p>
+</li>
+<li><p>由于mount必须提权才可挂载，所以需要使用自启动的server文件，才能对智业smb服务器下文件进行访问，该服务器需要在系统的<code>smbd</code>服务启动后才可启动，细节如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;mount zhiye smb file</span><br><span class="line">After&#x3D;smbd.service network.target</span><br><span class="line">Requires&#x3D;smbd.service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;sbin&#x2F;mount_zhiyesmb.sh</span><br><span class="line">Restart&#x3D;on-failure</span><br><span class="line">User&#x3D;root</span><br><span class="line">RestartSec&#x3D;5s</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
+<li><p>对于wine下代码修改如下，当检测到<code>192.0.1.80</code>路径时替换至容器路径，将开机字自启动的挂载目录软连接到容器中即可成功访问</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">@@ <span class="number">-272</span>,<span class="number">8</span> +<span class="number">274</span>,<span class="number">12</span> @@ <span class="function">NTSTATUS WINAPI <span class="title">RtlDosPathNameToNtPathName_U_WithStatus</span><span class="params">(<span class="keyword">const</span> WCHAR *dos_path, U</span></span></span><br><span class="line"><span class="function"><span class="params">     <span class="keyword">switch</span> (RtlDetermineDosPathNameType_U(ptr))</span></span></span><br><span class="line"><span class="function"><span class="params">     &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">     <span class="keyword">case</span> UNC_PATH: <span class="comment">/* \\foo */</span></span></span></span><br><span class="line"><span class="function"><span class="params">-        offset = <span class="number">2</span>;</span></span></span><br><span class="line"><span class="function"><span class="params">+    offset = <span class="number">2</span>;</span></span></span><br><span class="line"><span class="function"><span class="params">+    <span class="keyword">if</span>(wcsstr(ptr,<span class="string">L&quot;192.0.1.80&quot;</span>)) &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">+        wcscat(ntpath-&gt;Buffer, <span class="string">L&quot;C:\\&quot;</span>);</span></span></span><br><span class="line"><span class="function"><span class="params">+    &#125;<span class="keyword">else</span> &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">         wcscat(ntpath-&gt;Buffer, <span class="string">L&quot;UNC\\&quot;</span>);</span></span></span><br><span class="line"><span class="function"><span class="params">+    &#125;</span></span></span><br><span class="line"><span class="function"><span class="params">         <span class="keyword">break</span>;</span></span></span><br><span class="line"><span class="function"><span class="params">     <span class="keyword">case</span> DEVICE_PATH: <span class="comment">/* \\.\foo */</span></span></span></span><br><span class="line"><span class="function"><span class="params">         offset = <span class="number">4</span>;</span></span></span><br><span class="line"><span class="function"><span class="params">--</span></span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h2><p>修改后启动后升级效果图如下：<br><img src="/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/6.png" alt="图6"></p>
+<h2 id="其他方案"><a href="#其他方案" class="headerlink" title="其他方案"></a>其他方案</h2><ul>
+<li>方案1：完成wine下的​Workstation服务，让其支持容器下的smb连接<ul>
+<li>优点：能够完整的符合window逻辑，实现smb服务的启动与访问。</li>
+<li>缺点：难度较大，实现时间较长。</li>
+</ul>
+</li>
+<li>方案2：在wine下访问unc路径时，使用C实现SMB下的文件夹访问/读取/拷贝<ul>
+<li>优点：难度中等，属于方案1的平替方案，可以间接补充wine下smb文件访问的代码，完成后有一定的代码通用性。</li>
+<li>缺点：与window下的smb服务逻辑有出入，未实现window下的smb服务启动。</li>
+</ul>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/wine/" rel="tag"># wine</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/05/27/wine-%E5%A4%84%E7%90%86%E5%BF%AB%E9%80%9F%E5%A4%8D%E5%88%B6%E6%97%B6%E5%81%B6%E7%8E%B0%E5%A4%B1%E8%B4%A5%E9%97%AE%E9%A2%98/" rel="prev" title="【Linux技术分享】wine下处理快速复制时偶现失败问题">
+      <i class="fa fa-chevron-left"></i> 【Linux技术分享】wine下处理快速复制时偶现失败问题
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#wine%E4%B8%8B%E7%9B%AE%E5%89%8D%E4%B8%8D%E6%94%AF%E6%8C%81smb%E4%B8%8B%E6%8B%B7%E8%B4%9D%EF%BC%8C%E7%9B%AE%E5%89%8D%E9%81%87%E5%88%B0wine%E4%B8%8B%E6%9F%90%E5%BA%94%E7%94%A8%E5%90%AF%E5%8A%A8%E5%90%8E%E5%8D%87%E7%BA%A7%E9%9C%80%E8%A6%81%E6%8B%B7%E8%B4%9D%E7%9B%AE%E6%A0%87smb%E6%96%87%E4%BB%B6%E8%87%B3%E6%8C%87%E5%AE%9A%E6%96%87%E4%BB%B6%E5%A4%B9%E4%B8%AD"><span class="nav-number">1.</span> <span class="nav-text">wine下目前不支持smb下拷贝，目前遇到wine下某应用启动后升级需要拷贝目标smb文件至指定文件夹中</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E6%A6%82%E8%BF%B0"><span class="nav-number">1.1.</span> <span class="nav-text">问题概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%87%E7%BA%A7%E6%B5%81%E7%A8%8B"><span class="nav-number">1.2.</span> <span class="nav-text">升级流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B7%E4%BD%93%E6%96%B9%E6%A1%88"><span class="nav-number">1.2.1.</span> <span class="nav-text">具体方案</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%AA%8C%E8%AF%81"><span class="nav-number">1.3.</span> <span class="nav-text">验证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E6%96%B9%E6%A1%88"><span class="nav-number">1.4.</span> <span class="nav-text">其他方案</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mecry"
+      src="/images/%E5%A4%B4%E5%83%8F.jpg">
+  <p class="site-author-name" itemprop="name">Mecry</p>
+  <div class="site-description" itemprop="description">在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lk-me/" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lk-me&#x2F;" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:linkmecry@gmail.com" title="E-Mail → mailto:linkmecry@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        <img src="https://static.dy208.cn/o_1dfilp8ruo521thr1hvf18ji17soa.png">
+<a href="https://beian.miit.gov.cn/"  style="color:#f72b07" target="_blank">鄂ICP备2021006857号-1</a>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mecry</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+}
+}
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>

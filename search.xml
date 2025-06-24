@@ -1,6 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【Linux技术分享】简单处理wine下smb无法使用问题</title>
+    <url>/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/</url>
+    <content><![CDATA[<h1 id="wine下目前不支持smb下拷贝，目前遇到wine下某应用启动后升级需要拷贝目标smb文件至指定文件夹中"><a href="#wine下目前不支持smb下拷贝，目前遇到wine下某应用启动后升级需要拷贝目标smb文件至指定文件夹中" class="headerlink" title="wine下目前不支持smb下拷贝，目前遇到wine下某应用启动后升级需要拷贝目标smb文件至指定文件夹中"></a>wine下目前不支持smb下拷贝，目前遇到wine下某应用启动后升级需要拷贝目标smb文件至指定文件夹中</h1><span id="more"></span>
+
+<h2 id="问题概述"><a href="#问题概述" class="headerlink" title="问题概述"></a>问题概述</h2><p>启动升级失败，现象如下图<br><img src="/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/2.png" alt="图2"></p>
+<h2 id="升级流程"><a href="#升级流程" class="headerlink" title="升级流程"></a>升级流程</h2><ol>
+<li><p>与应用厂商沟通发现该应用升级首先调用<code>WNetAddConnection2A</code>函数</p>
+</li>
+<li><p>wine启动增加mpr日志通道，日志输出如下，发现该函数调用三次<br><img src="/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/3.png" alt="图3"></p>
+</li>
+<li><p>WNetAddConnection2： 函数与网络资源建立连接，并且可以将本地设备重定向到网络资源。在该流程中此函数是建立与smb的服务器连接，从而访问服务器文件。</p>
+</li>
+<li><p>学习wine下源码，发现该函数在<code>if (!providerTable || providerTable-&gt;numProviders == 0)</code>判断时已返回，而<code>providerTable</code>是在<code>wnetInit</code>函数中进行初始化，源码大致如下</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">HKEY hKey;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">if</span> (RegOpenKeyExW(HKEY_LOCAL_MACHINE, <span class="string">L&quot;System\\CurrentControlSet\\Control\\NetworkProvider\\Order&quot;</span>,</span><br><span class="line">                     <span class="number">0</span>, KEY_READ, &amp;hKey) == ERROR_SUCCESS)</span><br><span class="line">   &#123;</span><br><span class="line">       DWORD size = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">       RegQueryValueExW(hKey, <span class="string">L&quot;ProviderOrder&quot;</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, &amp;size);</span><br><span class="line">       <span class="keyword">if</span> (size)</span><br><span class="line">       &#123;</span><br><span class="line">           ......</span><br><span class="line">                   providerTable =</span><br><span class="line">                    HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,</span><br><span class="line">                    <span class="keyword">sizeof</span>(WNetProviderTable)</span><br><span class="line">                    + (numToAllocate - <span class="number">1</span>) * <span class="keyword">sizeof</span>(WNetProvider));</span><br><span class="line">           ......</span><br><span class="line">       &#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>打开wine下注册表发现<code>System\\CurrentControlSet\\Control\\NetworkProvider\\Order\\NetworkProvider</code>缺失，从window下注册表发现该项中<code>LanmanWorkstation</code>这项存在，</p>
+<ul>
+<li>LanmanWorkstation 是 Windows 操作系统中的一个服务，正式名称为 ​Workstation 服务。它的主要功能是管理客户端与网络资源（如文件共享和打印机共享）的连接。具体来说，Workstation 服务负责处理与 SMB（Server Message Block）协议相关的操作，使客户端能够访问远程服务器上的共享资源。<br><img src="/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/4.png" alt="图4"></li>
+</ul>
+</li>
+<li><p>将该注册表与相关dll导入至wine容器中，发现无法启动报错。</p>
+</li>
+<li><p>调研开发原生的wine下smb服务实现时间较长，不符合现场项目速度要求，所以尝试其他快速平替方案，暂时将该函数不返回错误码，代码如下：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">@@ <span class="number">-2183</span>,<span class="number">6</span> +<span class="number">2183</span>,<span class="number">9</span> @@ <span class="function">DWORD WINAPI <span class="title">WNetUseConnectionA</span><span class="params">( HWND hwndOwner, NETRESOURCEA *resource,</span></span></span><br><span class="line"><span class="function"><span class="params">     TRACE( <span class="string">&quot;(%p, %p, %p, %s, 0x%08lX, %p, %p, %p)\n&quot;</span>, hwndOwner, resource, password, debugstr_a(userid), flags,</span></span></span><br><span class="line"><span class="function"><span class="params">         accessname, buffer_size, result );</span></span></span><br><span class="line"><span class="function"><span class="params"></span></span></span><br><span class="line"><span class="function"><span class="params">+    <span class="keyword">if</span>(userid &amp;&amp; !<span class="built_in">strcmp</span>(userid, <span class="string">&quot;ZEMR_USER&quot;</span>))&#123;</span></span></span><br><span class="line"><span class="function"><span class="params">+        <span class="keyword">return</span> <span class="number">0</span>;</span></span></span><br><span class="line"><span class="function"><span class="params">+    &#125;</span></span></span><br><span class="line"><span class="function"><span class="params">     netresource_a_to_w(resource, &amp;resourceW);</span></span></span><br><span class="line"><span class="function"><span class="params"></span></span></span><br><span class="line"><span class="function"><span class="params">     ctxt.hwndOwner = hwndOwner;</span></span></span><br></pre></td></tr></table></figure></li>
+<li><p>在wine启动时增加file日志通道，发现升级时访问路径<code>\\192.0.1.80\\nurse.update时</code>，在wine中替换为<code>UNC\\192.0.1.80\\nurse.update</code>路径</p>
+<ul>
+<li>在 Windows 系统中，​UNC（Universal Naming Convention，通用命名约定）​ 是一种用于标识网络资源的标准化路径格式。UNC 路径通常用于访问网络共享资源，例如文件共享或打印机。</li>
+<li>UNC 路径的基本格式如下：\ServerName\ShareName\Path</li>
+</ul>
+</li>
+</ol>
+<p><img src="/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/5.png" alt="图5"></p>
+<h3 id="具体方案"><a href="#具体方案" class="headerlink" title="具体方案"></a>具体方案</h3><ol>
+<li><p>根据上述流程分析可以暂定一个方案，可以在系统开机时将目标服务器文件挂载至容器中，在wine中代码将<code>UNC+服务器地址</code>路径转换为本地路径中，细节交互图如下：<br><img src="/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/upgrade.png" alt="图6"></p>
+</li>
+<li><p>由于mount必须提权才可挂载，所以需要使用自启动的server文件，才能对智业smb服务器下文件进行访问，该服务器需要在系统的<code>smbd</code>服务启动后才可启动，细节如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;mount zhiye smb file</span><br><span class="line">After&#x3D;smbd.service network.target</span><br><span class="line">Requires&#x3D;smbd.service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;sbin&#x2F;mount_zhiyesmb.sh</span><br><span class="line">Restart&#x3D;on-failure</span><br><span class="line">User&#x3D;root</span><br><span class="line">RestartSec&#x3D;5s</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
+<li><p>对于wine下代码修改如下，当检测到<code>192.0.1.80</code>路径时替换至容器路径，将开机字自启动的挂载目录软连接到容器中即可成功访问</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">@@ <span class="number">-272</span>,<span class="number">8</span> +<span class="number">274</span>,<span class="number">12</span> @@ <span class="function">NTSTATUS WINAPI <span class="title">RtlDosPathNameToNtPathName_U_WithStatus</span><span class="params">(<span class="keyword">const</span> WCHAR *dos_path, U</span></span></span><br><span class="line"><span class="function"><span class="params">     <span class="keyword">switch</span> (RtlDetermineDosPathNameType_U(ptr))</span></span></span><br><span class="line"><span class="function"><span class="params">     &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">     <span class="keyword">case</span> UNC_PATH: <span class="comment">/* \\foo */</span></span></span></span><br><span class="line"><span class="function"><span class="params">-        offset = <span class="number">2</span>;</span></span></span><br><span class="line"><span class="function"><span class="params">+    offset = <span class="number">2</span>;</span></span></span><br><span class="line"><span class="function"><span class="params">+    <span class="keyword">if</span>(wcsstr(ptr,<span class="string">L&quot;192.0.1.80&quot;</span>)) &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">+        wcscat(ntpath-&gt;Buffer, <span class="string">L&quot;C:\\&quot;</span>);</span></span></span><br><span class="line"><span class="function"><span class="params">+    &#125;<span class="keyword">else</span> &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">         wcscat(ntpath-&gt;Buffer, <span class="string">L&quot;UNC\\&quot;</span>);</span></span></span><br><span class="line"><span class="function"><span class="params">+    &#125;</span></span></span><br><span class="line"><span class="function"><span class="params">         <span class="keyword">break</span>;</span></span></span><br><span class="line"><span class="function"><span class="params">     <span class="keyword">case</span> DEVICE_PATH: <span class="comment">/* \\.\foo */</span></span></span></span><br><span class="line"><span class="function"><span class="params">         offset = <span class="number">4</span>;</span></span></span><br><span class="line"><span class="function"><span class="params">--</span></span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h2><p>修改后启动后升级效果图如下：<br><img src="/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/6.png" alt="图6"></p>
+<h2 id="其他方案"><a href="#其他方案" class="headerlink" title="其他方案"></a>其他方案</h2><ul>
+<li>方案1：完成wine下的​Workstation服务，让其支持容器下的smb连接<ul>
+<li>优点：能够完整的符合window逻辑，实现smb服务的启动与访问。</li>
+<li>缺点：难度较大，实现时间较长。</li>
+</ul>
+</li>
+<li>方案2：在wine下访问unc路径时，使用C实现SMB下的文件夹访问/读取/拷贝<ul>
+<li>优点：难度中等，属于方案1的平替方案，可以间接补充wine下smb文件访问的代码，完成后有一定的代码通用性。</li>
+<li>缺点：与window下的smb服务逻辑有出入，未实现window下的smb服务启动。</li>
+</ul>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>wine</category>
+      </categories>
+      <tags>
+        <tag>wine</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【Linux技术分享】wine下处理快速复制时偶现失败问题</title>
     <url>/2025/05/27/wine-%E5%A4%84%E7%90%86%E5%BF%AB%E9%80%9F%E5%A4%8D%E5%88%B6%E6%97%B6%E5%81%B6%E7%8E%B0%E5%A4%B1%E8%B4%A5%E9%97%AE%E9%A2%98/</url>
     <content><![CDATA[<h1 id="某应用在在快速调用剪切板进行数据复制时，在第一次进行交互出现失败概率几乎为百分之百，后续点击交互失败概率大致为百分之20左右"><a href="#某应用在在快速调用剪切板进行数据复制时，在第一次进行交互出现失败概率几乎为百分之百，后续点击交互失败概率大致为百分之20左右" class="headerlink" title="某应用在在快速调用剪切板进行数据复制时，在第一次进行交互出现失败概率几乎为百分之百，后续点击交互失败概率大致为百分之20左右"></a>某应用在在快速调用剪切板进行数据复制时，在第一次进行交互出现失败概率几乎为百分之百，后续点击交互失败概率大致为百分之20左右</h1><span id="more"></span>
