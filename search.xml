@@ -1,6 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【Linux技术分享】通过逆向简单定位wine下的崩溃</title>
+    <url>/2025/07/21/wine-%E9%80%9A%E8%BF%87%E9%80%86%E5%90%91%E7%AE%80%E5%8D%95%E5%AE%9A%E4%BD%8Dwine%E4%B8%8B%E7%9A%84%E5%B4%A9%E6%BA%83/</url>
+    <content><![CDATA[<h1 id="通过Cutter等二进制分析工具协助分析wine下崩溃问题"><a href="#通过Cutter等二进制分析工具协助分析wine下崩溃问题" class="headerlink" title="通过Cutter等二进制分析工具协助分析wine下崩溃问题"></a>通过Cutter等二进制分析工具协助分析wine下崩溃问题</h1><span id="more"></span>
+
+<ol>
+<li><p>实现一个简单的段错误代码</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">fun</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span>* p = <span class="literal">NULL</span>;</span><br><span class="line">    *p = <span class="number">32</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    fun();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>通过wine下运行弹出debug的窗口<br><img src="/2025/07/21/wine-%E9%80%9A%E8%BF%87%E9%80%86%E5%90%91%E7%AE%80%E5%8D%95%E5%AE%9A%E4%BD%8Dwine%E4%B8%8B%E7%9A%84%E5%B4%A9%E6%BA%83/1.png" alt="图1"></p>
+</li>
+<li><p>使用winedbg进行附加调试，在调试模式下崩溃，输入bt即可打印堆栈信息<br><img src="/2025/07/21/wine-%E9%80%9A%E8%BF%87%E9%80%86%E5%90%91%E7%AE%80%E5%8D%95%E5%AE%9A%E4%BD%8Dwine%E4%B8%8B%E7%9A%84%E5%B4%A9%E6%BA%83/2.png" alt="图2"></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x3D;&gt;0 0x0045ca5f in consoleapplication1 (+0x5ca5f) (0x0031fde0)</span><br><span class="line">0x0045ca5f: 当前执行的指令地址（程序计数器 PC 的值）。</span><br><span class="line">(+0x5ca5f): 相对于模块基址的偏移量（这里是 consoleapplication1 的偏移量）。</span><br><span class="line">(0x0031fde0): 调用时的栈帧地址（Stack Frame Address），即该函数调用时栈顶指针（ESP）或基址指针（EBP）的值。</span><br></pre></td></tr></table></figure></li>
+<li><p>通过 <code>/proc/pid/maps</code>，在指定进程中查看elf文件加载信息<br><img src="/2025/07/21/wine-%E9%80%9A%E8%BF%87%E9%80%86%E5%90%91%E7%AE%80%E5%8D%95%E5%AE%9A%E4%BD%8Dwine%E4%B8%8B%E7%9A%84%E5%B4%A9%E6%BA%83/5.png" alt="图5"></p>
+</li>
+<li><p>通过以上分析可以定位出错代码在<code>consoleapplication1</code>这个进程中，偏移量为<code>+0x5ca5f</code>。<br><img src="/2025/07/21/wine-%E9%80%9A%E8%BF%87%E9%80%86%E5%90%91%E7%AE%80%E5%8D%95%E5%AE%9A%E4%BD%8Dwine%E4%B8%8B%E7%9A%84%E5%B4%A9%E6%BA%83/4.png" alt="图4"><br><img src="/2025/07/21/wine-%E9%80%9A%E8%BF%87%E9%80%86%E5%90%91%E7%AE%80%E5%8D%95%E5%AE%9A%E4%BD%8Dwine%E4%B8%8B%E7%9A%84%E5%B4%A9%E6%BA%83/3.png" alt="图3"></p>
+</li>
+<li><p>通过ida或者Cutter等二进制分析工具进行分析，本次使用的为Cutter</p>
+</li>
+<li><p>加载该exe后发现是从地址<code>0x0040000</code>开始加载<br><img src="/2025/07/21/wine-%E9%80%9A%E8%BF%87%E9%80%86%E5%90%91%E7%AE%80%E5%8D%95%E5%AE%9A%E4%BD%8Dwine%E4%B8%8B%E7%9A%84%E5%B4%A9%E6%BA%83/6.png" alt="图6"></p>
+</li>
+<li><p>加上偏移量进行偏移定位，获取其反汇编内容</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">0x0045ca30      push    ebp</span><br><span class="line">0x0045ca31      mov     ebp, esp</span><br><span class="line">0x0045ca33      sub     esp, 0xcc</span><br><span class="line">0x0045ca39      push    ebx</span><br><span class="line">0x0045ca3a      push    esi</span><br><span class="line">0x0045ca3b      push    edi</span><br><span class="line">0x0045ca3c      lea     edi, [var_ch]</span><br><span class="line">0x0045ca3f      mov     ecx, 3</span><br><span class="line">0x0045ca44      mov     eax, 0xcccccccc</span><br><span class="line">0x0045ca49      rep     stosd dword es:[edi], eax</span><br><span class="line">0x0045ca4b      mov     ecx, 0x538067</span><br><span class="line">0x0045ca50      call    fcn.00458cce</span><br><span class="line">0x0045ca55      mov     dword [var_8h], 0</span><br><span class="line">0x0045ca5c      mov     eax, dword [var_8h]</span><br><span class="line">0x0045ca5f      mov     dword [eax], 0x20 ; 32</span><br><span class="line">0x0045ca65      pop     edi</span><br><span class="line">0x0045ca66      pop     esi</span><br><span class="line">0x0045ca67      pop     ebx</span><br><span class="line">0x0045ca68      add     esp, 0xcc</span><br><span class="line">0x0045ca6e      cmp     ebp, esp</span><br><span class="line">0x0045ca70      call    fcn.00457fc2</span><br><span class="line">0x0045ca75      mov     esp, ebp</span><br><span class="line">0x0045ca77      pop     ebp</span><br></pre></td></tr></table></figure></li>
+<li><p>通过Cutter通过该汇编内容得到大致函数<br><img src="/2025/07/21/wine-%E9%80%9A%E8%BF%87%E9%80%86%E5%90%91%E7%AE%80%E5%8D%95%E5%AE%9A%E4%BD%8Dwine%E4%B8%8B%E7%9A%84%E5%B4%A9%E6%BA%83/8.png" alt="图8"></p>
+</li>
+<li><p>通过Cutter工具即可定位此次崩溃原因，向地址 0（NULL）写入 0x20，这会导致 段错误。<br><img src="/2025/07/21/wine-%E9%80%9A%E8%BF%87%E9%80%86%E5%90%91%E7%AE%80%E5%8D%95%E5%AE%9A%E4%BD%8Dwine%E4%B8%8B%E7%9A%84%E5%B4%A9%E6%BA%83/9.png" alt="图9"></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">mov dword [var_8h], 0：将 var_8h（ebp - 0x8）设为 0。</span><br><span class="line">mov eax, dword [var_8h]：将 var_8h 的值（0）加载到 eax。</span><br><span class="line">mov dword [eax], 0x20：尝试向 eax（0，即 NULL）写入 0x20.</span><br></pre></td></tr></table></figure></li>
+</ol>
+]]></content>
+      <categories>
+        <category>wine</category>
+      </categories>
+      <tags>
+        <tag>wine</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【Linux技术分享】简单处理wine下smb无法使用问题</title>
     <url>/2025/06/24/wine-%E7%AE%80%E5%8D%95%E5%A4%84%E7%90%86wine%E4%B8%8Bsmb%E6%97%A0%E6%B3%95%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98/</url>
     <content><![CDATA[<h1 id="wine下目前不支持smb下拷贝，目前遇到wine下某应用启动后升级需要拷贝目标smb文件至指定文件夹中"><a href="#wine下目前不支持smb下拷贝，目前遇到wine下某应用启动后升级需要拷贝目标smb文件至指定文件夹中" class="headerlink" title="wine下目前不支持smb下拷贝，目前遇到wine下某应用启动后升级需要拷贝目标smb文件至指定文件夹中"></a>wine下目前不支持smb下拷贝，目前遇到wine下某应用启动后升级需要拷贝目标smb文件至指定文件夹中</h1><span id="more"></span>
