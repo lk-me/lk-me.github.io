@@ -1,6 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【Linux技术分享】密码输入框显示明文问题分析</title>
+    <url>/2025/11/24/wine-%E5%88%86%E6%9E%90%E7%A8%8E%E5%8A%A1%E5%B1%80%E5%AF%86%E7%A0%81%E6%98%8E%E6%96%87%E9%97%AE%E9%A2%98/</url>
+    <content><![CDATA[<h1 id="密码输入框显示明文问题分析"><a href="#密码输入框显示明文问题分析" class="headerlink" title="密码输入框显示明文问题分析"></a>密码输入框显示明文问题分析</h1><span id="more"></span>
+<h1 id="现场环境"><a href="#现场环境" class="headerlink" title="现场环境"></a>现场环境</h1><p>wine版本： wine10.14<br>系统版本：debian12</p>
+<h1 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h1><ol>
+<li> 密码输入框显示明文，如下图：<br><img src="/2025/11/24/wine-%E5%88%86%E6%9E%90%E7%A8%8E%E5%8A%A1%E5%B1%80%E5%AF%86%E7%A0%81%E6%98%8E%E6%96%87%E9%97%AE%E9%A2%98/1.png" alt="图1"></li>
+</ol>
+<h1 id="分析流程"><a href="#分析流程" class="headerlink" title="分析流程"></a>分析流程</h1><ol>
+<li><p>window下实现密码框通常设置window窗口ES_PASSWORD风格实现或者在wm_create中发送EM_SETPASSWORDCHAR消息设置window的edit为密码框</p>
+</li>
+<li><p>使用spy++发现wine下窗口风格与window下不一致，缺少ES_PASSWORD风格</p>
+</li>
+<li><p>查看msg/edit/win中逻辑，完成window下的demo,确认wine下的多行<code>ES_MULTILINE</code>风格不支持加密，该应用加密逻辑大致如下：</p>
+<ul>
+<li>该应用使用的是<code>wingding.ttf</code>中的字母<code>l</code>设置密码为黑圆圈。</li>
+<li>在WM_CREATE中发送消息类似SendMessage(hPwd, EM_SETPASSWORDCHAR, ‘*’, 0)，由于用的是<code>l</code>字母所有这里发送的消息字符就是<code>l</code></li>
+<li>wingding这个字体wine中会自带，目前将window下的这个字体拷贝到容器中输入字符就会变化，目前原因还需要调研？？？？</li>
+<li>在设置密码为黑圆圈的时候有两种方案，1：将WCHAR消息进行拦截，在这进行修改，2：类似步骤2，在wm_create中发送一次EM_SETPASSWORDCHAR消息即可设置</li>
+<li>wine下收到EM_SETPASSWORDCHAR消息的时候，会在<code>EDIT_EM_SetPasswordChar</code>函数进程处理，目前就是这里出问题，在wine中当edit窗口中风格有<code>ES_MULTILINE</code>直接返回，不会设置edit为密码窗口</li>
+<li>EDIT_EM_SetPasswordChar修改后还需要修改排版函数，不然输入的字符变成<code>wingding.ttf</code>对应的符号，不是密码中的字符，所以需要修改<code>EDIT_UpdateUniscribeData_linedef</code>函数</li>
+</ul>
+</li>
+<li><p>查看wine下的user32/edit.c中的EDIT_EM_SetPasswordChar函数</p>
+</li>
+</ol>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">EDIT_EM_SetPasswordChar</span><span class="params">(EDITSTATE *es, WCHAR c)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	LONG style;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (es-&gt;style &amp; ES_MULTILINE)</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (es-&gt;password_char == c)</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">        style = GetWindowLongW( es-&gt;hwndSelf, GWL_STYLE );</span><br><span class="line">	es-&gt;password_char = c;</span><br><span class="line">	<span class="keyword">if</span> (c) &#123;</span><br><span class="line">            SetWindowLongW( es-&gt;hwndSelf, GWL_STYLE, style | ES_PASSWORD );</span><br><span class="line">            es-&gt;style |= ES_PASSWORD;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            SetWindowLongW( es-&gt;hwndSelf, GWL_STYLE, style &amp; ~ES_PASSWORD );</span><br><span class="line">            es-&gt;style &amp;= ~ES_PASSWORD;</span><br><span class="line">	&#125;</span><br><span class="line">	EDIT_InvalidateUniscribeData(es);</span><br><span class="line">	EDIT_UpdateText(es, <span class="literal">NULL</span>, TRUE);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li><p>需要将EDIT_UpdateUniscribeData函数的EDIT_UpdateUniscribeData_linedef函数进行处理，第一个函数是处理单行的，第二个函数是处理编辑框多行风格的。在单行风格中有处理wine密码风格，让其显示密码型号，多行中没有，需要增加该逻辑，代码如下：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> SCRIPT_STRING_ANALYSIS <span class="title">EDIT_UpdateUniscribeData_linedef</span><span class="params">(EDITSTATE *es, HDC dc, LINEDEF *line_def)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (!line_def)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (line_def-&gt;net_length &amp;&amp; !line_def-&gt;ssa)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">int</span> index = line_def-&gt;index;</span><br><span class="line">		HFONT old_font = <span class="literal">NULL</span>;</span><br><span class="line">		HDC udc = dc;</span><br><span class="line">		SCRIPT_TABDEF tabdef;</span><br><span class="line">		HRESULT hr;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (!udc)</span><br><span class="line">			udc = NtUserGetDC(es-&gt;hwndSelf);</span><br><span class="line">		<span class="keyword">if</span> (es-&gt;font)</span><br><span class="line">			old_font = SelectObject(udc, es-&gt;font);</span><br><span class="line"></span><br><span class="line">		tabdef.cTabStops = es-&gt;tabs_count;</span><br><span class="line">		tabdef.iScale = GdiGetCharDimensions(udc, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">		tabdef.pTabStops = es-&gt;tabs;</span><br><span class="line">		tabdef.iTabOrigin = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (es-&gt;style &amp; ES_PASSWORD)</span><br><span class="line">			hr = ScriptStringAnalyse(udc, &amp;es-&gt;password_char, line_def-&gt;net_length,</span><br><span class="line">                                                  (<span class="number">1.5</span>*line_def-&gt;net_length+<span class="number">16</span>), <span class="number">-1</span>,</span><br><span class="line">                                                  SSA_LINK|SSA_FALLBACK|SSA_GLYPHS|SSA_TAB|SSA_PASSWORD, <span class="number">-1</span>,</span><br><span class="line">                                                  <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, &amp;tabdef, <span class="literal">NULL</span>, &amp;line_def-&gt;ssa);</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">			hr = ScriptStringAnalyse(udc, &amp;es-&gt;text[index], line_def-&gt;net_length,</span><br><span class="line">                                                  (<span class="number">1.5</span>*line_def-&gt;net_length+<span class="number">16</span>), <span class="number">-1</span>,</span><br><span class="line">                                                  SSA_LINK|SSA_FALLBACK|SSA_GLYPHS|SSA_TAB, <span class="number">-1</span>,</span><br><span class="line">                                                  <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, &amp;tabdef, <span class="literal">NULL</span>, &amp;line_def-&gt;ssa);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (FAILED(hr))</span><br><span class="line">		&#123;</span><br><span class="line">			WARN(<span class="string">&quot;ScriptStringAnalyse failed (%lx)\n&quot;</span>,hr);</span><br><span class="line">			line_def-&gt;ssa = <span class="literal">NULL</span>;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (es-&gt;font)</span><br><span class="line">			SelectObject(udc, old_font);</span><br><span class="line">		<span class="keyword">if</span> (udc != dc)</span><br><span class="line">                    NtUserReleaseDC( es-&gt;hwndSelf, udc );</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> line_def-&gt;ssa;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure></li>
+<li><p>修改后成功显示黑圆圈<br><img src="/2025/11/24/wine-%E5%88%86%E6%9E%90%E7%A8%8E%E5%8A%A1%E5%B1%80%E5%AF%86%E7%A0%81%E6%98%8E%E6%96%87%E9%97%AE%E9%A2%98/2.png" alt="图2"></p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>wine</category>
+      </categories>
+      <tags>
+        <tag>wine</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【Linux技术分享】调整容器中默认启动浏览器为系统外部浏览器</title>
     <url>/2025/08/05/wine-%E8%B0%83%E6%95%B4%E5%AE%B9%E5%99%A8%E4%B8%AD%E9%BB%98%E8%AE%A4%E5%90%AF%E5%8A%A8%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B8%BA%E7%B3%BB%E7%BB%9F%E5%A4%96%E9%83%A8%E6%B5%8F%E8%A7%88%E5%99%A8/</url>
     <content><![CDATA[<h1 id="容器中打开网址浏览器默认为容器中的ie-有时候会存在部分问题，需要将其调整为外部linux的浏览器"><a href="#容器中打开网址浏览器默认为容器中的ie-有时候会存在部分问题，需要将其调整为外部linux的浏览器" class="headerlink" title="容器中打开网址浏览器默认为容器中的ie,有时候会存在部分问题，需要将其调整为外部linux的浏览器"></a>容器中打开网址浏览器默认为容器中的ie,有时候会存在部分问题，需要将其调整为外部linux的浏览器</h1><span id="more"></span>

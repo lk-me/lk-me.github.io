@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="密码输入框显示明文问题分析">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Linux技术分享】密码输入框显示明文问题分析">
+<meta property="og:url" content="http://example.com/2025/11/24/wine-%E5%88%86%E6%9E%90%E7%A8%8E%E5%8A%A1%E5%B1%80%E5%AF%86%E7%A0%81%E6%98%8E%E6%96%87%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="Link Mecry">
+<meta property="og:description" content="密码输入框显示明文问题分析">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2025/11/24/wine-%E5%88%86%E6%9E%90%E7%A8%8E%E5%8A%A1%E5%B1%80%E5%AF%86%E7%A0%81%E6%98%8E%E6%96%87%E9%97%AE%E9%A2%98/1.png">
+<meta property="og:image" content="http://example.com/2025/11/24/wine-%E5%88%86%E6%9E%90%E7%A8%8E%E5%8A%A1%E5%B1%80%E5%AF%86%E7%A0%81%E6%98%8E%E6%96%87%E9%97%AE%E9%A2%98/2.png">
+<meta property="article:published_time" content="2025-11-24T01:05:30.000Z">
+<meta property="article:modified_time" content="2025-11-24T02:04:40.572Z">
+<meta property="article:author" content="Mecry">
+<meta property="article:tag" content="wine">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2025/11/24/wine-%E5%88%86%E6%9E%90%E7%A8%8E%E5%8A%A1%E5%B1%80%E5%AF%86%E7%A0%81%E6%98%8E%E6%96%87%E9%97%AE%E9%A2%98/1.png">
+
+<link rel="canonical" href="http://example.com/2025/11/24/wine-%E5%88%86%E6%9E%90%E7%A8%8E%E5%8A%A1%E5%B1%80%E5%AF%86%E7%A0%81%E6%98%8E%E6%96%87%E9%97%AE%E9%A2%98/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Linux技术分享】密码输入框显示明文问题分析 | Link Mecry</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div id="id-header-inner" class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Link Mecry</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Mecry Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/11/24/wine-%E5%88%86%E6%9E%90%E7%A8%8E%E5%8A%A1%E5%B1%80%E5%AF%86%E7%A0%81%E6%98%8E%E6%96%87%E9%97%AE%E9%A2%98/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Mecry">
+      <meta itemprop="description" content="在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Link Mecry">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Linux技术分享】密码输入框显示明文问题分析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2025-11-24 09:05:30 / 修改时间：10:04:40" itemprop="dateCreated datePublished" datetime="2025-11-24T09:05:30+08:00">2025-11-24</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/wine/" itemprop="url" rel="index"><span itemprop="name">wine</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="密码输入框显示明文问题分析"><a href="#密码输入框显示明文问题分析" class="headerlink" title="密码输入框显示明文问题分析"></a>密码输入框显示明文问题分析</h1><span id="more"></span>
+<h1 id="现场环境"><a href="#现场环境" class="headerlink" title="现场环境"></a>现场环境</h1><p>wine版本： wine10.14<br>系统版本：debian12</p>
+<h1 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h1><ol>
+<li> 密码输入框显示明文，如下图：<br><img src="/2025/11/24/wine-%E5%88%86%E6%9E%90%E7%A8%8E%E5%8A%A1%E5%B1%80%E5%AF%86%E7%A0%81%E6%98%8E%E6%96%87%E9%97%AE%E9%A2%98/1.png" alt="图1"></li>
+</ol>
+<h1 id="分析流程"><a href="#分析流程" class="headerlink" title="分析流程"></a>分析流程</h1><ol>
+<li><p>window下实现密码框通常设置window窗口ES_PASSWORD风格实现或者在wm_create中发送EM_SETPASSWORDCHAR消息设置window的edit为密码框</p>
+</li>
+<li><p>使用spy++发现wine下窗口风格与window下不一致，缺少ES_PASSWORD风格</p>
+</li>
+<li><p>查看msg/edit/win中逻辑，完成window下的demo,确认wine下的多行<code>ES_MULTILINE</code>风格不支持加密，该应用加密逻辑大致如下：</p>
+<ul>
+<li>该应用使用的是<code>wingding.ttf</code>中的字母<code>l</code>设置密码为黑圆圈。</li>
+<li>在WM_CREATE中发送消息类似SendMessage(hPwd, EM_SETPASSWORDCHAR, ‘*’, 0)，由于用的是<code>l</code>字母所有这里发送的消息字符就是<code>l</code></li>
+<li>wingding这个字体wine中会自带，目前将window下的这个字体拷贝到容器中输入字符就会变化，目前原因还需要调研？？？？</li>
+<li>在设置密码为黑圆圈的时候有两种方案，1：将WCHAR消息进行拦截，在这进行修改，2：类似步骤2，在wm_create中发送一次EM_SETPASSWORDCHAR消息即可设置</li>
+<li>wine下收到EM_SETPASSWORDCHAR消息的时候，会在<code>EDIT_EM_SetPasswordChar</code>函数进程处理，目前就是这里出问题，在wine中当edit窗口中风格有<code>ES_MULTILINE</code>直接返回，不会设置edit为密码窗口</li>
+<li>EDIT_EM_SetPasswordChar修改后还需要修改排版函数，不然输入的字符变成<code>wingding.ttf</code>对应的符号，不是密码中的字符，所以需要修改<code>EDIT_UpdateUniscribeData_linedef</code>函数</li>
+</ul>
+</li>
+<li><p>查看wine下的user32/edit.c中的EDIT_EM_SetPasswordChar函数</p>
+</li>
+</ol>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">EDIT_EM_SetPasswordChar</span><span class="params">(EDITSTATE *es, WCHAR c)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	LONG style;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (es-&gt;style &amp; ES_MULTILINE)</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (es-&gt;password_char == c)</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">        style = GetWindowLongW( es-&gt;hwndSelf, GWL_STYLE );</span><br><span class="line">	es-&gt;password_char = c;</span><br><span class="line">	<span class="keyword">if</span> (c) &#123;</span><br><span class="line">            SetWindowLongW( es-&gt;hwndSelf, GWL_STYLE, style | ES_PASSWORD );</span><br><span class="line">            es-&gt;style |= ES_PASSWORD;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            SetWindowLongW( es-&gt;hwndSelf, GWL_STYLE, style &amp; ~ES_PASSWORD );</span><br><span class="line">            es-&gt;style &amp;= ~ES_PASSWORD;</span><br><span class="line">	&#125;</span><br><span class="line">	EDIT_InvalidateUniscribeData(es);</span><br><span class="line">	EDIT_UpdateText(es, <span class="literal">NULL</span>, TRUE);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li><p>需要将EDIT_UpdateUniscribeData函数的EDIT_UpdateUniscribeData_linedef函数进行处理，第一个函数是处理单行的，第二个函数是处理编辑框多行风格的。在单行风格中有处理wine密码风格，让其显示密码型号，多行中没有，需要增加该逻辑，代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> SCRIPT_STRING_ANALYSIS <span class="title">EDIT_UpdateUniscribeData_linedef</span><span class="params">(EDITSTATE *es, HDC dc, LINEDEF *line_def)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (!line_def)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (line_def-&gt;net_length &amp;&amp; !line_def-&gt;ssa)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">int</span> index = line_def-&gt;index;</span><br><span class="line">		HFONT old_font = <span class="literal">NULL</span>;</span><br><span class="line">		HDC udc = dc;</span><br><span class="line">		SCRIPT_TABDEF tabdef;</span><br><span class="line">		HRESULT hr;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (!udc)</span><br><span class="line">			udc = NtUserGetDC(es-&gt;hwndSelf);</span><br><span class="line">		<span class="keyword">if</span> (es-&gt;font)</span><br><span class="line">			old_font = SelectObject(udc, es-&gt;font);</span><br><span class="line"></span><br><span class="line">		tabdef.cTabStops = es-&gt;tabs_count;</span><br><span class="line">		tabdef.iScale = GdiGetCharDimensions(udc, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">		tabdef.pTabStops = es-&gt;tabs;</span><br><span class="line">		tabdef.iTabOrigin = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (es-&gt;style &amp; ES_PASSWORD)</span><br><span class="line">			hr = ScriptStringAnalyse(udc, &amp;es-&gt;password_char, line_def-&gt;net_length,</span><br><span class="line">                                                  (<span class="number">1.5</span>*line_def-&gt;net_length+<span class="number">16</span>), <span class="number">-1</span>,</span><br><span class="line">                                                  SSA_LINK|SSA_FALLBACK|SSA_GLYPHS|SSA_TAB|SSA_PASSWORD, <span class="number">-1</span>,</span><br><span class="line">                                                  <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, &amp;tabdef, <span class="literal">NULL</span>, &amp;line_def-&gt;ssa);</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">			hr = ScriptStringAnalyse(udc, &amp;es-&gt;text[index], line_def-&gt;net_length,</span><br><span class="line">                                                  (<span class="number">1.5</span>*line_def-&gt;net_length+<span class="number">16</span>), <span class="number">-1</span>,</span><br><span class="line">                                                  SSA_LINK|SSA_FALLBACK|SSA_GLYPHS|SSA_TAB, <span class="number">-1</span>,</span><br><span class="line">                                                  <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, &amp;tabdef, <span class="literal">NULL</span>, &amp;line_def-&gt;ssa);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (FAILED(hr))</span><br><span class="line">		&#123;</span><br><span class="line">			WARN(<span class="string">&quot;ScriptStringAnalyse failed (%lx)\n&quot;</span>,hr);</span><br><span class="line">			line_def-&gt;ssa = <span class="literal">NULL</span>;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (es-&gt;font)</span><br><span class="line">			SelectObject(udc, old_font);</span><br><span class="line">		<span class="keyword">if</span> (udc != dc)</span><br><span class="line">                    NtUserReleaseDC( es-&gt;hwndSelf, udc );</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> line_def-&gt;ssa;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure></li>
+<li><p>修改后成功显示黑圆圈<br><img src="/2025/11/24/wine-%E5%88%86%E6%9E%90%E7%A8%8E%E5%8A%A1%E5%B1%80%E5%AF%86%E7%A0%81%E6%98%8E%E6%96%87%E9%97%AE%E9%A2%98/2.png" alt="图2"></p>
+</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/wine/" rel="tag"># wine</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/08/05/wine-%E8%B0%83%E6%95%B4%E5%AE%B9%E5%99%A8%E4%B8%AD%E9%BB%98%E8%AE%A4%E5%90%AF%E5%8A%A8%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B8%BA%E7%B3%BB%E7%BB%9F%E5%A4%96%E9%83%A8%E6%B5%8F%E8%A7%88%E5%99%A8/" rel="prev" title="【Linux技术分享】调整容器中默认启动浏览器为系统外部浏览器">
+      <i class="fa fa-chevron-left"></i> 【Linux技术分享】调整容器中默认启动浏览器为系统外部浏览器
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AF%86%E7%A0%81%E8%BE%93%E5%85%A5%E6%A1%86%E6%98%BE%E7%A4%BA%E6%98%8E%E6%96%87%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90"><span class="nav-number">1.</span> <span class="nav-text">密码输入框显示明文问题分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8E%B0%E5%9C%BA%E7%8E%AF%E5%A2%83"><span class="nav-number">2.</span> <span class="nav-text">现场环境</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E6%8F%8F%E8%BF%B0"><span class="nav-number">3.</span> <span class="nav-text">问题描述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%86%E6%9E%90%E6%B5%81%E7%A8%8B"><span class="nav-number">4.</span> <span class="nav-text">分析流程</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mecry"
+      src="/images/%E5%A4%B4%E5%83%8F.jpg">
+  <p class="site-author-name" itemprop="name">Mecry</p>
+  <div class="site-description" itemprop="description">在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lk-me/" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lk-me&#x2F;" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:linkmecry@gmail.com" title="E-Mail → mailto:linkmecry@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        <img src="https://static.dy208.cn/o_1dfilp8ruo521thr1hvf18ji17soa.png">
+<a href="https://beian.miit.gov.cn/"  style="color:#f72b07" target="_blank">鄂ICP备2021006857号-1</a>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mecry</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+}
+}
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>
