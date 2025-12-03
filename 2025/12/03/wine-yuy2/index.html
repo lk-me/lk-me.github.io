@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="对wine下DirectShow学习">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Linux技术分享】wine下DirectShow学习">
+<meta property="og:url" content="http://example.com/2025/12/03/wine-yuy2/index.html">
+<meta property="og:site_name" content="Link Mecry">
+<meta property="og:description" content="对wine下DirectShow学习">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-12-03T09:05:30.000Z">
+<meta property="article:modified_time" content="2025-12-03T11:43:53.455Z">
+<meta property="article:author" content="Mecry">
+<meta property="article:tag" content="wine">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2025/12/03/wine-yuy2/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Linux技术分享】wine下DirectShow学习 | Link Mecry</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div id="id-header-inner" class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Link Mecry</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Mecry Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/12/03/wine-yuy2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Mecry">
+      <meta itemprop="description" content="在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Link Mecry">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Linux技术分享】wine下DirectShow学习
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2025-12-03 17:05:30 / 修改时间：19:43:53" itemprop="dateCreated datePublished" datetime="2025-12-03T17:05:30+08:00">2025-12-03</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/wine/" itemprop="url" rel="index"><span itemprop="name">wine</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="对wine下DirectShow学习"><a href="#对wine下DirectShow学习" class="headerlink" title="对wine下DirectShow学习"></a>对wine下DirectShow学习</h1><span id="more"></span>
+
+<h1 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h1><ol>
+<li>实现wine下读取yuy2视频流</li>
+</ol>
+<h1 id="开发调研准备"><a href="#开发调研准备" class="headerlink" title="开发调研准备"></a>开发调研准备</h1><ol>
+<li>yuyv/yuy2/yuv/rgb24是图像/视频像素格式（Pixel Format）。</li>
+</ol>
+<ul>
+<li>rgb24：RGB（红、绿、蓝），每个像素 24 位（3 字节），即 R、G、B 各占 8 位（0~255），通常叫做无损画质。</li>
+<li>yuv：是广义叫法，用Y：亮度（Luma），决定灰度。</li>
+<li>yuy2/yuyv：是同一种格式的不同叫法（YUY2 是 Windows 命名，YUYV 是 Linux/V4L2 命名），是一种压缩格式</li>
+</ul>
+<ol start="2">
+<li>rgb24和yuy2细节差距：</li>
+</ol>
+<ul>
+<li>一个像素的颜色，既可以用 (R=100, G=150, B=200) 表示，也可以通过数学公式转换成 (Y=160, U=-20, V=30) 这样的 YUV 值。</li>
+<li>rgb：每个像素 3 字节（R、G、B），2 个像素 = 6 字节，每个像素内容是直接描述颜色的三原色成分</li>
+<li>yuy2/yuyv：把颜色拆成 亮度（Y） + 色度（U/V），每 2 个像素 = 4 字节（Y₀, U, Y₁, V），其中 U 和 V 被两个像素共享。</li>
+<li>总结：原本两个像素用6个字节，原色用rgb显示,yuv是每两个像素用两个字节共享的是色度，rgb跟yuv像素内容不就是不一样的，rgb里面是红绿蓝，yuv里面是亮度色度，两者可以互相转换，但是yuv是压缩格式会出现颜色模糊和失真。</li>
+</ul>
+<ol start="3">
+<li><p>常见显示错误</p>
+<ul>
+<li>直接用 YUV 数据当 RGB 显示：<ol>
+<li>图像整体呈青绿色或粉紫色</li>
+<li>有明显的条纹、噪点、色块</li>
+<li>人物或物体轮廓可能隐约可见（因为 Y 亮度信息还在），但颜色完全错误</li>
+<li>水平方向有2像素周期的重复图案（因为 YUY2 是每2像素打包）</li>
+</ol>
+</li>
+<li>用 RGB 当 YUV 显示<ol>
+<li>视频播放器可能崩溃、花屏</li>
+<li>或显示高对比度黑白+彩色噪点</li>
+</ol>
+</li>
+<li>为什么yuv内容和rgb内容差距很大但是 YUV 数据当 RGB 显示可以隐约查看到内容：Y 亮度保留，U/V 被误用，Y被rgb中的红色截取，红色和亮度强关联，所以能隐约看到内容。</li>
+</ul>
+</li>
+<li><p>相互转换</p>
+<ul>
+<li>数学公式<ol>
+<li>RGB → YCbCr（编码）<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">假设 R、G、B 的取值范围是 [<span class="number">0</span>, <span class="number">255</span>]（<span class="number">8</span>-bit）</span><br><span class="line">Y  =  <span class="number">0.299</span>·R + <span class="number">0.587</span>·G + <span class="number">0.114</span>·B  </span><br><span class="line">Cb = <span class="number">-0.168736</span>·R - <span class="number">0.331264</span>·G + <span class="number">0.5</span>·B + <span class="number">128</span>  </span><br><span class="line">Cr =  <span class="number">0.5</span>·R - <span class="number">0.418688</span>·G - <span class="number">0.081312</span>·B + <span class="number">128</span></span><br><span class="line">Y 范围：[<span class="number">0</span>, <span class="number">255</span>]</span><br><span class="line">Cb/Cr 范围：[<span class="number">0</span>, <span class="number">255</span>]（中心在 <span class="number">128</span>，<span class="number">128</span> 表示无色）</span><br></pre></td></tr></table></figure></li>
+<li>YCbCr → RGB（解码）<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">R = Y + <span class="number">1.402</span>·(Cr - <span class="number">128</span>)  </span><br><span class="line">G = Y - <span class="number">0.344136</span>·(Cb - <span class="number">128</span>) - <span class="number">0.714136</span>·(Cr - <span class="number">128</span>)  </span><br><span class="line">B = Y + <span class="number">1.772</span>·(Cb - <span class="number">128</span>)</span><br></pre></td></tr></table></figure></li>
+</ol>
+</li>
+</ul>
+</li>
+</ol>
+<h1 id="wine下通过linux采集视频数据流程"><a href="#wine下通过linux采集视频数据流程" class="headerlink" title="wine下通过linux采集视频数据流程"></a>wine下通过linux采集视频数据流程</h1><ul>
+<li> wine下通过linux采集的代码是在<code>dlls/qcap/v4l.c</code>，在初始化的时候会检测是否存在<code>v4l2</code>，若存在则通过<code>v4l2</code>库进行设备打开创建/关闭/ioctl/read</li>
+</ul>
+<ol>
+<li>设备创建<ul>
+<li>window函数：CoCreateInstance</li>
+<li>v4l_device_create：打开 /dev/videoN，枚举所有支持的格式（仅限 YUYV 和 BGR24），构建 caps 列表。<ol>
+<li>调用if (xioctl(fd, VIDIOC_QUERYCAP, &amp;caps) == -1)查看当前设备是否支持视频采集和 read()</li>
+<li>循环调用获取：VIDIOC_ENUM_FMT（像素格式），VIDIOC_ENUM_FRAMESIZES（分辨率），VIDIOC_ENUM_FRAMEINTERVALS（帧率）</li>
+<li>对于第二步获取的数据进行组合调用 fill_caps() 填充 struct caps。</li>
+<li>尝试 VIDIOC_TRY_FMT 验证第一个格式是否可用</li>
+</ol>
+</li>
+<li>fill_caps()：将 V4L2 的 (pixelformat, w, h, fps) 转换为 Windows 的 AM_MEDIA_TYPE + VIDEOINFOHEADER</li>
+</ul>
+</li>
+<li>格式设置<ul>
+<li>window函数：IAMStreamConfig::SetFormat</li>
+<li>v4l_device_set_format：选择某个 caps 并通过 VIDIOC_S_FMT 应用到设备。<ol>
+<li>这里需要进行格式转换，将传入的window下的格式转换成v4l实际设置格式</li>
+</ol>
+</li>
+</ul>
+</li>
+<li>读取一帧//window函数：<ul>
+<li>v4l_device_read_frame：从设备读取原始帧，并做 垂直翻转（因 Windows DIB 是 bottom-up）<ol>
+<li>Windows 的 BITMAPINFO 默认是 bottom-up（第0行在底部），V4L2 输出通常是 top-down（第0行在顶部），所以必须 逐行倒序拷贝，否则图像上下颠倒。</li>
+</ol>
+</li>
+</ul>
+</li>
+<li>正式采集：<ul>
+<li>window函数：IMediaControl::Run()</li>
+<li>v4l_device_start：正式应用格式（之前 create 只是 TRY_FMT），当 DirectShow 图表运行（IMediaControl::Run()）时，会调用</li>
+</ul>
+</li>
+<li>格式读取：<ul>
+<li>window函数：IAMStreamConfig::GetStreamCaps    </li>
+<li>v4l_device_get_caps：格式获取，由于window下的格式读取参数较少，所以这里不需要转换</li>
+</ul>
+</li>
+</ol>
+<h1 id="window下用DirectShowShow采集视频数据"><a href="#window下用DirectShowShow采集视频数据" class="headerlink" title="window下用DirectShowShow采集视频数据"></a>window下用DirectShowShow采集视频数据</h1><ul>
+<li>DirectShow 通过 Filter Graph 把摄像头（Capture Filter）和显示器（Renderer）连起来，调用 Run() 就开始采集。<ol>
+<li>Filter Graph创建<ul>
+<li>CoCreateInstance(CLSID_FilterGraph, ……, (void**)&amp;pGraph):创建一个 空的 Filter Graph（过滤器图），就是里面的<code>pGraph</code>参数。</li>
+</ul>
+</li>
+<li>摄像头（Capture Filter）创建<ul>
+<li>CoCreateInstance(CLSID_VideoCapture,……, (void**)&amp;pCamera)：创建摄像头 Capture Filter</li>
+<li>pGraph-&gt;AddFilter(pCamera, L”Camera”)：将摄像头添加到第一步创建的Filter Graph中</li>
+</ul>
+</li>
+<li>显示器（Renderer）创建<ul>
+<li>CoCreateInstance(CLSID_VideoRendererDefault, ……,(void**)&amp;pRenderer);创建显示器的Renderer</li>
+<li>pGraph-&gt;AddFilter(pRenderer, L”Renderer”);将显示器添加到第一步创建的Filter Graph中</li>
+</ul>
+</li>
+<li>显示器和摄像头连接<ul>
+<li>IPin *pOut = GetOutPin(pCamera);   // 摄像头输出</li>
+<li>IPin *pIn  = GetInPin(pRenderer);  // 渲染器输入</li>
+<li>pGraph-&gt;Connect(pOut, pIn); //手动连接</li>
+</ul>
+</li>
+<li>开始采集播放    // 6. 启动 Graph<ul>
+<li>pGraph-&gt;QueryInterface(IID_IMediaControl, (void**)&amp;pControl)：获取pControl控制播放关闭</li>
+<li>pControl-&gt;Run()：开始运行</li>
+</ul>
+</li>
+</ol>
+</li>
+<li>目前大部分情况会使用<code>CaptureGraphBuilder2</code>来替代显示器和摄像头连接这一步，因为在连接的时候会出现数据源和显示不匹配问题，例如采集的是yuyv但是显示是rbg24，此时就会在<code>CaptureGraphBuilder2</code>内部调用<code>pCapture-&gt;RenderStream</code>这个函数进行格式转换。</li>
+</ul>
+<h1 id="wine下整体渲染流程"><a href="#wine下整体渲染流程" class="headerlink" title="wine下整体渲染流程"></a>wine下整体渲染流程</h1><ul>
+<li><p>初始化</p>
+<ul>
+<li><p>关键知识介绍</p>
+<ol>
+<li>wine下的Filter都是通过com来进行操作的，Filter Graph Manager (FGM) 也是一种filter,也是一个com接口<ul>
+<li>com是什么：’’’’’’’’   </li>
+</ul>
+</li>
+<li>Filter Graph Manager是视频处理的核心，他通过Filter Mapper，Media Control，Media Event，Media Seeking这几个接口来协调视频显示<ul>
+<li>Filter Graph Manager核心：整体协调</li>
+<li>Filter Mapper接口：查找过滤器</li>
+<li>Media Control接口：播放控制</li>
+<li>Media Event接口：事件处理</li>
+<li>Media Seeking接口：定位管理</li>
+</ul>
+</li>
+<li>Media Foundation（MF），新一代的视频流处理方案，DirectShow的Filter Graph Manager是老一代，wine下主要是依赖gstream实现这个方案，该方案是提供了色彩转换接口。</li>
+</ol>
+</li>
+<li><p>容器初始化</p>
+<ol>
+<li>创建Filter Mapper实例，通过ilter_mapper_create函数实现<ul>
+<li>012c:trace:quartz:filter_mapper_create Created filter mapper 01343DE0.</li>
+</ul>
+</li>
+<li>注册视频渲染器过滤器，AVI解压缩器过滤器，MPEG音频解码器过滤器，通过FilterMapper3_RegisterFilter函数实现<ul>
+<li>012c:trace:quartz:FilterMapper3_RegisterFilter iface 01343DE4, clsid {70e102b0-5556-11ce-97c0-00aa0055595a}, name L”Video Renderer”, ret_moniker 00000000, category {083863f1-70de-11d0-bd40-00a0c911ce86}, instance (null), prf2 7BDC3E78.</li>
+<li>012c:trace:quartz:FilterMapper3_RegisterFilter iface 01343DE4, clsid {feb50740-7bef-11ce-9bd9-0000e202599c}, name L”MPEG Video Decoder”, ret_moniker 00000000, category (null), instance (null), prf2 7BDC3DD8.</li>
+</ul>
+</li>
+<li>创建过滤器的类别，把上面的过滤器进行分类包含音频压缩器，音频渲染器，设备控制过滤器，通过这个函数实现FilterMapper3_CreateCategory<ul>
+<li>012c:trace:quartz:FilterMapper3_CreateCategory iface 013441FC, category {cc7bfb41-f175-11d1-a392-00e0291f3959}, merit 0x200000, description L”External Renderers”.</li>
+<li>012c:trace:quartz:FilterMapper3_CreateCategory iface 013441FC, category {860bb310-5d01-11d0-bd3b-00a0c911ce86}, merit 0x200000, description L”Video Capture Sources”.</li>
+<li>012c:trace:quartz:FilterMapper3_CreateCategory iface 013441FC, category {33d9a760-90c8-11d0-bd43-00a0c911ce86}, merit 0x200000, description L”Video Compressors”.</li>
+</ul>
+</li>
+<li>上面三步都是在 Quartz.dll模块中实现， Quartz.dll是基础模块，需要提前注册</li>
+<li>注册MP3音频解码器L3codec.acm</li>
+<li>注册qcap.dll视频捕获相关模块，包含AVI复用器（AVI Mux），文件写入器（File writer），智能分配器（Smart Tee ）<ul>
+<li>012c:trace:quartz:filter_mapper_create Created filter mapper 0135CAF8.</li>
+<li>012c:trace:quartz:FilterMapper3_RegisterFilter iface 0135CAFC, clsid {e2510970-f137-11ce-8b67-00aa00a3f1a6}, name L”AVI Mux”, ret_moniker 00000000, category (null), instance (null), prf2 7A7821BC.</li>
+<li>012c:trace:quartz:FilterMapper3_RegisterFilter iface 0135CAFC, clsid {8596e5f0-0da5-11d0-bd21-00a0c911ce86}, name L”File writer”, ret_moniker 00000000, category (null), instance (null), prf2 7A782110.</li>
+<li>012c:trace:quartz:FilterMapper3_RegisterFilter iface 0135CAFC, clsid {cc58e280-8aa1-11d1-b3f1-00aa003761c5}, name L”Smart Tee”, ret_moniker 00000000, category (null), instance (null), prf2 7A782144.</li>
+</ul>
+</li>
+<li>注册qedit.dll编辑相关相关模块注册，采样抓取器（SampleGrabber ），空渲染器（Null Renderer）<ul>
+<li>012c:trace:quartz:FilterMapper3_RegisterFilter iface 0135CB9C, clsid {c1f400a0-3f08-11d3-9f0b-006008039e37}, name L”SampleGrabber”, ret_moniker 00000000, category (null), instance (null), prf2 7A730178.</li>
+<li>012c:trace:quartz:FilterMapper3_RegisterFilter iface 0135CB9C, clsid {c1f400a4-3f08-11d3-9f0b-006008039e37}, name L”Null Renderer”, ret_moniker 00000000, category (null), instance (null), prf2 7A73014C.</li>
+</ul>
+</li>
+<li>注册winegstreamer.dll，把GStreamer集成进来，用于处理wine下的视频，比如解码，色彩转换，gstreamer是wine下的后端，大部分filter的底层都和这个有关联，视频的Decoder都是通过GStreamer底层实现，还有较为复杂的视频操作也是通过GStreamer，例如MPEG-I Stream Splitter，Wave Parser等</li>
+</ol>
+</li>
+<li><p>模块加载</p>
+<ul>
+<li>todo</li>
+</ul>
+</li>
+<li><p>数据捕获</p>
+<ul>
+<li>todo</li>
+</ul>
+</li>
+<li><p>数据处理</p>
+<ul>
+<li>todo</li>
+</ul>
+</li>
+<li><p>实际渲染</p>
+<ul>
+<li>todo</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="实现directshow的色彩转换filter"><a href="#实现directshow的色彩转换filter" class="headerlink" title="实现directshow的色彩转换filter"></a>实现directshow的色彩转换filter</h1><ul>
+<li>todo</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/wine/" rel="tag"># wine</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/11/24/wine-%E5%88%86%E6%9E%90%E7%A8%8E%E5%8A%A1%E5%B1%80%E5%AF%86%E7%A0%81%E6%98%8E%E6%96%87%E9%97%AE%E9%A2%98/" rel="prev" title="【Linux技术分享】密码输入框显示明文问题分析">
+      <i class="fa fa-chevron-left"></i> 【Linux技术分享】密码输入框显示明文问题分析
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AF%B9wine%E4%B8%8BDirectShow%E5%AD%A6%E4%B9%A0"><span class="nav-number">1.</span> <span class="nav-text">对wine下DirectShow学习</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%9B%AE%E6%A0%87"><span class="nav-number">2.</span> <span class="nav-text">目标</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BC%80%E5%8F%91%E8%B0%83%E7%A0%94%E5%87%86%E5%A4%87"><span class="nav-number">3.</span> <span class="nav-text">开发调研准备</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#wine%E4%B8%8B%E9%80%9A%E8%BF%87linux%E9%87%87%E9%9B%86%E8%A7%86%E9%A2%91%E6%95%B0%E6%8D%AE%E6%B5%81%E7%A8%8B"><span class="nav-number">4.</span> <span class="nav-text">wine下通过linux采集视频数据流程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#window%E4%B8%8B%E7%94%A8DirectShowShow%E9%87%87%E9%9B%86%E8%A7%86%E9%A2%91%E6%95%B0%E6%8D%AE"><span class="nav-number">5.</span> <span class="nav-text">window下用DirectShowShow采集视频数据</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#wine%E4%B8%8B%E6%95%B4%E4%BD%93%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B"><span class="nav-number">6.</span> <span class="nav-text">wine下整体渲染流程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0directshow%E7%9A%84%E8%89%B2%E5%BD%A9%E8%BD%AC%E6%8D%A2filter"><span class="nav-number">7.</span> <span class="nav-text">实现directshow的色彩转换filter</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mecry"
+      src="/images/%E5%A4%B4%E5%83%8F.jpg">
+  <p class="site-author-name" itemprop="name">Mecry</p>
+  <div class="site-description" itemprop="description">在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">54</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lk-me/" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lk-me&#x2F;" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:linkmecry@gmail.com" title="E-Mail → mailto:linkmecry@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        <img src="https://static.dy208.cn/o_1dfilp8ruo521thr1hvf18ji17soa.png">
+<a href="https://beian.miit.gov.cn/"  style="color:#f72b07" target="_blank">鄂ICP备2021006857号-1</a>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mecry</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+}
+}
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>
