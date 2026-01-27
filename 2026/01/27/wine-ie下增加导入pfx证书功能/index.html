@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="ie下增加导入pfx证书功能">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Linux技术分享】ie下增加导入pfx证书功能">
+<meta property="og:url" content="http://example.com/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/index.html">
+<meta property="og:site_name" content="Link Mecry">
+<meta property="og:description" content="ie下增加导入pfx证书功能">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/1.png">
+<meta property="og:image" content="http://example.com/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/2.png">
+<meta property="og:image" content="http://example.com/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/3.png">
+<meta property="og:image" content="http://example.com/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/4.png">
+<meta property="og:image" content="http://example.com/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/5.png">
+<meta property="og:image" content="http://example.com/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/6.png">
+<meta property="og:image" content="http://example.com/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/7.png">
+<meta property="og:image" content="http://example.com/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/8.png">
+<meta property="article:published_time" content="2026-01-27T12:05:30.000Z">
+<meta property="article:modified_time" content="2026-01-27T09:46:59.077Z">
+<meta property="article:author" content="Mecry">
+<meta property="article:tag" content="wine">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/1.png">
+
+<link rel="canonical" href="http://example.com/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Linux技术分享】ie下增加导入pfx证书功能 | Link Mecry</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div id="id-header-inner" class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Link Mecry</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Mecry Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Mecry">
+      <meta itemprop="description" content="在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Link Mecry">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Linux技术分享】ie下增加导入pfx证书功能
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2026-01-27 20:05:30 / 修改时间：17:46:59" itemprop="dateCreated datePublished" datetime="2026-01-27T20:05:30+08:00">2026-01-27</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/wine/" itemprop="url" rel="index"><span itemprop="name">wine</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="ie下增加导入pfx证书功能"><a href="#ie下增加导入pfx证书功能" class="headerlink" title="ie下增加导入pfx证书功能"></a>ie下增加导入pfx证书功能</h1><span id="more"></span>
+<h2 id="问题概述"><a href="#问题概述" class="headerlink" title="问题概述"></a>问题概述</h2><p>目前wine下不支持pfx证书导入功能，但是window下证书导入很多种方案，比如ie导入，用certutil.exe导入，组件导入，并且导入存放方案也有很多种，wine目前只支持ie下简单的cer证书导入，该文档方案旨在支持wine下ie的pfx证书导入功能</p>
+<h2 id="名词解释"><a href="#名词解释" class="headerlink" title="名词解释"></a>名词解释</h2><ul>
+<li>pfx证书：PFX（Personal Information Exchange）是一种证书和私钥的打包格式，也称为PKCS#12，通常用密码保护（对称加密）。大概组成部分如下：<ol>
+<li>一个或多个X.509证书（公钥）</li>
+<li>对应的私钥（RSA/ECC私钥）</li>
+<li>证书链（可选的中间CA证书）</li>
+<li>属性信息（友好名称、密钥用法等）</li>
+</ol>
+</li>
+<li>GNUTLS：GNUTLS（GNU Transport Layer Security Library）是一个开源的SSL/TLS加密库。目前wine后端解密框架就用的是这个。</li>
+<li>ActiveX：ActiveX 是 Microsoft 在1996年推出的组件对象模型（COM）技术，主要用于在Web浏览器中嵌入和运行丰富的交互式内容。用户可以通过自己编写的JavaScript脚本，来查询注册表找到对应的DLL/OCX，从而调用dll中的接口函数。<h2 id="现状"><a href="#现状" class="headerlink" title="现状"></a>现状</h2></li>
+</ul>
+<ol>
+<li>用户目前使用的是ie导入的pfx证书，弹出无法识别，导入效果如下：<br><img src="/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/1.png" alt="图1"></li>
+</ol>
+<h2 id="修复方案"><a href="#修复方案" class="headerlink" title="修复方案"></a>修复方案</h2><h3 id="增加wine下无法导入-pfx证书界面"><a href="#增加wine下无法导入-pfx证书界面" class="headerlink" title="增加wine下无法导入.pfx证书界面"></a>增加wine下无法导入<code>.pfx</code>证书界面</h3><ol>
+<li><p>打开日志通道定位ie导入证书的界面是通过cryptui进行显示的<br><img src="/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/2.png" alt="图2"></p>
+</li>
+<li><p>该模块导入证书主要分两类，ui模式导入和非ui模式导入，代码如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!(dwFlags &amp; CRYPTUI_WIZ_NO_UI))</span><br><span class="line">    ret = show_import_ui(dwFlags, hwndParent, pwszWizardTitle, pImportSrc,</span><br><span class="line">    hDestCertStore);</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (pImportSrc)</span><br><span class="line">    ret = do_import(dwFlags, hwndParent, pwszWizardTitle, pImportSrc,</span><br><span class="line">    hDestCertStore);</span><br></pre></td></tr></table></figure></li>
+<li><p>在ie中进行导入证书是通过<code>show_import_ui</code>进行处理，该函数是一个页面式的窗口过程</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">......</span><br><span class="line">pages[nPages].pfnDlgProc = import_welcome_dlg_proc;</span><br><span class="line">......</span><br><span class="line">pages[nPages].pfnDlgProc = import_file_dlg_proc;</span><br><span class="line">......</span><br><span class="line">pages[nPages].pfnDlgProc = import_store_dlg_proc;</span><br><span class="line">......</span><br><span class="line">pages[nPages].pfnDlgProc = import_finish_dlg_proc;</span><br><span class="line">......</span><br></pre></td></tr></table></figure></li>
+<li><p>pfx证书导入在import_file_dlg_proc函数中处理，大致流程是<code>import_file_dlg_proc-&gt;import_validate_filename-&gt;open_store_from_file-&gt;CryptQueryObject</code></p>
+</li>
+<li><p>在CryptQueryObject函数中就是处理证书的，该模块就实现cryptui-&gt;crypt32模块的跳转函数</p>
+</li>
+<li><p>但是在<code>import_validate_filename</code>函数中根本没有处理pfx文件加密的问题，pfx中存在私钥，大部分情况都会需要输入密码</p>
+</li>
+<li><p>流程完整性考虑密码输入应该在<code>&gt;CryptQueryObject</code>函数中处理，但是crypt32模块理论上不应该有ui处理，所以pfx密码输入需要放在<code>import_validate_filename</code>函数中，当<code>HCERTSTORE source = open_store_from_file(data-&gt;dwFlags, fileName,&amp;data-&gt;contentType);</code>函数获取<code>data-&gt;contentType == CERT_QUERY_CONTENT_PFX</code>时，通过pfx导入函数将<code>source/证书存储句柄</code>重新获取，</p>
+</li>
+<li><p>修改代码如下，通过<code>show_import_pfx_password_dialog</code>获取pfx密码，通过<code>PFXImportCertStore</code>导入</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">HCERTSTORE source = open_store_from_file(data-&gt;dwFlags, fileName,</span><br><span class="line">        &amp;data-&gt;contentType);</span><br><span class="line">        <span class="keyword">if</span>(data-&gt;contentType == CERT_QUERY_CONTENT_PFX)&#123;</span><br><span class="line">            WCHAR password[MAX_STRING_LEN] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line">            <span class="keyword">if</span> (show_import_pfx_password_dialog(hwnd, fileName, password, MAX_STRING_LEN))</span><br><span class="line">            &#123;</span><br><span class="line">                CRYPT_DATA_BLOB blob;</span><br><span class="line">                <span class="keyword">if</span>(CRYPT_ReadBlobFromFile(fileName, &amp;blob))&#123;</span><br><span class="line">                    <span class="keyword">if</span>(PFXIsPFXBlob(&amp;blob))</span><br><span class="line">                    source = PFXImportCertStore(&amp;blob, password,</span><br><span class="line">                                        CRYPT_EXPORTABLE | CRYPT_USER_KEYSET);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>导入证书显示效果如下：<br><img src="/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/3.png" alt="图3"></p>
+<h3 id="处理wine下无法获取-pfx证书密钥问题"><a href="#处理wine下无法获取-pfx证书密钥问题" class="headerlink" title="处理wine下无法获取.pfx证书密钥问题"></a>处理wine下无法获取<code>.pfx</code>证书密钥问题</h3></li>
+<li><p>应用程序通过activeX调用用户模块，再获取指定<code>pfx</code>密钥，目前获取失败，显示如下：<br><img src="/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/4.png" alt="图4"></p>
+</li>
+<li><p>通过日志发现wine是调用<code>CRYPT_RegReadSerializedFromReg</code>函数 从注册表读取序列化的证书数据</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0160:trace:crypt:CRYPT_RegReadSerializedFromReg Adding cert with hash L&quot;EEC56C95D5A99DC4E06FE92225387507C2B30061&quot;</span><br></pre></td></tr></table></figure></li>
+<li><p>创建证书上下文</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">0160:trace:crypt:CertCreateCertificateContext (00000001, 03732EAE, 1059)</span><br><span class="line">0160:trace:crypt:CryptDecodeObjectEx (0x00000001, #0002, 03732EAE, 1059, 0x00008000, 00000000, 03169B30, 03169B34)</span><br></pre></td></tr></table></figure></li>
+<li><p>读取证书属性（关键步骤）<br>0160:trace:crypt:read_serialized_KeyProvInfoProperty L”mecry”,L”Microsoft Enhanced Cryptographic Provider v1.0”,1,00000000,0,00000000,3</p>
+</li>
+<li><p>设置证书属性<br>0160:trace:crypt:CertSetCertificateContextProperty (00D16ED8, 2, 00000000, 0441B130)<br>0160:trace:crypt:CertSetCertificateContextProperty (00D16ED8, 3, 00000000, 03169A0C)</p>
+</li>
+<li><p>访问私钥，尝试获取与证书关联的私钥，打开密钥容器 “mecry”<br>0160:trace:crypt:CryptAcquireCertifduiicatePrivateKey (00D16F58, 00000000, 00000000, 0316BEB8, 0316BE74, 00000000)<br>0160:trace:crypt:CryptAcquireContextW (0316A14C, L”mecry”, L”Microsoft Enhanced Cryptographic Provider v1.0”, 1, 00000000)</p>
+</li>
+<li><p>解密受保护的私钥（核心），私钥数据以加密形式存储（738字节）使用 CryptUnprotectData 解密，解密后得到596字节的RSA私钥BLOB<br>0160:trace:crypt:CryptUnprotectData called<br>0160:trace:crypt:CryptUnprotectData pDataOut cbData: 596</p>
+</li>
+<li><p>私钥BLOB结构<br>07,02,00,00,00,a4,00,00,52,53,41,32,00,04,00,00,01,00,01,00,51,41,bd,94,b1,e8,71,d1,28,b6,a0,5c,8c,59,32,6b…<br>BLOB类型：07 = PRIVATEKEYBLOB<br>密钥类型：RSA_KEYX (RSA密钥交换)<br>密钥长度：1024位（0x400 = 1024）</p>
+</li>
+<li><p>导入私钥到CSP，将解密后的私钥导入到加密服务提供者(CSP)，创建RSA密钥对象<br>0160:trace:crypt:import_key blob type: 7<br>0160:trace:crypt:new_key alg = “RSA_KEYX”, dwKeyLen = 1024<br>0160:trace:crypt:import_private_key installing key exchange key</p>
+</li>
+<li><p>哈希计算创建SHA1哈希对象（0x8004 = CALG_SHA1），对数据 “abcde”（5字节）进行哈希<br>0160:trace:crypt:CryptCreateHash (0x38aa160, 0x8004, 0x0, 00000000, 0316BEBC)<br>0160:trace:crypt:RSAENH_CPHashData (hProv=0000000a, hHash=0000000d, pbData=0161B760, dwDataLen=5, dwFlags=00000000)</p>
+</li>
+<li><p>签名操作失败，调用<code>RSAENH_CPHashData</code>函数，pbSignature=00000000，只获取签名长度，没有获取实际签名<br>0160:trace:crypt:CryptSignHashW (0x389c2e0, 3, (null), 00000000, 00000000, 0316BE64)<br>0160:trace:crypt:RSAENH_CPSignHash (hProv=0000000a, hHash=0000000d, dwKeySpec=00000003, …)<br>调用签名函数</p>
+</li>
+<li><p>RSAENH_CPHashData函数主要是通过RSAENH_CPGetUserKey获取密钥，这个函数就失败了，RSAENH_CPGetUserKey函数实现逻辑只处理了<code>AT_KEYEXCHANGE</code>，<code>AT_SIGNATURE</code>，但是传入了dwKeySpec=00000003导致返回为空</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">switch</span> (dwKeySpec)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">case</span> AT_KEYEXCHANGE:</span><br><span class="line">            copy_handle(&amp;handle_table, pKeyContainer-&gt;hKeyExchangeKeyPair, RSAENH_MAGIC_KEY, </span><br><span class="line">                        phUserKey);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">case</span> AT_SIGNATURE:</span><br><span class="line">            copy_handle(&amp;handle_table, pKeyContainer-&gt;hSignatureKeyPair, RSAENH_MAGIC_KEY, </span><br><span class="line">                        phUserKey);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            *phUserKey = (HCRYPTKEY)INVALID_HANDLE_VALUE;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure></li>
+<li><p>00000003 是 AT_KEYEXCHANGE (1) + AT_SIGNATURE (2) 的组合值，增加<code>case AT_BOTH:</code>解决该问题，代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">case</span> AT_BOTH:</span><br><span class="line">    <span class="keyword">if</span> (pKeyContainer-&gt;hSignatureKeyPair != (HCRYPTKEY)INVALID_HANDLE_VALUE)</span><br><span class="line">    &#123;</span><br><span class="line">        copy_handle(&amp;handle_table, pKeyContainer-&gt;hSignatureKeyPair, RSAENH_MAGIC_KEY,</span><br><span class="line">                    phUserKey);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (pKeyContainer-&gt;hKeyExchangeKeyPair != (HCRYPTKEY)INVALID_HANDLE_VALUE)</span><br><span class="line">    &#123;</span><br><span class="line">        copy_handle(&amp;handle_table, pKeyContainer-&gt;hKeyExchangeKeyPair, RSAENH_MAGIC_KEY,</span><br><span class="line">                    phUserKey);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        *phUserKey = (HCRYPTKEY)INVALID_HANDLE_VALUE;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="处理wine下导入两个pfx只能显示一个问题"><a href="#处理wine下导入两个pfx只能显示一个问题" class="headerlink" title="处理wine下导入两个pfx只能显示一个问题"></a>处理wine下导入两个pfx只能显示一个问题</h3><ol>
+<li>根据上图发现我在ie中导入了两个pfx证书，但是wine下用activeX调用显示时只看见了一个，如下：<br><img src="/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/5.png" alt="图5"></li>
+<li>开启file的日志通道，发现在ie的activeX插件运行时会日志重定向至<code>iexplore.log</code>，内容如下，只遍历了一个证书：<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[INFO] [P0032] [T0540] [<span class="number">2026</span><span class="number">-01</span><span class="number">-27</span> <span class="number">16</span>:<span class="number">36</span>:<span class="number">27</span>:<span class="number">128</span>] [JITDeviceManager.cpp(<span class="number">3508</span>)]: 证书发生变化，广播&gt;证书<span class="number">1</span>张。</span><br><span class="line">[INFO] [P0032] [T0540] [<span class="number">2026</span><span class="number">-01</span><span class="number">-27</span> <span class="number">16</span>:<span class="number">36</span>:<span class="number">27</span>:<span class="number">128</span>] [JITDeviceManager.cpp(<span class="number">3025</span>)]: CLTPLT No<span class="number">.1</span> JITCertSN[证书[<span class="number">0</span>DDE372A]], SubjectCN[FCMS超级管理员], SubjectDN[CN=FCMS超级管理员, S=<span class="number">62</span>, O=<span class="number">01</span>, O=MOF, C=CN], IssuerCN[Private Certificate Authority Of MOF], IssuerDN[CN=Private Certificate Authority Of MOF, O=MOF, C=CN], IssuerReverseDN[C=CN, O=MOF, CN=Private Certificate Authority Of MOF], SerialNumber[<span class="number">58E15893949</span>F8E2F], EffectiveInfo[<span class="number">03</span>/<span class="number">14</span>/<span class="number">2023</span>], ExpiredInfo[<span class="number">03</span>/<span class="number">11</span>/<span class="number">2033</span>], AsymmType[RSA], HashALg[SHA1], KeySpec[签名]，KeyUsage[<span class="number">000000</span>C8]，StoreName[MY], ContainerName[mecry], DeviceName[CSP],LibName[], Version[<span class="number">1</span>], KeyType[CSP]</span><br><span class="line"></span><br><span class="line">[ERROR] [P0032] [T0540] [<span class="number">2026</span><span class="number">-01</span><span class="number">-27</span> <span class="number">16</span>:<span class="number">36</span>:<span class="number">27</span>:<span class="number">675</span>] [JCPCSPContainer.cpp(<span class="number">125</span>)]: [ExportCertificate][CSP_STANDARD] 导出证书失败 错误码: <span class="number">0xE000000E</span></span><br></pre></td></tr></table></figure></li>
+<li>将window下的<code>certutil.exe</code>模块和依赖拷贝至目录中，获取当前容器下的证书内容如下：<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">my <span class="string">&quot;个人的&quot;</span></span><br><span class="line">(null)</span><br><span class="line">(null) <span class="number">66</span>dc052e91a6fb2a</span><br><span class="line">CN=Private Certificate Authority Of MOF, O=MOF, C=CN</span><br><span class="line"><span class="number">2023</span>/<span class="number">3</span>/<span class="number">14</span> <span class="number">15</span>:<span class="number">14</span></span><br><span class="line"><span class="number">2033</span>/<span class="number">3</span>/<span class="number">11</span> <span class="number">15</span>:<span class="number">14</span></span><br><span class="line">CN=FCMS系统管理员, S=<span class="number">62</span>, O=<span class="number">01</span>, O=MOF, C=CN</span><br><span class="line">(null)</span><br><span class="line">(null) eec56c95d5a99dc4e06fe92225387507c2b30061</span><br><span class="line">(null)</span><br><span class="line">CN=FCMS超级管理员, S=<span class="number">62</span>, O=<span class="number">01</span>, O=MOF, C=CN</span><br><span class="line">(null)</span><br><span class="line">(null) <span class="number">2</span>d519ebaeaf9ca73ba2e4c9f7b9c97fac764c9d6</span><br><span class="line">(null)</span><br><span class="line"><span class="number">0250</span>:fixme:ncrypt:NCryptIsKeyHandle (<span class="number">0xa307e0</span>): stub</span><br><span class="line">(null)</span><br></pre></td></tr></table></figure></li>
+<li>可以明显看到有两个证书，从window下该命令进行对比，发现wine下缺少很多内容，但是哈希还是有的<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">================ 证书 <span class="number">0</span> ================</span><br><span class="line">序列号: <span class="number">66</span>dc052e91a6fb2a</span><br><span class="line">颁发者: CN=Private Certificate Authority Of MOF, O=MOF, C=CN</span><br><span class="line">NotBefore: <span class="number">2023</span>/<span class="number">3</span>/<span class="number">14</span> <span class="number">15</span>:<span class="number">14</span></span><br><span class="line">NotAfter: <span class="number">2033</span>/<span class="number">3</span>/<span class="number">11</span> <span class="number">15</span>:<span class="number">14</span></span><br><span class="line">使用者: CN=FCMS系统管理员, S=<span class="number">62</span>, O=<span class="number">01</span>, O=MOF, C=CN</span><br><span class="line">非根证书</span><br><span class="line">证书哈希(sha1): eec56c95d5a99dc4e06fe92225387507c2b30061</span><br><span class="line">密钥容器 = &#123;<span class="number">81</span>D20652-C659<span class="number">-48F</span>C-B6E2<span class="number">-66B</span>82A1C1881&#125;</span><br><span class="line">唯一容器名称: <span class="number">4</span>cd7be763adea5572744a1f99c3a412b_42bec1a3<span class="number">-8</span>aa0<span class="number">-4868</span><span class="number">-85e3</span><span class="number">-2b</span>6d81967bcc</span><br><span class="line">提供程序 = Microsoft Enhanced Cryptographic Provider v1<span class="number">.0</span></span><br><span class="line">私钥不能导出</span><br><span class="line">通过了签名测试</span><br><span class="line"></span><br><span class="line">================ 证书 <span class="number">1</span> ================</span><br><span class="line">序列号: <span class="number">58e15893949</span>f8e2f</span><br><span class="line">颁发者: CN=Private Certificate Authority Of MOF, O=MOF, C=CN</span><br><span class="line">NotBefore: <span class="number">2023</span>/<span class="number">3</span>/<span class="number">14</span> <span class="number">15</span>:<span class="number">16</span></span><br><span class="line">NotAfter: <span class="number">2033</span>/<span class="number">3</span>/<span class="number">11</span> <span class="number">15</span>:<span class="number">16</span></span><br><span class="line">使用者: CN=FCMS超级管理员, S=<span class="number">62</span>, O=<span class="number">01</span>, O=MOF, C=CN</span><br><span class="line">非根证书</span><br><span class="line">证书哈希(sha1): <span class="number">2</span>d519ebaeaf9ca73ba2e4c9f7b9c97fac764c9d6</span><br><span class="line">密钥容器 = <span class="number">618B</span>9599-FAAC<span class="number">-4990</span><span class="number">-971</span>D<span class="number">-9357</span>AF422ED6</span><br><span class="line">唯一容器名称: e50ef612cec653f50e591d0cbea64044_42bec1a3<span class="number">-8</span>aa0<span class="number">-4868</span><span class="number">-85e3</span><span class="number">-2b</span>6d81967bcc</span><br><span class="line">提供程序 = Microsoft Enhanced Cryptographic Provider v1<span class="number">.0</span></span><br><span class="line">私钥不能导出</span><br><span class="line">通过了签名测试</span><br><span class="line">CertUtil: -store 命令成功完成。</span><br></pre></td></tr></table></figure></li>
+<li>由于wine下是能看见一个证书并非两个证书都无法看见，学习wine下代码，定位导入证书函数流程为<code>import_key</code>-&gt;<code>CryptAcquireContextW</code>-&gt;<code>RSAENH_CPAcquireContext</code>-&gt;<code>new_key_container</code>-&gt;<code>create_container_key</code>,在<code>create_container_key</code>函数中发现该函数是通过注册表将证书进行写入读取<code>\Software\Wine\Crypto\RSA</code>，打开wine容器下的注册表只能看到一项，如下：<br><img src="/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/6.png" alt="图6"></li>
+<li>在pfx的导入/查询函数都是通过<code>CryptAcquireContextW</code>，目前导入的时候默认为<code>null</code>导致两个证书都在默认容器中<code>mecry(当前用户)</code></li>
+</ol>
+<ul>
+<li>在RSAENH_CPAcquireContext中的<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (pszContainer &amp;&amp; *pszContainer)</span><br><span class="line">&#123;</span><br><span class="line">    lstrcpynA(szKeyContainerName, pszContainer, MAX_PATH);</span><br><span class="line">&#125; </span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">&#123;</span><br><span class="line">    DWORD dwLen = <span class="keyword">sizeof</span>(szKeyContainerName);</span><br><span class="line">    <span class="keyword">if</span> (!GetUserNameA(szKeyContainerName, &amp;dwLen)) <span class="keyword">return</span> FALSE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<ol start="7">
+<li>目前问题比较清晰，需要增加每个证书对应的容器即可，将每个容器进行区分，增加代码如下<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">generate_name_from_pfx(pfx-&gt;pbData, pfx-&gt;cbData,</span><br><span class="line">                                container_name, ARRAY_SIZE(container_name));</span><br><span class="line"></span><br><span class="line">prov = import_key( data, container_name, flags );</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="总体解决方案总结"><a href="#总体解决方案总结" class="headerlink" title="总体解决方案总结"></a>总体解决方案总结</h2><ol>
+<li>需要在<code>cryptui</code>模块中增加pfx导入密码输入地方，并且将pfx进行导入</li>
+<li>需要在获取密钥的地方增加支持该控件的参数</li>
+<li>需要对每个证书生成一个唯一的容器标识，防止插件找不到证书</li>
+</ol>
+<h2 id="效果展示"><a href="#效果展示" class="headerlink" title="效果展示"></a>效果展示</h2><p><img src="/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/7.png" alt="图7"><br><img src="/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/8.png" alt="图8"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/wine/" rel="tag"># wine</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/12/24/wine-%E6%8D%95%E6%8D%89%E6%89%93%E5%8D%B0%E6%97%B6%E7%9A%84%E4%B8%AD%E9%97%B4%E6%96%87%E4%BB%B6/" rel="prev" title="【Linux技术分享】捕捉打印时的中间文件">
+      <i class="fa fa-chevron-left"></i> 【Linux技术分享】捕捉打印时的中间文件
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD"><span class="nav-number">1.</span> <span class="nav-text">ie下增加导入pfx证书功能</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E6%A6%82%E8%BF%B0"><span class="nav-number">1.1.</span> <span class="nav-text">问题概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8D%E8%AF%8D%E8%A7%A3%E9%87%8A"><span class="nav-number">1.2.</span> <span class="nav-text">名词解释</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%B0%E7%8A%B6"><span class="nav-number">1.3.</span> <span class="nav-text">现状</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%AE%E5%A4%8D%E6%96%B9%E6%A1%88"><span class="nav-number">1.4.</span> <span class="nav-text">修复方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A2%9E%E5%8A%A0wine%E4%B8%8B%E6%97%A0%E6%B3%95%E5%AF%BC%E5%85%A5-pfx%E8%AF%81%E4%B9%A6%E7%95%8C%E9%9D%A2"><span class="nav-number">1.4.1.</span> <span class="nav-text">增加wine下无法导入.pfx证书界面</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%84%E7%90%86wine%E4%B8%8B%E6%97%A0%E6%B3%95%E8%8E%B7%E5%8F%96-pfx%E8%AF%81%E4%B9%A6%E5%AF%86%E9%92%A5%E9%97%AE%E9%A2%98"><span class="nav-number">1.4.2.</span> <span class="nav-text">处理wine下无法获取.pfx证书密钥问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%84%E7%90%86wine%E4%B8%8B%E5%AF%BC%E5%85%A5%E4%B8%A4%E4%B8%AApfx%E5%8F%AA%E8%83%BD%E6%98%BE%E7%A4%BA%E4%B8%80%E4%B8%AA%E9%97%AE%E9%A2%98"><span class="nav-number">1.4.3.</span> <span class="nav-text">处理wine下导入两个pfx只能显示一个问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E4%BD%93%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%E6%80%BB%E7%BB%93"><span class="nav-number">1.5.</span> <span class="nav-text">总体解决方案总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%88%E6%9E%9C%E5%B1%95%E7%A4%BA"><span class="nav-number">1.6.</span> <span class="nav-text">效果展示</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mecry"
+      src="/images/%E5%A4%B4%E5%83%8F.jpg">
+  <p class="site-author-name" itemprop="name">Mecry</p>
+  <div class="site-description" itemprop="description">在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">56</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lk-me/" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lk-me&#x2F;" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:linkmecry@gmail.com" title="E-Mail → mailto:linkmecry@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        <img src="https://static.dy208.cn/o_1dfilp8ruo521thr1hvf18ji17soa.png">
+<a href="https://beian.miit.gov.cn/"  style="color:#f72b07" target="_blank">鄂ICP备2021006857号-1</a>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mecry</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+}
+}
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>
