@@ -1,6 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>【Linux技术分享】调整容器中默认启动浏览器为系统外部浏览器</title>
+    <url>/2026/04/07/wine-%E5%A4%84%E7%90%86adobe%E6%89%93%E5%8D%B0pdf%E4%B8%8D%E5%85%A8%E9%97%AE%E9%A2%98/</url>
+    <content><![CDATA[<h1 id="处理adobe打印pdf不全问题"><a href="#处理adobe打印pdf不全问题" class="headerlink" title="处理adobe打印pdf不全问题"></a>处理adobe打印pdf不全问题</h1><span id="more"></span>
+<h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>wine下使用adobe打开pdf文件后打印到<code>cups-pdf</code>打印机的时候无法打印pdf图片</p>
+<h1 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h1><ol>
+<li>使用wine10.14打印，打印多页但是pdf打印机输出的pdf只有一页</li>
+<li>打开psdrv和winspool发现startpage/endpage存在次数和我本地pdf页数文件一致<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="number">0184</span>:trace:psdrv:PSDRV_StartPage <span class="number">440101</span>A3</span><br><span class="line"><span class="number">0184</span>:trace:psdrv:PSDRV_EndPage <span class="number">440101</span>A3</span><br><span class="line"><span class="number">0184</span>:trace:psdrv:PSDRV_StartPage <span class="number">440101</span>A3</span><br><span class="line"><span class="number">0184</span>:trace:psdrv:PSDRV_EndPage <span class="number">440101</span>A3</span><br><span class="line"><span class="number">0184</span>:trace:psdrv:PSDRV_StartPage <span class="number">440101</span>A3</span><br><span class="line"><span class="number">0184</span>:trace:psdrv:PSDRV_EndPage <span class="number">440101</span>A3</span><br><span class="line"><span class="number">0184</span>:trace:psdrv:PSDRV_StartPage <span class="number">440101</span>A3</span><br><span class="line"><span class="number">0184</span>:trace:psdrv:PSDRV_EndPage <span class="number">440101</span>A3</span><br></pre></td></tr></table></figure></li>
+<li>wine中模拟window打印是将打印的目标pdf文件转换为ps(Photo Graphic)文件进行输出</li>
+<li>截取wine下打印数据目前在高版本wine下需要从<code>/dlls/localspl/cups.c</code>中打印逻辑中提取<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> NTSTATUS <span class="title">write_doc</span><span class="params">(<span class="keyword">void</span> *args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">write_doc_params</span> *<span class="title">params</span> =</span> args;</span><br><span class="line">    <span class="keyword">doc_t</span> *doc = (<span class="keyword">doc_t</span> *)(<span class="keyword">size_t</span>)params-&gt;doc;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* =========== 新增：保存 PostScript 数据 =========== */</span></span><br><span class="line">    <span class="keyword">static</span> FILE *ps_file = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="keyword">if</span> (!ps_file)</span><br><span class="line">    &#123;</span><br><span class="line">        ps_file = fopen(<span class="string">&quot;/tmp/wine_print.ps&quot;</span>, <span class="string">&quot;wb&quot;</span>);</span><br><span class="line">        <span class="keyword">if</span> (!ps_file)</span><br><span class="line">            ERR(<span class="string">&quot;Failed to open PS debug file\n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (ps_file)</span><br><span class="line">    &#123;</span><br><span class="line">        fwrite(params-&gt;buf, <span class="number">1</span>, params-&gt;size, ps_file);</span><br><span class="line">        fflush(ps_file);</span><br><span class="line">        TRACE(<span class="string">&quot;Saved %u bytes to /tmp/wine_print.ps\n&quot;</span>, params-&gt;size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/* =============================================== */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> doc-&gt;write_doc(doc, params-&gt;buf, params-&gt;size);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>打印截取的<code>.ps</code>文件直接用pdf查看工具打开发现页面正常</li>
+<li>将该<code>ps</code>文件使用lpr命令打印发现文件只有第一页，后面的未能正常显示</li>
+<li>查看<code>/var/spool/cups/d00060-001</code>文件，该文件是发送至cups的文件，该文件也是正常的</li>
+<li>怀疑本地pdf打印机问题，不支持wine下的ps格式写法，通过命令<code>gs -dNOPAUSE -dBATCH -sDEVICE=ps2write -sOutputFile=1_fixed.ps 1.ps</code>后ps文件打印正常</li>
+<li>新建系统其他的pdf打印机，基于cups,在<code>http://localhost:631/</code>网页上进行打印机添加</li>
+</ol>
+<ul>
+<li>在/etc/cups/cups-files.conf文件中修改<code>FileDevice Yes</code>这一项</li>
+<li>添加打印机中选择<code> AppSocket/HP JetDirect</code>这一项</li>
+<li>在Connection这一项中填写<code>file:/tmp/1.ps</code></li>
+<li>选择驱动的时候选<code>Generic-PDF_Printer-PDF.ppd</code></li>
+<li>打印后生成文件在<code>/tmp/1.ps</code>下可以直接打开</li>
+</ul>
+<ol start="10">
+<li>wine下使用基于cups的pdf打印机进行文件打印，页数正常</li>
+</ol>
+<h1 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h1><ul>
+<li>创建一个自定义的pdf打印机解决<ol>
+<li>仿照pdf打印机中的ppd,创建一个自己的ppd文件<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">*PPD-Adobe: <span class="string">&quot;4.3&quot;</span></span><br><span class="line">*FormatVersion: <span class="string">&quot;4.3&quot;</span></span><br><span class="line">*FileVersion: <span class="string">&quot;1.1&quot;</span></span><br><span class="line">*LanguageVersion: English</span><br><span class="line">*LanguageEncoding: ISOLatin1</span><br><span class="line">*PCFileName: <span class="string">&quot;GENERIC.PPD&quot;</span></span><br><span class="line">*Manufacturer: <span class="string">&quot;Generic&quot;</span></span><br><span class="line">*Product: <span class="string">&quot;(PostScript Printer)&quot;</span></span><br><span class="line">*ModelName: <span class="string">&quot;Generic PostScript Printer&quot;</span></span><br><span class="line">*ShortNickName: <span class="string">&quot;Generic PostScript Printer&quot;</span></span><br><span class="line">*NickName: <span class="string">&quot;Generic PostScript Printer&quot;</span></span><br><span class="line">*PSVersion: <span class="string">&quot;(2014.0) 0&quot;</span></span><br><span class="line">*LanguageLevel: <span class="string">&quot;2&quot;</span></span><br><span class="line">*ColorDevice: True</span><br><span class="line">*DefaultColorSpace: RGB</span><br><span class="line">*FileSystem: False</span><br><span class="line">*Throughput: <span class="string">&quot;8&quot;</span></span><br><span class="line">*LandscapeOrientation: Plus90</span><br><span class="line">*TTRasterizer: Type42</span><br><span class="line">*DefaultResolution: <span class="number">600</span>dpi</span><br><span class="line">*OpenUI *PageSize/Media Size: PickOne</span><br><span class="line">*OrderDependency: <span class="number">10</span> AnySetup *PageSize</span><br><span class="line">*DefaultPageSize: A4</span><br><span class="line">*PageSize A4/A4: <span class="string">&quot;&lt;&lt;/PageSize[595 842]/ImagingBBox null&gt;&gt;setpagedevice&quot;</span></span><br><span class="line">*CloseUI: *PageSize</span><br><span class="line">*OpenUI *PageRegion: PickOne</span><br><span class="line">*OrderDependency: <span class="number">10</span> AnySetup *PageRegion</span><br><span class="line">*DefaultPageRegion: A4</span><br><span class="line">*PageRegion A4/A4: <span class="string">&quot;&lt;&lt;/PageSize[595 842]/ImagingBBox null&gt;&gt;setpagedevice&quot;</span></span><br><span class="line">*CloseUI: *PageRegion</span><br><span class="line">*DefaultImageableArea: A4</span><br><span class="line">*ImageableArea A4/A4: <span class="string">&quot;0 0 595 842&quot;</span></span><br><span class="line">*DefaultPaperDimension: A4</span><br><span class="line">*PaperDimension A4/A4: <span class="string">&quot;595 842&quot;</span></span><br></pre></td></tr></table></figure></li>
+<li>创建一个自己的backend，里面运行命令类似是<code>gs -dNOPAUSE -dBATCH -sDEVICE=ps2write -sOutputFile=1_fixed.ps 1.ps</code>，将pdf输出到指定目录</li>
+<li>在deb安装脚本中将backend和ppd关联起来<code>lpadmin -p &quot;MyManualPDF&quot; -v &quot;mypdf://&quot; -E -P /usr/share/cups/model/manual_generic.ppd</code>， 我的backend就是<code>mypdf</code>，打印用到我这个ppd就会找到我的backend</li>
+</ol>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>wine</category>
+      </categories>
+      <tags>
+        <tag>wine</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>【Linux技术分享】ie下增加导入pfx证书功能</title>
     <url>/2026/01/27/wine-ie%E4%B8%8B%E5%A2%9E%E5%8A%A0%E5%AF%BC%E5%85%A5pfx%E8%AF%81%E4%B9%A6%E5%8A%9F%E8%83%BD/</url>
     <content><![CDATA[<h1 id="ie下增加导入pfx证书功能"><a href="#ie下增加导入pfx证书功能" class="headerlink" title="ie下增加导入pfx证书功能"></a>ie下增加导入pfx证书功能</h1><span id="more"></span>
