@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>【Linux技术分享】调整容器中默认启动浏览器为系统外部浏览器</title>
+    <title>【Linux技术分享】处理adobe打印pdf不全问题</title>
     <url>/2026/04/07/wine-%E5%A4%84%E7%90%86adobe%E6%89%93%E5%8D%B0pdf%E4%B8%8D%E5%85%A8%E9%97%AE%E9%A2%98/</url>
     <content><![CDATA[<h1 id="处理adobe打印pdf不全问题"><a href="#处理adobe打印pdf不全问题" class="headerlink" title="处理adobe打印pdf不全问题"></a>处理adobe打印pdf不全问题</h1><span id="more"></span>
 <h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>wine下使用adobe打开pdf文件后打印到<code>cups-pdf</code>打印机的时候无法打印pdf图片</p>
