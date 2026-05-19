@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="wine下捕捉hid通信">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Linux技术分享】wine下捕捉hid通信">
+<meta property="og:url" content="http://example.com/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/index.html">
+<meta property="og:site_name" content="Link Mecry">
+<meta property="og:description" content="wine下捕捉hid通信">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/1.png">
+<meta property="og:image" content="http://example.com/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/99.png">
+<meta property="og:image" content="http://example.com/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/2.png">
+<meta property="og:image" content="http://example.com/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/3.png">
+<meta property="og:image" content="http://example.com/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/4.png">
+<meta property="og:image" content="http://example.com/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/5.png">
+<meta property="og:image" content="http://example.com/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/6.png">
+<meta property="article:published_time" content="2026-05-19T09:05:30.000Z">
+<meta property="article:modified_time" content="2026-05-19T11:57:25.354Z">
+<meta property="article:author" content="Mecry">
+<meta property="article:tag" content="wine">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/1.png">
+
+<link rel="canonical" href="http://example.com/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Linux技术分享】wine下捕捉hid通信 | Link Mecry</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div id="id-header-inner" class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Link Mecry</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Mecry Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Mecry">
+      <meta itemprop="description" content="在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Link Mecry">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Linux技术分享】wine下捕捉hid通信
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2026-05-19 17:05:30 / 修改时间：19:57:25" itemprop="dateCreated datePublished" datetime="2026-05-19T17:05:30+08:00">2026-05-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/wine/" itemprop="url" rel="index"><span itemprop="name">wine</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="wine下捕捉hid通信"><a href="#wine下捕捉hid通信" class="headerlink" title="wine下捕捉hid通信"></a>wine下捕捉hid通信</h1><span id="more"></span>
+
+<h2 id="问题概述"><a href="#问题概述" class="headerlink" title="问题概述"></a>问题概述</h2><p>hid设备在wine下无法被识别window中正常使用</p>
+<h2 id="问题截图"><a href="#问题截图" class="headerlink" title="问题截图"></a>问题截图</h2><p><img src="/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/1.png" alt="图1"></p>
+<h2 id="分析流程"><a href="#分析流程" class="headerlink" title="分析流程"></a>分析流程</h2><ol>
+<li><p>使用wireshark进行捕捉hid设备的通讯数据，需要安装插件并且选中usbpcab<br><img src="/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/99.png" alt="图99"></p>
+</li>
+<li><p>在usbtree中发现我的设备是6号端口<br><img src="/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/2.png" alt="图2"></p>
+</li>
+<li><p>在wireshark中选择好过滤条件<code>usb.device_address=6</code><br><img src="/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/3.png" alt="图3"></p>
+</li>
+<li><p>在wireshark中找到数据段，并将其拷贝出来<br><img src="/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/4.png" alt="图4"></p>
+</li>
+<li><p>打印wine下日志，梳理wine与hid设备通讯流程，大致为HidD_SetOutputReport与设备通讯，再通过HidD_GetInputReport捕捉设备传来的数据</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0024</span>:trace:hid:HidD_SetOutputReport file <span class="number">000000</span>D8, report_buf <span class="number">7B</span>FDCD78, report_len <span class="number">65.</span></span><br><span class="line"><span class="number">00</span>c4:trace:hid:pdo_ioctl device <span class="number">00</span>ED0430 code <span class="number">0xb0195</span></span><br><span class="line"><span class="number">00</span>c4:trace:hid:hid_internal_dispatch write output report id <span class="number">0</span> length <span class="number">64</span>:</span><br><span class="line">......</span><br><span class="line"><span class="number">0024</span>:trace:hid:HidD_SetOutputReport file <span class="number">000000</span>D8, report_buf <span class="number">7B</span>FDCD78, report_len <span class="number">65.</span></span><br><span class="line"><span class="number">00</span>c4:trace:hid:pdo_ioctl device <span class="number">00</span>ED0430 code <span class="number">0xb0195</span></span><br><span class="line"><span class="number">00</span>c4:trace:hid:hid_internal_dispatch write output report id <span class="number">0</span> length <span class="number">64</span>:</span><br></pre></td></tr></table></figure></li>
+<li><p>完成测试程序，将步骤一捕捉的数据进行转发给设备</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 测试发送报告</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">TestHidApi</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* apiName, HANDLE hDevice,</span></span></span><br><span class="line"><span class="function"><span class="params">                BOOLEAN (WINAPI *pfnSendReport)(HANDLE, PVOID, ULONG),</span></span></span><br><span class="line"><span class="function"><span class="params">                USHORT reportLen, BOOL isOutput)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;\n--- Testing %s ---\n&quot;</span>, apiName);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (reportLen == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Report length is zero, cannot test.\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 分配符合设备要求的缓冲区</span></span><br><span class="line">    BYTE *reportBuffer = (BYTE*)<span class="built_in">malloc</span>(reportLen);</span><br><span class="line">    <span class="keyword">if</span> (!reportBuffer) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Memory allocation failed.\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">memset</span>(reportBuffer, <span class="number">0</span>, reportLen);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 复制命令数据（注意不要超出缓冲区）</span></span><br><span class="line">    <span class="keyword">size_t</span> dataSize = <span class="keyword">sizeof</span>(g_ReportData) &gt; reportLen ? reportLen : <span class="keyword">sizeof</span>(g_ReportData);</span><br><span class="line">    <span class="built_in">memcpy</span>(reportBuffer, g_ReportData, dataSize);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果报告ID == 0，第一个字节必须为0（已经是0）</span></span><br><span class="line">    reportBuffer[<span class="number">0</span>] = <span class="number">0x00</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 发送报告</span></span><br><span class="line">    BOOL bResult = pfnSendReport(hDevice, reportBuffer, reportLen);</span><br><span class="line">    <span class="keyword">if</span> (bResult) &#123;</span><br><span class="line">        HidD_GetInputReport(hDevice, reportBuffer, reportLen);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;HidD_GetInputReport succeeded, received %u bytes:\n&quot;</span>, <span class="keyword">sizeof</span>(reportBuffer));</span><br><span class="line">        <span class="keyword">for</span> (DWORD i = <span class="number">0</span>; i &lt; <span class="number">64</span>; i++) &#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;%02X &quot;</span>, reportBuffer[i]);</span><br><span class="line">            <span class="keyword">if</span> ((i+<span class="number">1</span>) % <span class="number">16</span> == <span class="number">0</span>) <span class="built_in">printf</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果愿意，可 以尝试读取 Input Report，但此处不展开</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Call to %s failed, Error: %d\n&quot;</span>, apiName, GetLastError());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">free</span>(reportBuffer);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;HID API Test Program (Fixed)\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 打开设备</span></span><br><span class="line">    HANDLE hDevice = GetHidDeviceHandle(VENDOR_ID, PRODUCT_ID);</span><br><span class="line">    <span class="keyword">if</span> (hDevice == INVALID_HANDLE_VALUE) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Device not found (VID=0x%04X, PID=0x%04X)\n&quot;</span>, VENDOR_ID, PRODUCT_ID);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Device opened successfully.\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 获取设备的报告长度</span></span><br><span class="line">    USHORT outputLen = <span class="number">0</span>, featureLen = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (!GetReportLengths(hDevice, &amp;outputLen, &amp;featureLen)) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Failed to get report lengths. Using defaults (64).\n&quot;</span>);</span><br><span class="line">        outputLen = <span class="number">64</span>;</span><br><span class="line">        featureLen = <span class="number">64</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Force set featureLen = %u (ignoring device descriptor)\n&quot;</span>, featureLen);</span><br><span class="line">    <span class="comment">// 3. 测试两个 API</span></span><br><span class="line">    TestHidApi(<span class="string">&quot;HidD_SetOutputReport&quot;</span>, hDevice, HidD_SetOutputReport, outputLen, TRUE);</span><br><span class="line">    <span class="comment">//TestHidApi(&quot;HidD_SetFeature&quot;,      hDevice, HidD_SetFeature,      featureLen, FALSE);</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 4. 清理</span></span><br><span class="line">    CloseHandle(hDevice);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>发现在wine下和window显示不一样，wine下并没有数据，window是可以捕捉的回复</p>
+</li>
+<li><p>这时候调研wine下是HidD_SetOutputReport和HidD_GetInputReport是如何访问设备，与设备进行交互，大致为</p>
+<ul>
+<li>HidD_SetOutputReport：HidD_SetOutputReport-&gt;pdo_ioctl-&gt;hid_device_xfer_report-&gt;unix_device_set_output_report-&gt;在调用linux的write进行写入数据</li>
+<li>HidD_GetInputReport：和上面一样不过是write换成了read</li>
+</ul>
+</li>
+<li><p>根据上面的逻辑完成一个linux读取的demo进行测试</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">test_output_report</span><span class="params">(<span class="keyword">int</span> fd)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">char</span> buffer[REPORT_LEN + <span class="number">1</span>];</span><br><span class="line">    <span class="keyword">int</span> ret, len = REPORT_LEN;</span><br><span class="line">    fd_set fds;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">tv</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 发送 Output Report（中断端点）</span></span><br><span class="line">    <span class="comment">// 如果 reportId == 0，需要先写一个字节的 0 作为报告 ID，后面跟数据</span></span><br><span class="line">    <span class="built_in">memset</span>(buffer, <span class="number">0</span>, <span class="keyword">sizeof</span>(buffer));</span><br><span class="line">    buffer[<span class="number">0</span>] = <span class="number">0x00</span>;</span><br><span class="line">    <span class="built_in">memcpy</span>(buffer + <span class="number">1</span>, report_data, REPORT_LEN);</span><br><span class="line">    ret = write(fd, buffer, REPORT_LEN + <span class="number">1</span>);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        perror(<span class="string">&quot;write (Output Report)&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Output Report sent %d bytes (including report ID)\n&quot;</span>, ret);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 尝试读取 Input Report（中断端点）</span></span><br><span class="line">    FD_ZERO(&amp;fds);</span><br><span class="line">    FD_SET(fd, &amp;fds);</span><br><span class="line">    tv.tv_sec = <span class="number">1</span>;</span><br><span class="line">    tv.tv_usec = <span class="number">0</span>;</span><br><span class="line">    ret = select(fd + <span class="number">1</span>, &amp;fds, <span class="literal">NULL</span>, <span class="literal">NULL</span>, &amp;tv);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        perror(<span class="string">&quot;select&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (ret == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Output Report: No Input Report received (timeout)\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">unsigned</span> <span class="keyword">char</span> inbuf[REPORT_LEN + <span class="number">1</span>];</span><br><span class="line">        ret = read(fd, inbuf, <span class="keyword">sizeof</span>(inbuf));</span><br><span class="line">        <span class="keyword">if</span> (ret &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            print_hex(<span class="string">&quot;Input Report (via interrupt)&quot;</span>, inbuf, ret);</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Output Report: read failed\n&quot;</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">test_feature_report</span><span class="params">(<span class="keyword">int</span> fd)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">char</span> outbuf[REPORT_LEN];</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">char</span> inbuf[REPORT_LEN];</span><br><span class="line">    <span class="keyword">int</span> ret;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 发送 Feature Report</span></span><br><span class="line">    <span class="built_in">memcpy</span>(outbuf, report_data, REPORT_LEN);</span><br><span class="line">    ret = ioctl(fd, HIDIOCSFEATURE(REPORT_LEN), outbuf);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        perror(<span class="string">&quot;ioctl HIDIOCSFEATURE&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Feature Report sent %d bytes\n&quot;</span>, ret);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 读取 Feature Report</span></span><br><span class="line">    <span class="built_in">memset</span>(inbuf, <span class="number">0</span>, REPORT_LEN);</span><br><span class="line">    ret = ioctl(fd, HIDIOCGFEATURE(REPORT_LEN), inbuf);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        perror(<span class="string">&quot;ioctl HIDIOCGFEATURE&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    print_hex(<span class="string">&quot;Feature Report received&quot;</span>, inbuf, ret);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>发现在debian13下无法使用<code>read</code>来读取和这个hid设备通讯的数据，但是FEATURE是可以的，如下图：<br><img src="/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/5.png" alt="图5"></p>
+</li>
+<li><p>由于该问题是系统性不支持，只能在wine中做一个重试机制，代码如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">+<span class="function">BOOL <span class="title">IsDataEmpty</span><span class="params">(<span class="keyword">const</span> BYTE *data, DWORD length)</span></span></span><br><span class="line">+&#123;</span><br><span class="line">+    DWORD i;</span><br><span class="line">+    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; length; i++) <span class="keyword">if</span> (data[i]) <span class="keyword">return</span> FALSE;</span><br><span class="line">+    <span class="keyword">return</span> TRUE;</span><br><span class="line">+&#125;</span><br><span class="line">+</span><br><span class="line"> <span class="function"><span class="keyword">static</span> NTSTATUS WINAPI <span class="title">hid_internal_dispatch</span><span class="params">(DEVICE_OBJECT *device, IRP *irp)</span></span></span><br><span class="line"><span class="function"> </span>&#123;</span><br><span class="line">     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);</span><br><span class="line">@@ <span class="number">-1570</span>,<span class="number">6</span> +<span class="number">1577</span>,<span class="number">12</span> @@ <span class="function"><span class="keyword">static</span> NTSTATUS WINAPI <span class="title">hid_internal_dispatch</span><span class="params">(DEVICE_OBJECT *device, IRP *irp)</span></span></span><br><span class="line">             packet-&gt;reportBufferLen = last_report-&gt;length;</span><br><span class="line">             irp-&gt;IoStatus.Information = packet-&gt;reportBufferLen;</span><br><span class="line">             irp-&gt;IoStatus.Status = STATUS_SUCCESS;</span><br><span class="line">+            <span class="keyword">if</span>(IsDataEmpty(packet-&gt;reportBuffer, packet-&gt;reportBufferLen))&#123;</span><br><span class="line">+                TRACE(<span class="string">&quot;read empty input report id %u length %lu, need feature report\n&quot;</span>, packet-&gt;reportId, packet-&gt;reportBufferLen);</span><br><span class="line">+                unix_device_get_feature_report(device, packet, &amp;irp-&gt;IoStatus);</span><br><span class="line">+                <span class="keyword">if</span> (!irp-&gt;IoStatus.Status) hidraw_disable_report_fixups(device);</span><br><span class="line">+                <span class="keyword">break</span>;</span><br><span class="line">+            &#125;</span><br><span class="line">             <span class="keyword">if</span> (TRACE_ON(hid))</span><br><span class="line">             &#123;</span><br><span class="line">                 TRACE(<span class="string">&quot;read input report id %u length %lu:\n&quot;</span>, packet-&gt;reportId, packet-&gt;reportBufferLen);</span><br><span class="line">-- </span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h2><p>修改后运行如下图：<br><img src="/2026/05/19/wine-wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1/6.png" alt="图6"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/wine/" rel="tag"># wine</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2026/04/07/wine-%E5%A4%84%E7%90%86adobe%E6%89%93%E5%8D%B0pdf%E4%B8%8D%E5%85%A8%E9%97%AE%E9%A2%98/" rel="prev" title="【Linux技术分享】处理adobe打印pdf不全问题">
+      <i class="fa fa-chevron-left"></i> 【Linux技术分享】处理adobe打印pdf不全问题
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#wine%E4%B8%8B%E6%8D%95%E6%8D%89hid%E9%80%9A%E4%BF%A1"><span class="nav-number">1.</span> <span class="nav-text">wine下捕捉hid通信</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E6%A6%82%E8%BF%B0"><span class="nav-number">1.1.</span> <span class="nav-text">问题概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E6%88%AA%E5%9B%BE"><span class="nav-number">1.2.</span> <span class="nav-text">问题截图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E6%9E%90%E6%B5%81%E7%A8%8B"><span class="nav-number">1.3.</span> <span class="nav-text">分析流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%AA%8C%E8%AF%81"><span class="nav-number">1.4.</span> <span class="nav-text">验证</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mecry"
+      src="/images/%E5%A4%B4%E5%83%8F.jpg">
+  <p class="site-author-name" itemprop="name">Mecry</p>
+  <div class="site-description" itemprop="description">在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">58</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lk-me/" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lk-me&#x2F;" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:linkmecry@gmail.com" title="E-Mail → mailto:linkmecry@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        <img src="https://static.dy208.cn/o_1dfilp8ruo521thr1hvf18ji17soa.png">
+<a href="https://beian.miit.gov.cn/"  style="color:#f72b07" target="_blank">鄂ICP备2021006857号-1</a>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mecry</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+}
+}
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>
