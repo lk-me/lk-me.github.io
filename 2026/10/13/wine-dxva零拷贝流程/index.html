@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Wine DXVA2 零拷贝（dmabuf）渲染流程本文说明 Wine 下 DXVA2 硬件解码的零拷贝（zero-copy）路径是如何工作的：解码器（Linux 侧 VA-API）导出的显存如何被渲染端（Windows 侧 D3D9）直接采样，从而省掉一次 GPU→CPU→GPU 的数据搬运。文章分三个部分：先总述整体思路，再给出 Linux&#x2F;Windows 两端的交互图与关键代码的参数说明，最">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Linux技术分享】Wine DXVA2 零拷贝（dmabuf）渲染流程">
+<meta property="og:url" content="http://example.com/2026/10/13/wine-dxva%E9%9B%B6%E6%8B%B7%E8%B4%9D%E6%B5%81%E7%A8%8B/index.html">
+<meta property="og:site_name" content="Link Mecry">
+<meta property="og:description" content="Wine DXVA2 零拷贝（dmabuf）渲染流程本文说明 Wine 下 DXVA2 硬件解码的零拷贝（zero-copy）路径是如何工作的：解码器（Linux 侧 VA-API）导出的显存如何被渲染端（Windows 侧 D3D9）直接采样，从而省掉一次 GPU→CPU→GPU 的数据搬运。文章分三个部分：先总述整体思路，再给出 Linux&#x2F;Windows 两端的交互图与关键代码的参数说明，最">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-10-13T09:05:30.000Z">
+<meta property="article:modified_time" content="2026-10-13T08:48:27.172Z">
+<meta property="article:author" content="Mecry">
+<meta property="article:tag" content="wine">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2026/10/13/wine-dxva%E9%9B%B6%E6%8B%B7%E8%B4%9D%E6%B5%81%E7%A8%8B/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Linux技术分享】Wine DXVA2 零拷贝（dmabuf）渲染流程 | Link Mecry</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div id="id-header-inner" class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Link Mecry</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Mecry Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2026/10/13/wine-dxva%E9%9B%B6%E6%8B%B7%E8%B4%9D%E6%B5%81%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Mecry">
+      <meta itemprop="description" content="在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Link Mecry">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Linux技术分享】Wine DXVA2 零拷贝（dmabuf）渲染流程
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2026-10-13 17:05:30 / 修改时间：16:48:27" itemprop="dateCreated datePublished" datetime="2026-10-13T17:05:30+08:00">2026-10-13</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ida/" itemprop="url" rel="index"><span itemprop="name">ida</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="Wine-DXVA2-零拷贝（dmabuf）渲染流程"><a href="#Wine-DXVA2-零拷贝（dmabuf）渲染流程" class="headerlink" title="Wine DXVA2 零拷贝（dmabuf）渲染流程"></a>Wine DXVA2 零拷贝（dmabuf）渲染流程</h1><p>本文说明 Wine 下 DXVA2 硬件解码的<strong>零拷贝（zero-copy）路径</strong>是如何工作的：解码器（Linux 侧 VA-API）导出的显存如何被渲染端（Windows 侧 D3D9）直接采样，从而省掉一次 GPU→CPU→GPU 的数据搬运。文章分三个部分：先总述整体思路，再给出 Linux/Windows 两端的交互图与关键代码的参数说明，最后总结回退机制与限制条件。</p>
+<hr>
+<span id="more"></span>
+<h2 id="一、总述"><a href="#一、总述" class="headerlink" title="一、总述"></a>一、总述</h2><h3 id="1-为什么需要零拷贝"><a href="#1-为什么需要零拷贝" class="headerlink" title="1. 为什么需要零拷贝"></a>1. 为什么需要零拷贝</h3><p>Wine 的 DXVA2 走 VA-API 硬解时，解码后的 NV12 数据放在 <strong>VA surface（GPU 显存）</strong>里。传统流程要把这帧数据交给 D3D9 渲染，需要两次拷贝：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GPU(VA surface) --vaGetImage&#x2F;vaMapBuffer--&gt; CPU 内存 --LockRect&#x2F;memcpy--&gt; GPU(D3D9 surface)</span><br></pre></td></tr></table></figure>
+
+<p>这对 1080p 影响尚可，但到了 4K（3840×2160 NV12，单帧约 12MB）就非常昂贵。零拷贝的思路是：<strong>让 D3D9 的渲染纹理直接”别名”解码器那块显存</strong>，渲染时直接采样，不再搬运数据。</p>
+<h3 id="2-核心机制：dmabuf"><a href="#2-核心机制：dmabuf" class="headerlink" title="2. 核心机制：dmabuf"></a>2. 核心机制：dmabuf</h3><p>Linux 上显卡驱动的显存对象可以用一个 <strong>dma-buf 文件描述符（fd）</strong> 在进程/子系统之间共享：</p>
+<ul>
+<li><strong>VA-API 侧</strong>（Linux 端）：<code>vaExportSurfaceHandle()</code> 把解码好的 VA surface 导出成 dmabuf fd（DRM PRIME 2）。</li>
+<li><strong>D3D9/wined3d 侧</strong>（Windows 端）：把这个 fd 导入成一个 GL 纹理（<code>glImportMemoryFdEXT</code> 或 <code>EGLImage</code>），让纹理的底层存储直接指向这块显存。</li>
+</ul>
+<p>两端通过 Wine 的 <strong>PE/Unix 跨进程调用</strong>（<code>WINE_UNIX_CALL</code>）衔接起来。</p>
+<h3 id="3-一个关键前提：失败自动回退"><a href="#3-一个关键前提：失败自动回退" class="headerlink" title="3. 一个关键前提：失败自动回退"></a>3. 一个关键前提：失败自动回退</h3><p>零拷贝<strong>只在满足特定条件时生效</strong>，任何一个环节失败都会<strong>自动回退到传统的 CPU 拷贝路径</strong>，不会导致解码出错：</p>
+<ul>
+<li>只针对 <strong>单 level、单 layer 的 NV12</strong> 纹理（DXVA2 解码渲染目标）；</li>
+<li>只支持 <strong>linear、非 padded、紧密排列</strong> 的 NV12 dmabuf 布局；</li>
+<li>需要 GPU 驱动/系统支持 dmabuf 导入（<code>GL_EXT_memory_object_fd</code> 或 <code>EGL_EXT_image_dma_buf_import</code>）。</li>
+</ul>
+<p>回退是<strong>逐 surface</strong> 的：某个 surface 导出/导入失败，只有它自己走 CPU 拷贝，其它 surface 不受影响。</p>
+<hr>
+<h2 id="二、交互图：Linux-端-与-Windows-端"><a href="#二、交互图：Linux-端-与-Windows-端" class="headerlink" title="二、交互图：Linux 端 与 Windows 端"></a>二、交互图：Linux 端 与 Windows 端</h2><p>Wine 的 dxva2 模块物理上分成两半：</p>
+<ul>
+<li><strong>Windows 端（PE 侧）</strong>：运行在 Windows ABI 下，文件如 <code>genericdecoder.c</code>、<code>d3d9/surface.c</code>、<code>wined3d/*.c</code>。</li>
+<li><strong>Linux 端（Unix 侧）</strong>：真正调用 libva/GL，文件如 <code>vaapi.c</code>、<code>vaapi-h264.c</code>。</li>
+</ul>
+<p>两者通过 <code>WINE_UNIX_CALL</code> 跨进程通信（wow64 下还有一层 PTR32 参数转换）。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">Windows 端（PE 侧）                                      Linux 端（Unix 侧）</span><br><span class="line">──────────────────────────────────────                 ──────────────────────────────────────</span><br><span class="line">DirectXVideoDecoderGeneric_CreateVideoDecoder</span><br><span class="line">  │  zerocopy_enabled() ?  默认 &#x3D; 1</span><br><span class="line">  │  分配 exports[numSurfaces]</span><br><span class="line">  │  for each surface i:</span><br><span class="line">  │    构造 vaapi_decoder_export_surface_params</span><br><span class="line">  │    DECODER_CALL(backend, decoder_export_surface)</span><br><span class="line">  │        │</span><br><span class="line">  │        └────────────── WINE_UNIX_CALL ─────────────▶ unix_vaapi_decoder_export_surface</span><br><span class="line">  │                                                       └─ IWineVideoDecoder_ExportSurface</span><br><span class="line">  │                                                          └─ WineVideoDecoderH264_ExportSurface</span><br><span class="line">  │                                                             └─ pvaExportSurfaceHandle()</span><br><span class="line">  │                                                                (libva) 导出 dmabuf fd</span><br><span class="line">  │    ◀────────── 返回 fd&#x2F;width&#x2F;height&#x2F;pitch&#x2F;uvOffset&#x2F;uvPitch&#x2F;size ──</span><br><span class="line">  │</span><br><span class="line">  │    exp-&gt;fd &#x3D; fd; exp-&gt;imported &#x3D; FALSE</span><br><span class="line">  │    wine_d3d9_surface_import_dmabuf(surface, fd, size, pitch)</span><br><span class="line">  │      └─ wined3d_texture_import_dmabuf()</span><br><span class="line">  │          └─ wined3d_cs_emit_import_dmabuf() ── 命令流 ──▶ wined3d_cs_exec_import_dmabuf()</span><br><span class="line">  │                                                             ├─ EXT_memory_object_fd:</span><br><span class="line">  │                                                             │    glCreateMemoryObjectsEXT</span><br><span class="line">  │                                                             │    glImportMemoryFdEXT</span><br><span class="line">  │                                                             │    glTexStorageMem2DEXT</span><br><span class="line">  │                                                             └─ 或 EGL: unix_egl_dmabuf_import</span><br><span class="line">  │                                                                    └────────▶ Unix 侧建 EGLImage</span><br><span class="line">  │    exp-&gt;imported &#x3D; TRUE   ← 导入成功，该 surface 后续零拷贝</span><br><span class="line">  │</span><br><span class="line">渲染时（每帧）：</span><br><span class="line">DirectXVideoDecoderGeneric_EndFrame</span><br><span class="line">  │  exports[surface].imported ?</span><br><span class="line">  │    ├─ TRUE  → return S_OK        （零拷贝：渲染端直接采样 dmabuf）</span><br><span class="line">  │    └─ FALSE → lock_image + LockRect + converter（CPU 拷贝回退）</span><br></pre></td></tr></table></figure>
+
+<p>图中虚线上半段是「导出」，发生在<strong>创建解码器时一次性完成</strong>；下半段是「导入」，也在创建解码器时完成；真正决定是否省拷贝，是每帧 <code>EndFrame</code> 时的判断。</p>
+<hr>
+<h2 id="三、代码参数说明"><a href="#三、代码参数说明" class="headerlink" title="三、代码参数说明"></a>三、代码参数说明</h2><h3 id="3-1-Linux-端：libva-导出-dmabuf"><a href="#3-1-Linux-端：libva-导出-dmabuf" class="headerlink" title="3.1 Linux 端：libva 导出 dmabuf"></a>3.1 Linux 端：libva 导出 dmabuf</h3><h4 id="vaExportSurfaceHandle（libva-API）"><a href="#vaExportSurfaceHandle（libva-API）" class="headerlink" title="vaExportSurfaceHandle（libva API）"></a><code>vaExportSurfaceHandle</code>（libva API）</h4><p>Wine 在 <code>load_libva()</code> 里用 <code>dlsym</code> 动态解析该符号（<a href="../../../../workspace/i386_buster/home/deepin/wine/dlls/dxva2/vaapi.c#L148-L150">vaapi.c L148-L150</a>），因为它属于「可选符号」——旧版 libva 没有它时零拷贝自动禁用、回退 CPU 拷贝，而不是让整个硬解失败。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">VAStatus <span class="title">vaExportSurfaceHandle</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    VADisplay dpy,            <span class="comment">// VA 显示句柄</span></span></span></span><br><span class="line"><span class="function"><span class="params">    VASurfaceID surface_id,   <span class="comment">// 要导出的解码 surface</span></span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="keyword">uint32_t</span> mem_type,        <span class="comment">// VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME_2</span></span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="keyword">uint32_t</span> flags,           <span class="comment">// VA_EXPORT_SURFACE_READ_ONLY | VA_EXPORT_SURFACE_SEPARATE_LAYERS</span></span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="keyword">void</span> *descriptor          <span class="comment">// 输出：VADRMPRIMESurfaceDescriptor *</span></span></span></span><br><span class="line"><span class="function"><span class="params">)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p><code>VADRMPRIMESurfaceDescriptor</code> 关键字段（结合代码用法）：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>num_objects</code></td>
+<td>dmabuf 对象数量（Mesa 18.3 导出 2 个 dup，新 Mesa 共享 1 个）</td>
+</tr>
+<tr>
+<td><code>num_layers</code></td>
+<td>layer 数量，NV12 应为 2</td>
+</tr>
+<tr>
+<td><code>objects[i].fd</code></td>
+<td>第 i 个 dmabuf 的文件描述符</td>
+</tr>
+<tr>
+<td><code>objects[i].size</code></td>
+<td>对象字节大小</td>
+</tr>
+<tr>
+<td><code>objects[i].drm_format_modifier</code></td>
+<td>modifier，<code>0</code> = <code>DRM_FORMAT_MOD_LINEAR</code>（线性）</td>
+</tr>
+<tr>
+<td><code>layers[i].drm_format</code></td>
+<td>该 layer 的 DRM 格式，NV12 应为 <code>R8</code>(亮度) / <code>GR88</code>(色度)</td>
+</tr>
+<tr>
+<td><code>layers[i].num_planes</code></td>
+<td>该 layer 平面数，应为 1</td>
+</tr>
+<tr>
+<td><code>layers[i].object_index[0]</code></td>
+<td>该 layer 数据所在 object 下标</td>
+</tr>
+<tr>
+<td><code>layers[i].offset[0]</code></td>
+<td>该 layer 在 buffer 内的字节偏移</td>
+</tr>
+<tr>
+<td><code>layers[i].pitch[0]</code></td>
+<td>该 layer 的行 pitch（字节）</td>
+</tr>
+</tbody></table>
+<h4 id="WineVideoDecoderH264-ExportSurface（vaapi-h264-c-L835-L967）"><a href="#WineVideoDecoderH264-ExportSurface（vaapi-h264-c-L835-L967）" class="headerlink" title="WineVideoDecoderH264_ExportSurface（vaapi-h264.c L835-L967）"></a><code>WineVideoDecoderH264_ExportSurface</code>（<a href="../../../../workspace/i386_buster/home/deepin/wine/dlls/dxva2/vaapi-h264.c#L835-L967">vaapi-h264.c L835-L967</a>）</h4><p>这是 Linux 端真正被跨进程调用的导出实现，函数签名：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> HRESULT WINAPI <span class="title">WineVideoDecoderH264_ExportSurface</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    IWineVideoDecoder *iface, UINT surfaceIndex,</span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="keyword">int</span> *fd, UINT *width, UINT *height, UINT *pitch,</span></span></span><br><span class="line"><span class="function"><span class="params">    UINT *uvOffset, UINT *uvPitch, UINT *size)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>方向</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>surfaceIndex</code></td>
+<td>in</td>
+<td>要导出的 surface 下标，需 <code>&lt; surfaceCount</code>，否则 <code>E_INVALIDARG</code></td>
+</tr>
+<tr>
+<td><code>fd</code></td>
+<td>out</td>
+<td>导出的 dmabuf fd（<code>objects[0].fd</code>），所有权仍归解码器</td>
+</tr>
+<tr>
+<td><code>width</code> / <code>height</code></td>
+<td>out</td>
+<td>亮度平面宽高（像素）</td>
+</tr>
+<tr>
+<td><code>pitch</code></td>
+<td>out</td>
+<td>亮度行 pitch（字节），<code>layers[0].pitch[0]</code></td>
+</tr>
+<tr>
+<td><code>uvOffset</code></td>
+<td>out</td>
+<td>色度平面在 buffer 内的字节偏移，<code>layers[1].offset[0]</code></td>
+</tr>
+<tr>
+<td><code>uvPitch</code></td>
+<td>out</td>
+<td>色度行 pitch，<code>layers[1].pitch[0]</code></td>
+</tr>
+<tr>
+<td><code>size</code></td>
+<td>out</td>
+<td>dmabuf 对象大小（字节），会用 <code>lseek(fd, SEEK_END)</code> 校正</td>
+</tr>
+</tbody></table>
+<p>函数内部做了<strong>严格的布局校验</strong>，不满足就返回 <code>E_FAIL</code>（触发回退）：</p>
+<ol>
+<li><code>!pvaExportSurfaceHandle</code> → <code>E_NOTIMPL</code>（libva 不支持）；</li>
+<li>布局必须为：<code>num_objects &gt;= 1</code>、<code>num_layers == 2</code>、每层 1 个平面、格式 <code>R8</code>/<code>GR88</code>；</li>
+<li>所有 object 必须是 <strong>linear</strong>（modifier == 0）且是 <code>objects[0]</code> 的同一块 buffer 的 dup（<code>same_dmabuf</code>）；</li>
+<li>紧密排列约束（<a href="../../../../workspace/i386_buster/home/deepin/wine/dlls/dxva2/vaapi-h264.c#L922-L925">L922-L925</a>）：<ul>
+<li><code>layers[0].pitch[0] &gt;= width</code>（行可以有 padding，但不能比宽窄）</li>
+<li><code>layers[1].offset[0] == layers[0].pitch[0] * height</code>（色度紧跟亮度）</li>
+<li><code>layers[1].pitch[0] == layers[0].pitch[0]</code>（亮度/色度同 pitch）</li>
+<li><code>size &gt;= pitch * height * 3/2</code></li>
+</ul>
+</li>
+</ol>
+<h4 id="Unix-侧入口-unix-vaapi-decoder-export-surface（vaapi-c-L981-L988）"><a href="#Unix-侧入口-unix-vaapi-decoder-export-surface（vaapi-c-L981-L988）" class="headerlink" title="Unix 侧入口 unix_vaapi_decoder_export_surface（vaapi.c L981-L988）"></a>Unix 侧入口 <code>unix_vaapi_decoder_export_surface</code>（<a href="../../../../workspace/i386_buster/home/deepin/wine/dlls/dxva2/vaapi.c#L981-L988">vaapi.c L981-L988</a>）</h4><p>它是 PE 侧跨进程调用落地的函数，把 <code>vaapi_decoder_export_surface_params</code> 拆开转发给虚表方法：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> NTSTATUS <span class="title">unix_vaapi_decoder_export_surface</span><span class="params">(<span class="keyword">void</span> *args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">vaapi_decoder_export_surface_params</span> *<span class="title">params</span> =</span> args;</span><br><span class="line">    params-&gt;result = IWineVideoDecoder_ExportSurface(</span><br><span class="line">        (IWineVideoDecoder *)(UINT_PTR)params-&gt;decoder,</span><br><span class="line">        params-&gt;surfaceIndex, &amp;params-&gt;fd, &amp;params-&gt;width, &amp;params-&gt;height,</span><br><span class="line">        &amp;params-&gt;pitch, &amp;params-&gt;uvOffset, &amp;params-&gt;uvPitch, &amp;params-&gt;size);</span><br><span class="line">    <span class="keyword">return</span> S_OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>跨进程参数结构（<a href="../../../../workspace/i386_buster/home/deepin/wine/dlls/dxva2/dxva2_private.h#L152-L164">dxva2_private.h L152-L164</a>）：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">vaapi_decoder_export_surface_params</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    UINT64 decoder;      <span class="comment">// 不透明的 IWineVideoDecoder 句柄</span></span><br><span class="line">    UINT surfaceIndex;</span><br><span class="line">    <span class="keyword">int</span> fd;              <span class="comment">// OUT: dmabuf fd</span></span><br><span class="line">    UINT width;          <span class="comment">// OUT: 亮度宽</span></span><br><span class="line">    UINT height;         <span class="comment">// OUT: 亮度高</span></span><br><span class="line">    UINT pitch;          <span class="comment">// OUT: 亮度行 pitch</span></span><br><span class="line">    UINT uvOffset;       <span class="comment">// OUT: 色度平面偏移</span></span><br><span class="line">    UINT uvPitch;        <span class="comment">// OUT: 色度行 pitch</span></span><br><span class="line">    UINT size;           <span class="comment">// OUT: dmabuf 对象大小</span></span><br><span class="line">    HRESULT result;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注释说明：该结构所有字段都是固定宽度，32/64 位布局一致，<strong>无需 PTR32 转换</strong>（wow64 下直接透传）。</p>
+</blockquote>
+<hr>
+<h3 id="3-2-Windows-端：D3D9-wined3d-导入-dmabuf"><a href="#3-2-Windows-端：D3D9-wined3d-导入-dmabuf" class="headerlink" title="3.2 Windows 端：D3D9/wined3d 导入 dmabuf"></a>3.2 Windows 端：D3D9/wined3d 导入 dmabuf</h3><h4 id="①-解码器创建时的导出循环（genericdecoder-c-L514-L560）"><a href="#①-解码器创建时的导出循环（genericdecoder-c-L514-L560）" class="headerlink" title="① 解码器创建时的导出循环（genericdecoder.c L514-L560）"></a>① 解码器创建时的导出循环（<a href="../../../../workspace/i386_buster/home/deepin/wine/dlls/dxva2/genericdecoder.c#L514-L560">genericdecoder.c L514-L560</a>）</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (zerocopy_enabled())</span><br><span class="line">    genericdecoder-&gt;exports = HeapAlloc(..., <span class="keyword">sizeof</span>(*exports) * numSurfaces);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; genericdecoder-&gt;exports &amp;&amp; i &lt; numSurfaces; i++)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">vaapi_surface_export</span> *<span class="title">exp</span> =</span> &amp;genericdecoder-&gt;exports[i];</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">vaapi_decoder_export_surface_params</span> <span class="title">params</span>;</span></span><br><span class="line">    ...</span><br><span class="line">    DECODER_CALL(backend, decoder_export_surface, params);   <span class="comment">// → 跨到 Linux 端</span></span><br><span class="line">    <span class="keyword">if</span> (FAILED(params.result)) &#123; WARN(...); <span class="keyword">continue</span>; &#125;      <span class="comment">// 导出失败 → 该 surface 回退</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">exp</span>-&gt;fd = params.fd; <span class="built_in">exp</span>-&gt;width = ...; <span class="built_in">exp</span>-&gt;size = params.size; ...</span><br><span class="line"></span><br><span class="line">    import_hr = wine_d3d9_surface_import_dmabuf(               <span class="comment">// → 导入到 D3D9</span></span><br><span class="line">        genericdecoder-&gt;surfaces[i], <span class="built_in">exp</span>-&gt;fd, <span class="built_in">exp</span>-&gt;size, <span class="built_in">exp</span>-&gt;pitch);</span><br><span class="line">    <span class="keyword">if</span> (FAILED(import_hr)) &#123; <span class="built_in">exp</span>-&gt;fd = <span class="number">-1</span>; <span class="keyword">continue</span>; &#125;         <span class="comment">// 导入失败 → 回退</span></span><br><span class="line">    <span class="built_in">exp</span>-&gt;imported = TRUE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>zerocopy_enabled()</code>（<a href="../../../../workspace/i386_buster/home/deepin/wine/dlls/dxva2/genericdecoder.c#L102-L115">L102-L115</a>）读环境变量 <code>WINE_DXVA2_ZEROCOPY</code>，<strong>不设置时默认返回 1（开启）</strong>，设 <code>=0</code> 可强制关闭走 CPU 拷贝。</p>
+<p>每个 surface 的导出结果缓存到（<a href="../../../../workspace/i386_buster/home/deepin/wine/dlls/dxva2/dxva2_private.h#L167-L179">dxva2_private.h L167-L179</a>）：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">vaapi_surface_export</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="keyword">int</span> fd;</span><br><span class="line">    UINT width, height, pitch, uvOffset, uvPitch, size;</span><br><span class="line">    BOOL imported;   <span class="comment">// TRUE 表示该 surface 已零拷贝，后续 EndFrame 跳过拷贝</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h4 id="②-wine-d3d9-surface-import-dmabuf（d3d9-surface-c-L468-L484）"><a href="#②-wine-d3d9-surface-import-dmabuf（d3d9-surface-c-L468-L484）" class="headerlink" title="② wine_d3d9_surface_import_dmabuf（d3d9/surface.c L468-L484）"></a>② <code>wine_d3d9_surface_import_dmabuf</code>（<a href="../../../../workspace/i386_buster/home/deepin/wine/dlls/d3d9/surface.c#L468-L484">d3d9/surface.c L468-L484</a>）</h4><p>Wine 私有的 D3D9 导出入口（见 <code>d3d9.spec</code>），供 dxva2 调用：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">HRESULT WINAPI <span class="title">wine_d3d9_surface_import_dmabuf</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    IDirect3DSurface9 *iface, <span class="keyword">int</span> fd, <span class="keyword">unsigned</span> <span class="keyword">int</span> size, <span class="keyword">unsigned</span> <span class="keyword">int</span> pitch)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>iface</code></td>
+<td>目标 D3D9 surface，必须是 mip 0（<code>sub_resource_idx == 0</code>），否则 <code>D3DERR_INVALIDCALL</code></td>
+</tr>
+<tr>
+<td><code>fd</code></td>
+<td>要导入的 dmabuf fd</td>
+</tr>
+<tr>
+<td><code>size</code></td>
+<td>dmabuf 字节大小</td>
+</tr>
+<tr>
+<td><code>pitch</code></td>
+<td>dmabuf 行 pitch（可能比 surface 宽，带 padding）</td>
+</tr>
+</tbody></table>
+<p>实现里加锁后转发给 <code>wined3d_texture_import_dmabuf(surface-&gt;wined3d_texture, fd, size, pitch)</code>。</p>
+<h4 id="③-wined3d-texture-import-dmabuf（texture-c-L2172-L2199）"><a href="#③-wined3d-texture-import-dmabuf（texture-c-L2172-L2199）" class="headerlink" title="③ wined3d_texture_import_dmabuf（texture.c L2172-L2199）"></a>③ <code>wined3d_texture_import_dmabuf</code>（<a href="../../../../workspace/i386_buster/home/deepin/wine/dlls/wined3d/texture.c#L2172-L2199">texture.c L2172-L2199</a>）</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">HRESULT CDECL <span class="title">wined3d_texture_import_dmabuf</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    struct wined3d_texture *texture, <span class="keyword">int</span> fd, <span class="keyword">unsigned</span> <span class="keyword">int</span> size, <span class="keyword">unsigned</span> <span class="keyword">int</span> pitch)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>校验条件（不满足返回 <code>WINED3DERR_INVALIDCALL</code>）：</p>
+<ul>
+<li><code>texture-&gt;texture_ops == &amp;texture_gl_ops</code>（必须是 GL 后端）</li>
+<li><code>level_count == 1 &amp;&amp; layer_count == 1</code>（单 level、单 layer）</li>
+<li><code>format-&gt;id == WINED3DFMT_NV12</code></li>
+<li><code>pitch &gt;= resource-&gt;width</code>（行可 padding，但不能比纹理窄）</li>
+</ul>
+<p>校验通过后交给命令流线程：<code>wined3d_cs_emit_import_dmabuf(...)</code>。</p>
+<h4 id="④-命令流：wined3d-cs-emit-import-dmabuf-wined3d-cs-exec-import-dmabuf（cs-c-L3106-L3128-L2987-L3104）"><a href="#④-命令流：wined3d-cs-emit-import-dmabuf-wined3d-cs-exec-import-dmabuf（cs-c-L3106-L3128-L2987-L3104）" class="headerlink" title="④ 命令流：wined3d_cs_emit_import_dmabuf / wined3d_cs_exec_import_dmabuf（cs.c L3106-L3128 / L2987-L3104）"></a>④ 命令流：<code>wined3d_cs_emit_import_dmabuf</code> / <code>wined3d_cs_exec_import_dmabuf</code>（<a href="../../../../workspace/i386_buster/home/deepin/wine/dlls/wined3d/cs.c#L3106-L3128">cs.c L3106-L3128</a> / <a href="../../../../workspace/i386_buster/home/deepin/wine/dlls/wined3d/cs.c#L2987-L3104">L2987-L3104</a>）</h4><p>提交侧构造命令：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">wined3d_cs_import_dmabuf</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">enum</span> <span class="title">wined3d_cs_op</span> <span class="title">opcode</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">wined3d_texture</span> *<span class="title">texture</span>;</span></span><br><span class="line">    <span class="keyword">int</span> fd;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> size;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> pitch;</span><br><span class="line">    HRESULT *hr;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>命令流线程真正执行时，<strong>两条导入路径二选一</strong>：</p>
+<p><strong>路径 A：<code>GL_EXT_memory_object_fd</code></strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">glCreateMemoryObjectsEXT(<span class="number">1</span>, &amp;memory);</span><br><span class="line">glImportMemoryFdEXT(memory, op-&gt;size, GL_HANDLE_TYPE_OPAQUE_FD_EXT, op-&gt;fd); <span class="comment">// 接管 fd 所有权</span></span><br><span class="line">glTexStorageMem2DEXT(target, <span class="number">1</span>, internal, row_pitch, height, memory, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+
+<p><strong>路径 B：<code>EGL_EXT_image_dma_buf_import</code></strong></p>
+<p>通过 <code>WINE_UNIX_CALL(unix_egl_dmabuf_import, ...)</code> 在 Linux 侧创建 EGLImage 并绑定到当前纹理；此路径 <code>eglCreateImageKHR</code> <strong>不接管 fd</strong>，fd 仍归解码器、每次导入复用。</p>
+<p>两者都满足「整块 NV12 buffer 别名成一个单平面 R8 纹理、行宽为 <code>row_pitch</code>」。成功后设置 <code>texture_rgb.row_pitch</code>、置 <code>WINED3D_TEXTURE_RGB_ALLOCATED</code> 标志，完成零拷贝导入。</p>
+<hr>
+<h3 id="3-3-Windows-端：渲染时决定是否拷贝（genericdecoder-c-L345-L384）"><a href="#3-3-Windows-端：渲染时决定是否拷贝（genericdecoder-c-L345-L384）" class="headerlink" title="3.3 Windows 端：渲染时决定是否拷贝（genericdecoder.c L345-L384）"></a>3.3 Windows 端：渲染时决定是否拷贝（<a href="../../../../workspace/i386_buster/home/deepin/wine/dlls/dxva2/genericdecoder.c#L345-L384">genericdecoder.c L345-L384</a>）</h3><p>每帧 <code>DirectXVideoDecoderGeneric_EndFrame</code> 的判断：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (last_surface &gt;= <span class="number">0</span> &amp;&amp; This-&gt;exports &amp;&amp; This-&gt;exports[last_surface].imported)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">/* 渲染目标直接采样解码器的 dmabuf，帧数据已经在渲染端了 */</span></span><br><span class="line">    <span class="keyword">return</span> S_OK;                                   <span class="comment">// 零拷贝，跳过拷贝</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 否则走传统 CPU 拷贝 */</span></span><br><span class="line">decoder_lock_image(...);                            <span class="comment">// Linux 端 vaSyncSurface + vaGetImage + vaMapBuffer</span></span><br><span class="line">IDirect3DSurface9_LockRect(...);                    <span class="comment">// 锁定 D3D9 surface</span></span><br><span class="line">converter-&gt;func(&amp;imageInfo, &amp;d3ddesc, &amp;d3drect);    <span class="comment">// NV12→NV12 逐行 memcpy</span></span><br><span class="line">IDirect3DSurface9_UnlockRect(...);</span><br><span class="line">decoder_unlock_image(...);</span><br></pre></td></tr></table></figure>
+
+<p><code>converter</code> 是 <code>convert_nv12_nv12</code>（<a href="../../../../workspace/i386_buster/home/deepin/wine/dlls/dxva2/genericdecoder.c#L46-L73">genericdecoder.c L46-L73</a>），逐行把 <code>imageInfo.buffer</code> 拷贝到 <code>d3drect.pBits</code>，这就是零拷贝要绕开的那条路径。</p>
+<hr>
+<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><h3 id="1-整条链路一句话"><a href="#1-整条链路一句话" class="headerlink" title="1. 整条链路一句话"></a>1. 整条链路一句话</h3><p><strong>解码器创建时</strong>，Linux 端用 <code>vaExportSurfaceHandle</code> 把每个 VA surface 导出成 dmabuf fd，Windows 端再用 <code>wined3d_texture_import_dmabuf</code> 把这个 fd 导入成 D3D9 纹理的底层存储；<strong>渲染时</strong>若该 surface 导入成功（<code>imported == TRUE</code>）就直接采样，否则回退 CPU 拷贝。</p>
+<h3 id="2-两端职责"><a href="#2-两端职责" class="headerlink" title="2. 两端职责"></a>2. 两端职责</h3><table>
+<thead>
+<tr>
+<th>端</th>
+<th>文件</th>
+<th>职责</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Linux</td>
+<td><code>vaapi.c</code> / <code>vaapi-h264.c</code></td>
+<td>动态加载并调用 libva 的 <code>vaExportSurfaceHandle</code>，校验 NV12 布局，产出 fd + 几何信息</td>
+</tr>
+<tr>
+<td>Windows</td>
+<td><code>genericdecoder.c</code></td>
+<td>编排导出/导入，缓存 <code>exports[]</code>，渲染时决定是否拷贝</td>
+</tr>
+<tr>
+<td>Windows</td>
+<td><code>d3d9/surface.c</code>、<code>wined3d/texture.c</code>、<code>wined3d/cs.c</code></td>
+<td>把 fd 导入成 GL 纹理，让纹理别名解码器显存</td>
+</tr>
+</tbody></table>
+<h3 id="3-回退机制（健壮性）"><a href="#3-回退机制（健壮性）" class="headerlink" title="3. 回退机制（健壮性）"></a>3. 回退机制（健壮性）</h3><p>零拷贝是「锦上添花」，<strong>任何一步失败都不会影响正确性</strong>，只会退回到 CPU 拷贝：</p>
+<ul>
+<li>libva 无 <code>vaExportSurfaceHandle</code> 符号 → <code>E_NOTIMPL</code> 回退；</li>
+<li>布局不是 linear/紧密排列 NV12 → <code>E_FAIL</code> 回退；</li>
+<li>系统不支持 dmabuf 导入（缺 <code>EXT_memory_object_fd</code> 且缺 EGL dma_buf）→ <code>WINED3DERR_NOTAVAILABLE</code> 回退；</li>
+<li>单个 surface 导出/导入失败 → 仅该 surface 回退（<code>imported</code> 保持 FALSE）。</li>
+</ul>
+<h3 id="4-关键限制"><a href="#4-关键限制" class="headerlink" title="4. 关键限制"></a>4. 关键限制</h3><ul>
+<li>仅支持 <strong>GL 后端 + 单 level + 单 layer + NV12</strong> 纹理；</li>
+<li>仅支持 <strong>linear、非 padded、紧密排列</strong>的 NV12 dmabuf；</li>
+<li>默认开启，可用 <code>WINE_DXVA2_ZEROCOPY=0</code> 强制关闭（调试用）。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/wine/" rel="tag"># wine</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2026/08/01/wine-dxva%E6%A8%A1%E5%9D%97%E5%AD%A6%E4%B9%A0-%E5%88%9D%E5%A7%8B%E5%8C%96%E5%92%8C%E6%B8%B2%E6%9F%93/" rel="prev" title="【Linux技术分享】dxva模块学习-初始化和渲染">
+      <i class="fa fa-chevron-left"></i> 【Linux技术分享】dxva模块学习-初始化和渲染
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Wine-DXVA2-%E9%9B%B6%E6%8B%B7%E8%B4%9D%EF%BC%88dmabuf%EF%BC%89%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B"><span class="nav-number">1.</span> <span class="nav-text">Wine DXVA2 零拷贝（dmabuf）渲染流程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E6%80%BB%E8%BF%B0"><span class="nav-number">1.1.</span> <span class="nav-text">一、总述</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E9%9B%B6%E6%8B%B7%E8%B4%9D"><span class="nav-number">1.1.1.</span> <span class="nav-text">1. 为什么需要零拷贝</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6%EF%BC%9Admabuf"><span class="nav-number">1.1.2.</span> <span class="nav-text">2. 核心机制：dmabuf</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E4%B8%80%E4%B8%AA%E5%85%B3%E9%94%AE%E5%89%8D%E6%8F%90%EF%BC%9A%E5%A4%B1%E8%B4%A5%E8%87%AA%E5%8A%A8%E5%9B%9E%E9%80%80"><span class="nav-number">1.1.3.</span> <span class="nav-text">3. 一个关键前提：失败自动回退</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E4%BA%A4%E4%BA%92%E5%9B%BE%EF%BC%9ALinux-%E7%AB%AF-%E4%B8%8E-Windows-%E7%AB%AF"><span class="nav-number">1.2.</span> <span class="nav-text">二、交互图：Linux 端 与 Windows 端</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E4%BB%A3%E7%A0%81%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E"><span class="nav-number">1.3.</span> <span class="nav-text">三、代码参数说明</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-Linux-%E7%AB%AF%EF%BC%9Alibva-%E5%AF%BC%E5%87%BA-dmabuf"><span class="nav-number">1.3.1.</span> <span class="nav-text">3.1 Linux 端：libva 导出 dmabuf</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#vaExportSurfaceHandle%EF%BC%88libva-API%EF%BC%89"><span class="nav-number">1.3.1.1.</span> <span class="nav-text">vaExportSurfaceHandle（libva API）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#WineVideoDecoderH264-ExportSurface%EF%BC%88vaapi-h264-c-L835-L967%EF%BC%89"><span class="nav-number">1.3.1.2.</span> <span class="nav-text">WineVideoDecoderH264_ExportSurface（vaapi-h264.c L835-L967）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Unix-%E4%BE%A7%E5%85%A5%E5%8F%A3-unix-vaapi-decoder-export-surface%EF%BC%88vaapi-c-L981-L988%EF%BC%89"><span class="nav-number">1.3.1.3.</span> <span class="nav-text">Unix 侧入口 unix_vaapi_decoder_export_surface（vaapi.c L981-L988）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-Windows-%E7%AB%AF%EF%BC%9AD3D9-wined3d-%E5%AF%BC%E5%85%A5-dmabuf"><span class="nav-number">1.3.2.</span> <span class="nav-text">3.2 Windows 端：D3D9&#x2F;wined3d 导入 dmabuf</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E2%91%A0-%E8%A7%A3%E7%A0%81%E5%99%A8%E5%88%9B%E5%BB%BA%E6%97%B6%E7%9A%84%E5%AF%BC%E5%87%BA%E5%BE%AA%E7%8E%AF%EF%BC%88genericdecoder-c-L514-L560%EF%BC%89"><span class="nav-number">1.3.2.1.</span> <span class="nav-text">① 解码器创建时的导出循环（genericdecoder.c L514-L560）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E2%91%A1-wine-d3d9-surface-import-dmabuf%EF%BC%88d3d9-surface-c-L468-L484%EF%BC%89"><span class="nav-number">1.3.2.2.</span> <span class="nav-text">② wine_d3d9_surface_import_dmabuf（d3d9&#x2F;surface.c L468-L484）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E2%91%A2-wined3d-texture-import-dmabuf%EF%BC%88texture-c-L2172-L2199%EF%BC%89"><span class="nav-number">1.3.2.3.</span> <span class="nav-text">③ wined3d_texture_import_dmabuf（texture.c L2172-L2199）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E2%91%A3-%E5%91%BD%E4%BB%A4%E6%B5%81%EF%BC%9Awined3d-cs-emit-import-dmabuf-wined3d-cs-exec-import-dmabuf%EF%BC%88cs-c-L3106-L3128-L2987-L3104%EF%BC%89"><span class="nav-number">1.3.2.4.</span> <span class="nav-text">④ 命令流：wined3d_cs_emit_import_dmabuf &#x2F; wined3d_cs_exec_import_dmabuf（cs.c L3106-L3128 &#x2F; L2987-L3104）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-Windows-%E7%AB%AF%EF%BC%9A%E6%B8%B2%E6%9F%93%E6%97%B6%E5%86%B3%E5%AE%9A%E6%98%AF%E5%90%A6%E6%8B%B7%E8%B4%9D%EF%BC%88genericdecoder-c-L345-L384%EF%BC%89"><span class="nav-number">1.3.3.</span> <span class="nav-text">3.3 Windows 端：渲染时决定是否拷贝（genericdecoder.c L345-L384）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E6%80%BB%E7%BB%93"><span class="nav-number">1.4.</span> <span class="nav-text">四、总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E6%95%B4%E6%9D%A1%E9%93%BE%E8%B7%AF%E4%B8%80%E5%8F%A5%E8%AF%9D"><span class="nav-number">1.4.1.</span> <span class="nav-text">1. 整条链路一句话</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E4%B8%A4%E7%AB%AF%E8%81%8C%E8%B4%A3"><span class="nav-number">1.4.2.</span> <span class="nav-text">2. 两端职责</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%9B%9E%E9%80%80%E6%9C%BA%E5%88%B6%EF%BC%88%E5%81%A5%E5%A3%AE%E6%80%A7%EF%BC%89"><span class="nav-number">1.4.3.</span> <span class="nav-text">3. 回退机制（健壮性）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E5%85%B3%E9%94%AE%E9%99%90%E5%88%B6"><span class="nav-number">1.4.4.</span> <span class="nav-text">4. 关键限制</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mecry"
+      src="/images/%E5%A4%B4%E5%83%8F.jpg">
+  <p class="site-author-name" itemprop="name">Mecry</p>
+  <div class="site-description" itemprop="description">在幸福博弈时，不要拿自己的不幸和别人幸福的一面去比。决定你快乐或不快乐的，不是别人，是你自己。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">61</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lk-me/" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lk-me&#x2F;" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:linkmecry@gmail.com" title="E-Mail → mailto:linkmecry@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        <img src="https://static.dy208.cn/o_1dfilp8ruo521thr1hvf18ji17soa.png">
+<a href="https://beian.miit.gov.cn/"  style="color:#f72b07" target="_blank">鄂ICP备2021006857号-1</a>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mecry</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+}
+}
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>
