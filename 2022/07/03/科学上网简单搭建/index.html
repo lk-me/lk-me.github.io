@@ -28,7 +28,7 @@
 <meta property="og:description" content="linux下科学上网简单搭建linux下利用shadowsock+kcptun+udp2raw的科学上网搭建。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-07-03T03:05:30.000Z">
-<meta property="article:modified_time" content="2026-07-02T04:39:33.895Z">
+<meta property="article:modified_time" content="2026-10-22T01:23:41.297Z">
 <meta property="article:author" content="Mecry">
 <meta property="article:tag" content="问题解决">
 <meta name="twitter:card" content="summary">
@@ -225,7 +225,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2026-07-02 12:39:33" itemprop="dateModified" datetime="2026-07-02T12:39:33+08:00">2026-07-02</time>
+                <time title="修改时间：2026-10-22 09:23:41" itemprop="dateModified" datetime="2026-10-22T09:23:41+08:00">2026-10-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -250,153 +250,360 @@
       
         <h1 id="linux下科学上网简单搭建"><a href="#linux下科学上网简单搭建" class="headerlink" title="linux下科学上网简单搭建"></a>linux下科学上网简单搭建</h1><p><em><strong>linux下利用shadowsock+kcptun+udp2raw的科学上网搭建。</strong></em></p>
 <span id="more"></span>
+
 <h2 id="本文适读人群"><a href="#本文适读人群" class="headerlink" title="本文适读人群"></a>本文适读人群</h2><ol>
-<li>对linux服务有简单了解</li>
-<li>对科学上网稳定性有强迫，在使用shadowsock+kcptun+udp2raw会让科学上网非常稳定不容易掉包</li>
+<li>对 linux 服务有简单了解</li>
+<li>对科学上网稳定性有强迫，在使用 shadowsocks+kcptun+udp2raw 会让科学上网非常稳定不容易掉包</li>
 </ol>
 <h2 id="本文能够知道什么"><a href="#本文能够知道什么" class="headerlink" title="本文能够知道什么"></a>本文能够知道什么</h2><ol>
-<li>linux下成功使用shadowsock+kcptun+udp2raw搭建科学上网</li>
+<li>linux 下成功使用 shadowsocks+kcptun+udp2raw 搭建科学上网</li>
+<li>常见故障怎么定位（key 不一致、MTU 溢出、换网络后失效、TUN 冲突）</li>
 </ol>
 <h2 id="本文不知道什么"><a href="#本文不知道什么" class="headerlink" title="本文不知道什么"></a>本文不知道什么</h2><ol>
 <li>搭建工具原理</li>
 </ol>
-<h2 id="VPS购买"><a href="#VPS购买" class="headerlink" title="VPS购买"></a>VPS购买</h2><ol>
-<li>我买的是<a target="_blank" rel="noopener" href="https://m.do.co/c/417ce18c978d/">digitalocean</a>价格在5刀一个月偏贵，只要是国外服务器就行。</li>
+<h2 id="链路总览"><a href="#链路总览" class="headerlink" title="链路总览"></a>链路总览</h2><p>先把数据流搞清楚，后面每一步都对得上号：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">浏览器 &#x2F; 终端</span><br><span class="line">   │  SOCKS5  127.0.0.1:9872   (TCP)</span><br><span class="line">   ▼</span><br><span class="line">sslocal   (shadowsocks 客户端)</span><br><span class="line">   │  TCP 加密流量 → 127.0.0.1:30001</span><br><span class="line">   ▼</span><br><span class="line">kcptun client   (KCP，UDP 承载)</span><br><span class="line">   │  UDP → 127.0.0.1:30001</span><br><span class="line">   ▼</span><br><span class="line">udp2raw client   (把 UDP 伪装成假 TCP，faketcp)</span><br><span class="line">   │  UDP 4096 → 服务器公网 IP:4096</span><br><span class="line">   ═══════════ 公网 ═══════════</span><br><span class="line">   │</span><br><span class="line">udp2raw server  :4096</span><br><span class="line">   │  TCP → 127.0.0.1:8400</span><br><span class="line">   ▼</span><br><span class="line">kcptun server  :8400</span><br><span class="line">   │  TCP → 127.0.0.1:39201</span><br><span class="line">   ▼</span><br><span class="line">ssserver  :39201</span><br><span class="line">   │</span><br><span class="line">   ▼</span><br><span class="line">互联网</span><br></pre></td></tr></table></figure>
+
+<p>各环节端口对应关系：</p>
+<table>
+<thead>
+<tr>
+<th>环节</th>
+<th>协议</th>
+<th>端口</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>本机 SOCKS5</td>
+<td>TCP</td>
+<td>9872</td>
+</tr>
+<tr>
+<td>sslocal → kcptun client</td>
+<td>TCP</td>
+<td>30001</td>
+</tr>
+<tr>
+<td>kcptun client → udp2raw client</td>
+<td>UDP</td>
+<td>30001</td>
+</tr>
+<tr>
+<td>udp2raw client → udp2raw server</td>
+<td>UDP</td>
+<td>4096</td>
+</tr>
+<tr>
+<td>udp2raw server → kcptun server</td>
+<td>TCP</td>
+<td>8400</td>
+</tr>
+<tr>
+<td>kcptun server → ssserver</td>
+<td>TCP</td>
+<td>39201</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>30001 同时出现两次是正常的：kcptun 监听 <strong>TCP</strong> 30001 给 sslocal 连，udp2raw 监听 <strong>UDP</strong> 30001 给 kcptun 连，协议不同不冲突。</p>
+</blockquote>
+<h2 id="VPS-购买"><a href="#VPS-购买" class="headerlink" title="VPS 购买"></a>VPS 购买</h2><ol>
+<li>我买的是 <a target="_blank" rel="noopener" href="https://m.do.co/c/417ce18c978d/">digitalocean</a> 价格在 5 刀一个月偏贵，只要是国外服务器就行。</li>
 </ol>
-<h2 id="shadowsock搭建"><a href="#shadowsock搭建" class="headerlink" title="shadowsock搭建"></a>shadowsock搭建</h2><ol>
-<li><p>下载shadowsock已发布的版本<code>https://github.com/shadowsocks/shadowsocks-rust/releases</code>，找一个最新版本下载即可，或者用命令<code> wget https://github.com/shadowsocks/shadowsocks-rust/releases/download/v1.6.10/shadowsocks-v1.6.10-release.x86_64-unknown-linux-musl.tar.xz</code>即可下载至本地;</p>
-</li>
-<li><p>本地压缩包解压后我们要使用的有两个文件，ssserver：shadowsock的服务端，sslocal：shadowsock的客户端;</p>
-<h3 id="客户端配置"><a href="#客户端配置" class="headerlink" title="客户端配置"></a>客户端配置</h3></li>
-<li><p>将<code>sslocal</code>二进制拷贝至<code>/usr/local/bin/</code>下</p>
-<blockquote>
-<p>sudo cp sslocal /usr/local/bin</p>
-</blockquote>
-</li>
-<li><p>创建配置文件</p>
-<blockquote>
-<p>sudo vim /etc/shadowsocks.json</p>
-</blockquote>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;server&quot;:&quot;127.0.0.1&quot;,</span><br><span class="line">    &quot;server_port&quot;:30001,</span><br><span class="line">    &quot;local_address&quot;:&quot;127.0.0.1&quot;,</span><br><span class="line">    &quot;local_port&quot;:9872,</span><br><span class="line">    &quot;password&quot;:&quot;rtqqer190&quot;,</span><br><span class="line">    &quot;timeout&quot;:300,</span><br><span class="line">    &quot;method&quot;:&quot;aes-256-gcm&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li><p>创建开机启动服务</p>
-<blockquote>
-<p>sudo vim /lib/systemd/system/ss-server.service</p>
-</blockquote>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;shadowsocks server daemon</span><br><span class="line">After&#x3D;syslog.target network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line"># 关键就是这行，确定我们的程序文件，以及配置文件的路径</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;sslocal -c &#x2F;etc&#x2F;shadowsocks.json</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
-<li><p>启动服务并设置开机启动</p>
-<blockquote>
-<p>systemctl start ss-server.service<br>systemctl enable ss-server.service</p>
-</blockquote>
-</li>
+<h3 id="防火墙只要开一个口"><a href="#防火墙只要开一个口" class="headerlink" title="防火墙只要开一个口"></a>防火墙只要开一个口</h3><ul>
+<li><strong>只需要放行 UDP 4096 入站</strong>，其它（22 除外）全部关掉。</li>
+<li>8400、39201 是纯本地回环，绑定 <code>127.0.0.1</code> 即可，<strong>不要</strong>对外暴露。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo ufw allow 4096/udp</span><br><span class="line">sudo ufw <span class="built_in">enable</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="shadowsocks搭建"><a href="#shadowsocks搭建" class="headerlink" title="shadowsocks搭建"></a>shadowsocks搭建</h2><ol>
+<li>下载 shadowsocks 已发布的版本 <code>https://github.com/shadowsocks/shadowsocks-rust/releases</code>；</li>
+<li>选 <strong><code>x86_64-unknown-linux-musl</code></strong> 那个包（静态链接，不依赖系统 glibc，扔到任何发行版都能跑）：</li>
 </ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">wget https://github.com/shadowsocks/shadowsocks-rust/releases/download/v1.6.10/shadowsocks-v1.6.10-release.x86_64-unknown-linux-musl.tar.xz</span><br><span class="line">tar -xf shadowsocks-v1.6.10-release.x86_64-unknown-linux-musl.tar.xz</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>压缩包解压后我们要使用的有两个文件：<code>ssserver</code>（服务端）、<code>sslocal</code>（客户端）。</li>
+</ol>
+<blockquote>
+<p>注意：新版 shadowsocks-rust 的配置文件字段改过（变成 <code>servers</code> / <code>locals</code> 数组），老版本用单个 JSON 对象的写法在新版会报错。下面统一改用<strong>命令行参数</strong>，跨版本最稳。</p>
+</blockquote>
+<h3 id="客户端配置"><a href="#客户端配置" class="headerlink" title="客户端配置"></a>客户端配置</h3><ol>
+<li>将 <code>sslocal</code> 拷贝至 <code>/usr/local/bin/</code> 下</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo cp sslocal /usr/<span class="built_in">local</span>/bin/</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>创建开机启动服务</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /lib/systemd/system/ss-server.service</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Unit]</span></span><br><span class="line"><span class="attr">Description</span>=shadowsocks local client (SOCKS5)</span><br><span class="line"><span class="attr">After</span>=network-<span class="literal">on</span>line.target kcptun.service</span><br><span class="line"><span class="attr">Wants</span>=network-<span class="literal">on</span>line.target</span><br><span class="line"></span><br><span class="line"><span class="section">[Service]</span></span><br><span class="line"><span class="attr">Type</span>=simple</span><br><span class="line"><span class="attr">ExecStart</span>=/usr/local/bin/sslocal -b <span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">9872</span> -s <span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">30001</span> -k <span class="string">&quot;你的密码&quot;</span> -m aes-<span class="number">256</span>-gcm</span><br><span class="line"><span class="attr">Restart</span>=<span class="literal">on</span>-abnormal</span><br><span class="line"><span class="attr">RestartSec</span>=<span class="number">5</span></span><br><span class="line"></span><br><span class="line"><span class="section">[Install]</span></span><br><span class="line"><span class="attr">WantedBy</span>=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<p>参数含义：<code>-b</code> 本地 SOCKS5 监听地址；<code>-s</code> 上游地址，也就是 <strong>kcptun 客户端的 TCP 30001</strong>。</p>
+<ol start="3">
+<li>启动并设置开机启动</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl daemon-reload</span><br><span class="line">sudo systemctl start ss-server.service</span><br><span class="line">sudo systemctl <span class="built_in">enable</span> ss-server.service</span><br></pre></td></tr></table></figure>
+
 <h3 id="服务端配置"><a href="#服务端配置" class="headerlink" title="服务端配置"></a>服务端配置</h3><ol>
-<li>将<code>ssserver</code>二进制拷贝至<code>/usr/local/bin/</code>下<blockquote>
-<p>sudo cp ssserver /usr/local/bin</p>
-</blockquote>
-</li>
-<li>创建配置文件<blockquote>
-<p>sudo vim /etc/shadowsocks.json</p>
-</blockquote>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;server&quot;:&quot;::&quot;,</span><br><span class="line">    &quot;server_port&quot;:39201,</span><br><span class="line">    &quot;local_address&quot;: &quot;127.0.0.1&quot;,</span><br><span class="line">    &quot;local_port&quot;:1080,</span><br><span class="line">    &quot;password&quot;:&quot;rtqqer190&quot;,</span><br><span class="line">    &quot;timeout&quot;:300,</span><br><span class="line">    &quot;method&quot;:&quot;aes-256-gcm&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li>创建开机启动服务<blockquote>
-<p>sudo vim /lib/systemd/system/ss-server.service</p>
-</blockquote>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;shadowsocks server daemon</span><br><span class="line">After&#x3D;syslog.target network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line"># 关键就是这行，确定我们的程序文件，以及配置文件的路径</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;ssserver -c &#x2F;etc&#x2F;shadowsocks.json</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
-<li>启动服务并设置开机启动<blockquote>
-<p>systemctl start ss-server.service<br>systemctl enable ss-server.service</p>
-</blockquote>
-</li>
+<li>将 <code>ssserver</code> 拷贝至 <code>/usr/local/bin/</code> 下</li>
 </ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo cp ssserver /usr/<span class="built_in">local</span>/bin/</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>创建开机启动服务</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /lib/systemd/system/ss-server.service</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Unit]</span></span><br><span class="line"><span class="attr">Description</span>=shadowsocks server</span><br><span class="line"><span class="attr">After</span>=network-<span class="literal">on</span>line.target</span><br><span class="line"></span><br><span class="line"><span class="section">[Service]</span></span><br><span class="line"><span class="attr">Type</span>=simple</span><br><span class="line"><span class="attr">ExecStart</span>=/usr/local/bin/ssserver -b <span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">39201</span> -k <span class="string">&quot;你的密码&quot;</span> -m aes-<span class="number">256</span>-gcm</span><br><span class="line"><span class="attr">Restart</span>=<span class="literal">on</span>-abnormal</span><br><span class="line"><span class="attr">RestartSec</span>=<span class="number">5</span></span><br><span class="line"></span><br><span class="line"><span class="section">[Install]</span></span><br><span class="line"><span class="attr">WantedBy</span>=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>**这里必须绑 <code>127.0.0.1</code>**。老版本照着抄 <code>&quot;server&quot;: &quot;::&quot;</code> 会把 39201 暴露在公网，等于绕过 udp2raw + kcptun 直连 shadowsocks，既失去抗封锁效果又多一个被扫的入口。</p>
+</blockquote>
+<ol start="3">
+<li>启动并设置开机启动</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl daemon-reload</span><br><span class="line">sudo systemctl start ss-server.service</span><br><span class="line">sudo systemctl <span class="built_in">enable</span> ss-server.service</span><br></pre></td></tr></table></figure>
+
 <h2 id="kcptun搭建"><a href="#kcptun搭建" class="headerlink" title="kcptun搭建"></a>kcptun搭建</h2><ol>
-<li><p>下载kcptun已发布的版本<code>https://github.com/xtaci/kcptun/releases</code>，找一个最新版本下载即可，或者用命令<code>wget https://github.com/xtaci/kcptun/releases/download/v20220628/kcptun-linux-amd64-20220628.tar.gz</code>即可下载至本地;</p>
-</li>
-<li><p>本地压缩包解压后我们要使用的有两个文件，server_linux_amd64：kcptun的服务端，client_linux_amd64：kcptun的客户端;</p>
-<h3 id="客户端配置-1"><a href="#客户端配置-1" class="headerlink" title="客户端配置"></a>客户端配置</h3></li>
-<li><p>将<code>client_linux_amd64</code>二进制拷贝至<code>/usr/local/bin/</code>下</p>
-<blockquote>
-<p>sudo cp client_linux_amd64 /usr/local/bin</p>
-</blockquote>
-</li>
-<li><p>创建开机启动服务</p>
-<blockquote>
-<p>sudo vim /lib/systemd/system/kcptun.service</p>
-</blockquote>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;kcptun-server Service</span><br><span class="line">After&#x3D;network.target</span><br><span class="line">Wants&#x3D;network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line">PIDFile&#x3D;&#x2F;var&#x2F;run&#x2F;kcp-server.pid</span><br><span class="line"># 重要的就是下面的这句话</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;client_linux_amd64 -l :30001 -r 127.0.0.1:30001 --crypt salsa20 --key &quot;lch0719&quot; --nocomp</span><br><span class="line">Restart&#x3D;on-abnormal</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
-<li><p>启动服务并设置开机启动</p>
-<blockquote>
-<p>systemctl start kcptun.service<br>systemctl enable kcptun.service</p>
-</blockquote>
-</li>
+<li>下载 kcptun 已发布的版本 <code>https://github.com/xtaci/kcptun/releases</code>，选 <code>linux-amd64</code> 包（文件名形如 <code>kcptun-linux-amd64-&lt;日期&gt;.tar.gz</code>，日期随版本变，用最新的那个）：</li>
 </ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 以 20251017 为例，换成你下载到的实际文件名</span></span><br><span class="line">wget https://github.com/xtaci/kcptun/releases/download/v20251017/kcptun-linux-amd64-20251017.tar.gz</span><br><span class="line">tar -xf kcptun-linux-amd64-20251017.tar.gz</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>国内访问 GitHub Releases 经常失败，可以从 SourceForge 镜像拿：<code>https://sourceforge.net/projects/kcptun.mirror/files/</code>，文件完全一样。</p>
+</blockquote>
+<ol start="2">
+<li>解压后要用两个文件：<code>server_linux_amd64</code>（服务端）、<code>client_linux_amd64</code>（客户端）。</li>
+</ol>
+<h3 id="客户端配置-1"><a href="#客户端配置-1" class="headerlink" title="客户端配置"></a>客户端配置</h3><ol>
+<li>将 <code>client_linux_amd64</code> 拷贝至 <code>/usr/local/bin/</code> 下</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo cp client_linux_amd64 /usr/<span class="built_in">local</span>/bin/</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>创建开机启动服务</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /lib/systemd/system/kcptun.service</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Unit]</span></span><br><span class="line"><span class="attr">Description</span>=kcptun client</span><br><span class="line"><span class="attr">After</span>=network-<span class="literal">on</span>line.target udp2raw.service</span><br><span class="line"><span class="attr">Wants</span>=network-<span class="literal">on</span>line.target udp2raw.service</span><br><span class="line"></span><br><span class="line"><span class="section">[Service]</span></span><br><span class="line"><span class="attr">Type</span>=simple</span><br><span class="line"><span class="attr">ExecStart</span>=/usr/local/bin/client_linux_amd64 -l :<span class="number">30001</span> -r <span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">30001</span> --crypt salsa20 --key <span class="string">&quot;你的KEY&quot;</span> --nocomp --mtu <span class="number">1200</span></span><br><span class="line"><span class="attr">Restart</span>=<span class="literal">on</span>-abnormal</span><br><span class="line"><span class="attr">RestartSec</span>=<span class="number">5</span></span><br><span class="line"></span><br><span class="line"><span class="section">[Install]</span></span><br><span class="line"><span class="attr">WantedBy</span>=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<p>三个容易踩的点：</p>
+<ul>
+<li><strong><code>--mtu 1200</code> 不能省</strong>。kcptun 默认 1350，加上 28 字节 IP/UDP 头就是 1378 字节，超过 udp2raw 单包上限 1375，日志会刷 <code>huge packet,data len=1378 (&gt;=1375)</code>，表现为能连上但速度很怪。</li>
+<li><code>--nocomp</code> 必须和服务端 <code>&quot;nocomp&quot;: true</code> 一致。</li>
+<li>老版本抄来的 <code>PIDFile=/var/run/kcp-server.pid</code> 是<strong>无效行</strong>——kcptun 不写 pid 文件，<code>Type=simple</code> 下写它只会让 systemd 打警告，删掉。</li>
+</ul>
+<ol start="3">
+<li>启动并设置开机启动</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl daemon-reload</span><br><span class="line">sudo systemctl start kcptun.service</span><br><span class="line">sudo systemctl <span class="built_in">enable</span> kcptun.service</span><br></pre></td></tr></table></figure>
+
 <h3 id="服务端配置-1"><a href="#服务端配置-1" class="headerlink" title="服务端配置"></a>服务端配置</h3><ol>
-<li><p>将<code>server_linux_amd64</code>二进制拷贝至<code>/usr/local/bin/</code>下</p>
-<blockquote>
-<p>sudo cp server_linux_amd64 /usr/local/bin</p>
-</blockquote>
-</li>
-<li><p>创建配置文件</p>
-<blockquote>
-<p>sudo vim /etc/kcptun.json</p>
-</blockquote>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;listen&quot;:&quot;:8400&quot;,</span><br><span class="line">  &quot;target&quot;:&quot;127.0.0.1:39201&quot;,</span><br><span class="line">  &quot;crypt&quot;:&quot;salsa20&quot;,</span><br><span class="line">  &quot;mode&quot;:&quot;fast2&quot;,</span><br><span class="line">  &quot;key&quot;:&quot;lch0719&quot;,</span><br><span class="line">  &quot;nocomp&quot;:true,</span><br><span class="line">  &quot;keepalive&quot;:10,</span><br><span class="line">  &quot;nodelay&quot;:0,</span><br><span class="line">  &quot;mtu&quot;:1350,</span><br><span class="line">  &quot;dscp&quot;:0,</span><br><span class="line">  &quot;sockbuf&quot;:4194304,</span><br><span class="line">  &quot;nc&quot;:1,</span><br><span class="line">  &quot;resend&quot;:2,</span><br><span class="line">  &quot;parityshard&quot;:3,</span><br><span class="line">  &quot;rcvwnd&quot;:4096,</span><br><span class="line">  &quot;interval&quot;:20,</span><br><span class="line">  &quot;sndwnd&quot;:4096,</span><br><span class="line">  &quot;datashard&quot;:10</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li><p>创建开机启动服务</p>
-<blockquote>
-<p>sudo vim /lib/systemd/system/kcptun.service</p>
-</blockquote>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;kcptun-server Service</span><br><span class="line">After&#x3D;network.target</span><br><span class="line">Wants&#x3D;network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line">PIDFile&#x3D;&#x2F;var&#x2F;run&#x2F;kcp-server.pid</span><br><span class="line"># 重要的就是下面的这句话</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;kcptun -c &#x2F;etc&#x2F;kcptun.json</span><br><span class="line">Restart&#x3D;on-abnormal</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
-<li><p>启动服务并设置开机启动</p>
-<blockquote>
-<p>systemctl start kcptun.service<br>systemctl enable kcptun.service</p>
-</blockquote>
-</li>
+<li>将 <code>server_linux_amd64</code> 拷贝至 <code>/usr/local/bin/</code> 下</li>
 </ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo cp server_linux_amd64 /usr/<span class="built_in">local</span>/bin/</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>创建配置文件</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/kcptun.json</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;listen&quot;</span>: <span class="string">&quot;:8400&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;target&quot;</span>: <span class="string">&quot;127.0.0.1:39201&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;crypt&quot;</span>: <span class="string">&quot;salsa20&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;mode&quot;</span>: <span class="string">&quot;fast2&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;key&quot;</span>: <span class="string">&quot;你的KEY&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;nocomp&quot;</span>: <span class="literal">true</span>,</span><br><span class="line">  <span class="attr">&quot;mtu&quot;</span>: <span class="number">1200</span>,</span><br><span class="line">  <span class="attr">&quot;keepalive&quot;</span>: <span class="number">10</span>,</span><br><span class="line">  <span class="attr">&quot;nodelay&quot;</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">&quot;dscp&quot;</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">&quot;sockbuf&quot;</span>: <span class="number">4194304</span>,</span><br><span class="line">  <span class="attr">&quot;nc&quot;</span>: <span class="number">1</span>,</span><br><span class="line">  <span class="attr">&quot;resend&quot;</span>: <span class="number">2</span>,</span><br><span class="line">  <span class="attr">&quot;parityshard&quot;</span>: <span class="number">3</span>,</span><br><span class="line">  <span class="attr">&quot;rcvwnd&quot;</span>: <span class="number">4096</span>,</span><br><span class="line">  <span class="attr">&quot;interval&quot;</span>: <span class="number">20</span>,</span><br><span class="line">  <span class="attr">&quot;sndwnd&quot;</span>: <span class="number">4096</span>,</span><br><span class="line">  <span class="attr">&quot;datashard&quot;</span>: <span class="number">10</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>mtu</code> 两端必须一致，客户端 <code>--mtu 1200</code> 服务端就写 <code>1200</code>。<br><code>target</code> 指向本机 ssserver 的 39201，<code>listen</code> 监听 8400，两个都在回环里，不要绑 <code>0.0.0.0</code>。</p>
+</blockquote>
+<ol start="3">
+<li>创建开机启动服务</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /lib/systemd/system/kcptun.service</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Unit]</span></span><br><span class="line"><span class="attr">Description</span>=kcptun server</span><br><span class="line"><span class="attr">After</span>=network-<span class="literal">on</span>line.target ss-server.service</span><br><span class="line"><span class="attr">Wants</span>=network-<span class="literal">on</span>line.target</span><br><span class="line"></span><br><span class="line"><span class="section">[Service]</span></span><br><span class="line"><span class="attr">Type</span>=simple</span><br><span class="line"><span class="attr">ExecStart</span>=/usr/local/bin/server_linux_amd64 -c /etc/kcptun.json</span><br><span class="line"><span class="attr">Restart</span>=<span class="literal">on</span>-abnormal</span><br><span class="line"><span class="attr">RestartSec</span>=<span class="number">5</span></span><br><span class="line"></span><br><span class="line"><span class="section">[Install]</span></span><br><span class="line"><span class="attr">WantedBy</span>=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>ExecStart 里的文件名要和拷贝的文件名一致</strong>。官方包里的二进制叫 <code>server_linux_amd64</code>，不是 <code>kcptun</code>；两者不一致会直接 <code>status=203/EXEC</code> 起不来。</p>
+</blockquote>
+<ol start="4">
+<li>启动并设置开机启动</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl daemon-reload</span><br><span class="line">sudo systemctl start kcptun.service</span><br><span class="line">sudo systemctl <span class="built_in">enable</span> kcptun.service</span><br></pre></td></tr></table></figure>
+
 <h2 id="udp2raw搭建"><a href="#udp2raw搭建" class="headerlink" title="udp2raw搭建"></a>udp2raw搭建</h2><ol>
-<li><p>下载udp2raw已发布的版本<code>https://github.com/wangyu-/udp2raw-tunnel</code>，找一个最新版本下载即可;</p>
-</li>
-<li><p>本地压缩包解压后我们要使用指定架构版本<code>udp2raw_amd64</code>，udp2raw为服务端客户端一体;</p>
-<h3 id="客户端配置-2"><a href="#客户端配置-2" class="headerlink" title="客户端配置"></a>客户端配置</h3></li>
-<li><p>将<code>udp2raw_amd64</code>二进制拷贝至<code>/usr/local/bin/</code>下</p>
-<blockquote>
-<p>sudo cp client_linux_amd64 /usr/local/bin</p>
-</blockquote>
-</li>
-<li><p>创建开机启动服务</p>
-<blockquote>
-<p>sudo vim /lib/systemd/system/udp2raw.service</p>
-</blockquote>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;udp2raw-server Service</span><br><span class="line">After&#x3D;network.target</span><br><span class="line">Wants&#x3D;network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line">PIDFile&#x3D;&#x2F;var&#x2F;run&#x2F;kcp-server.pid</span><br><span class="line"># 重要的就是下面的这句话</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;udp2raw_amd64 -c -l0.0.0.0:30001 -r &lt;服务器ip地址&gt;:&lt;服务器udp端口，比如我这里就是：4096&gt; -k &quot;lch0719&quot;</span><br><span class="line">Restart&#x3D;on-abnormal</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
-<li><p>启动服务并设置开机启动</p>
-<blockquote>
-<p>systemctl start udp2raw.service<br>systemctl enable udp2raw.service</p>
-</blockquote>
-</li>
+<li>下载 udp2raw 已发布的版本 <code>https://github.com/wangyu-/udp2raw-tunnel/releases</code>；</li>
+<li>解压后使用对应架构的 <code>udp2raw_amd64</code>，udp2raw 服务端客户端是同一个文件。</li>
 </ol>
+<h3 id="客户端配置-2"><a href="#客户端配置-2" class="headerlink" title="客户端配置"></a>客户端配置</h3><ol>
+<li>将 <code>udp2raw_amd64</code> 拷贝至 <code>/usr/local/bin/</code> 下</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo cp udp2raw_amd64 /usr/<span class="built_in">local</span>/bin/</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>先看一个<strong>能跑但不够用</strong>的版本</li>
+</ol>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Service]</span></span><br><span class="line"><span class="attr">ExecStart</span>=/usr/local/bin/udp2raw_amd64 -c -l <span class="number">0.0</span>.<span class="number">0.0</span>:<span class="number">30001</span> -r 服务器IP:<span class="number">4096</span> -k <span class="string">&quot;你的KEY&quot;</span></span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>实际推荐：加 <code>--lower-level auto --source-ip --dev</code></li>
+</ol>
+<p>udp2raw 的 faketcp 是自己在二层拼包发出去的。如果本机装了 Mihomo / Clash 之类会建 TUN 设备接管全局路由的软件，内核给它选的源地址会变成 TUN 的地址（比如 <code>198.18.0.1</code>），伪 TCP 的 SYN 会被对端直接 RST，日志永远是 <code>client_tcp_handshake</code> 反复重发 SYN。</p>
+<p>需要显式告诉它走哪块网卡、用哪个源 IP：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo /usr/<span class="built_in">local</span>/bin/udp2raw_amd64 -c -l 0.0.0.0:30001 -r 服务器IP:4096 -k <span class="string">&quot;你的KEY&quot;</span> \</span><br><span class="line">    --lower-level auto --source-ip 192.168.1.23 --dev wlan0</span><br></pre></td></tr></table></figure>
+
+<p><code>--source-ip</code> 必须填<strong>主路由表里的真实局域网 IP</strong>，不是 TUN 地址；<code>--dev</code> 是对应网卡。手工写死的问题是换个 WiFi 就失效，所以做成启动时自动探测的 wrapper：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /usr/<span class="built_in">local</span>/bin/udp2raw-client</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"><span class="built_in">set</span> -eu</span><br><span class="line">SERVER=服务器IP</span><br><span class="line">REMOTE_PORT=4096</span><br><span class="line">LOCAL_PORT=30001</span><br><span class="line">KEY=<span class="string">&#x27;你的KEY&#x27;</span></span><br><span class="line">BIN=/usr/<span class="built_in">local</span>/bin/udp2raw_amd64</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">detect</span></span>() &#123;</span><br><span class="line">    dev=$(ip -o route show table main default 2&gt;/dev/null |</span><br><span class="line">          awk <span class="string">&#x27;&#123;for (i = 1; i &lt;= NF; i++) if ($i == &quot;dev&quot;) &#123;print $(i + 1); exit&#125;&#125;&#x27;</span>)</span><br><span class="line">    [ -n <span class="string">&quot;<span class="variable">$&#123;dev:-&#125;</span>&quot;</span> ] || <span class="built_in">return</span> 1</span><br><span class="line">    src=$(ip -o -4 addr show dev <span class="string">&quot;<span class="variable">$dev</span>&quot;</span> scope global 2&gt;/dev/null |</span><br><span class="line">          awk <span class="string">&#x27;&#123;print $4; exit&#125;&#x27;</span> | cut -d/ -f1)</span><br><span class="line">    [ -n <span class="string">&quot;<span class="variable">$&#123;src:-&#125;</span>&quot;</span> ] || <span class="built_in">return</span> 1</span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$dev</span> <span class="variable">$src</span>&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">tries=0</span><br><span class="line"><span class="keyword">while</span> [ <span class="string">&quot;<span class="variable">$tries</span>&quot;</span> -lt 15 ]; <span class="keyword">do</span></span><br><span class="line">    <span class="keyword">if</span> info=$(detect); <span class="keyword">then</span> DEV=<span class="variable">$&#123;info%% *&#125;</span>; SRC=<span class="variable">$&#123;info#* &#125;</span>; <span class="built_in">break</span>; <span class="keyword">fi</span></span><br><span class="line">    tries=$((tries + <span class="number">1</span>)); sleep 2</span><br><span class="line"><span class="keyword">done</span></span><br><span class="line">[ -n <span class="string">&quot;<span class="variable">$&#123;DEV:-&#125;</span>&quot;</span> ] &amp;&amp; [ -n <span class="string">&quot;<span class="variable">$&#123;SRC:-&#125;</span>&quot;</span> ] || &#123; <span class="built_in">echo</span> <span class="string">&quot;未探测到默认路由/源地址&quot;</span> &gt;&amp;2; <span class="built_in">exit</span> 1; &#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;udp2raw-client: dev=<span class="variable">$DEV</span> src=<span class="variable">$SRC</span> server=<span class="variable">$SERVER</span>:<span class="variable">$REMOTE_PORT</span>&quot;</span></span><br><span class="line"><span class="built_in">exec</span> <span class="string">&quot;<span class="variable">$BIN</span>&quot;</span> -c -l <span class="string">&quot;0.0.0.0:<span class="variable">$&#123;LOCAL_PORT&#125;</span>&quot;</span> -r <span class="string">&quot;<span class="variable">$&#123;SERVER&#125;</span>:<span class="variable">$&#123;REMOTE_PORT&#125;</span>&quot;</span> -k <span class="string">&quot;<span class="variable">$KEY</span>&quot;</span> \</span><br><span class="line">    --lower-level auto --source-ip <span class="string">&quot;<span class="variable">$SRC</span>&quot;</span> --dev <span class="string">&quot;<span class="variable">$DEV</span>&quot;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo chmod 755 /usr/<span class="built_in">local</span>/bin/udp2raw-client</span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li>开机启动服务</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /lib/systemd/system/udp2raw.service</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Unit]</span></span><br><span class="line"><span class="attr">Description</span>=udp2raw client</span><br><span class="line"><span class="attr">After</span>=network-<span class="literal">on</span>line.target</span><br><span class="line"><span class="attr">Wants</span>=network-<span class="literal">on</span>line.target</span><br><span class="line"></span><br><span class="line"><span class="section">[Service]</span></span><br><span class="line"><span class="attr">Type</span>=simple</span><br><span class="line"><span class="attr">ExecStart</span>=/usr/local/bin/udp2raw-client</span><br><span class="line"><span class="attr">Restart</span>=<span class="literal">on</span>-abnormal</span><br><span class="line"><span class="attr">RestartSec</span>=<span class="number">5</span></span><br><span class="line"></span><br><span class="line"><span class="section">[Install]</span></span><br><span class="line"><span class="attr">WantedBy</span>=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<ol start="5">
+<li>启动并设置开机启动</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl daemon-reload</span><br><span class="line">sudo systemctl start udp2raw.service</span><br><span class="line">sudo systemctl <span class="built_in">enable</span> udp2raw.service</span><br></pre></td></tr></table></figure>
+
 <h3 id="服务端配置-2"><a href="#服务端配置-2" class="headerlink" title="服务端配置"></a>服务端配置</h3><ol>
-<li><p>将<code>udp2raw_amd64</code>二进制拷贝至<code>/usr/local/bin/</code>下</p>
-<blockquote>
-<p>sudo cp server_linux_amd64 /usr/local/bin</p>
-</blockquote>
-</li>
-<li><p>创建开机启动服务</p>
-<blockquote>
-<p>sudo vim /lib/systemd/system/udp2raw.service</p>
-</blockquote>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;udp2raw-server Service</span><br><span class="line">After&#x3D;network.target</span><br><span class="line">Wants&#x3D;network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line">PIDFile&#x3D;&#x2F;var&#x2F;run&#x2F;kcp-server.pid</span><br><span class="line"># 重要的就是下面的这句话</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;udp2raw_amd64 -s -l0.0.0.0:4096 -r127.0.0.1:8400 -a -k &quot;lch0719&quot;</span><br><span class="line">Restart&#x3D;on-abnormal</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure></li>
-<li><p>启动服务并设置开机启动</p>
-<blockquote>
-<p>systemctl start udp2raw.service<br>systemctl enable udp2raw.service</p>
-</blockquote>
-</li>
+<li>将 <code>udp2raw_amd64</code> 拷贝至 <code>/usr/local/bin/</code> 下</li>
 </ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo cp udp2raw_amd64 /usr/<span class="built_in">local</span>/bin/</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>创建开机启动服务</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /lib/systemd/system/udp2raw.service</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Unit]</span></span><br><span class="line"><span class="attr">Description</span>=udp2raw server</span><br><span class="line"><span class="attr">After</span>=network-<span class="literal">on</span>line.target kcptun.service</span><br><span class="line"><span class="attr">Wants</span>=network-<span class="literal">on</span>line.target</span><br><span class="line"></span><br><span class="line"><span class="section">[Service]</span></span><br><span class="line"><span class="attr">Type</span>=simple</span><br><span class="line"><span class="attr">ExecStart</span>=/usr/local/bin/udp2raw_amd64 -s -l <span class="number">0.0</span>.<span class="number">0.0</span>:<span class="number">4096</span> -r <span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">8400</span> -a -k <span class="string">&quot;你的KEY&quot;</span></span><br><span class="line"><span class="attr">Restart</span>=<span class="literal">on</span>-abnormal</span><br><span class="line"><span class="attr">RestartSec</span>=<span class="number">5</span></span><br><span class="line"></span><br><span class="line"><span class="section">[Install]</span></span><br><span class="line"><span class="attr">WantedBy</span>=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>服务端 <code>-a</code> 会自动写 iptables 规则拦掉内核发的 RST，<strong>必须先装 iptables</strong>，否则启动直接失败：<code>sh: 1: iptables: not found</code>。<br><code>apt install iptables</code> 即可。客户端不需要 <code>-a</code>（用 <code>--lower-level</code> 直达二层就没这个问题）。</p>
+</blockquote>
+<ol start="3">
+<li>启动并设置开机启动</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl daemon-reload</span><br><span class="line">sudo systemctl start udp2raw.service</span><br><span class="line">sudo systemctl <span class="built_in">enable</span> udp2raw.service</span><br></pre></td></tr></table></figure>
+
+<h2 id="密钥必须两侧一致"><a href="#密钥必须两侧一致" class="headerlink" title="密钥必须两侧一致"></a>密钥必须两侧一致</h2><p>这是最容易出错的地方，三组独立的值、各自成对：</p>
+<table>
+<thead>
+<tr>
+<th>位置</th>
+<th>客户端</th>
+<th>服务端</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>shadowsocks 密码</td>
+<td><code>sslocal -k</code></td>
+<td><code>ssserver -k</code></td>
+</tr>
+<tr>
+<td>kcptun key / nocomp / mtu</td>
+<td><code>--key</code> <code>--nocomp</code> <code>--mtu</code></td>
+<td><code>&quot;key&quot;</code> <code>&quot;nocomp&quot;</code> <code>&quot;mtu&quot;</code></td>
+</tr>
+<tr>
+<td>udp2raw key</td>
+<td><code>-k</code></td>
+<td><code>-k</code></td>
+</tr>
+</tbody></table>
+<p>任一处不一致的典型表现：**握手看起来成功，但一拿数据就 <code>curl: (52) Empty reply from server</code>**。</p>
+<h2 id="验证链路"><a href="#验证链路" class="headerlink" title="验证链路"></a>验证链路</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 端口都在听</span></span><br><span class="line">sudo ss -lntup | grep -E <span class="string">&#x27;9872|30001|4096|8400|39201&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. udp2raw 是否握上了</span></span><br><span class="line">sudo journalctl -u udp2raw -n 30 --no-pager</span><br><span class="line"><span class="comment">#    出现 state changed from client_handshake2 to client_ready 才算通</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 走代理测通</span></span><br><span class="line">curl -sS --socks5-hostname 127.0.0.1:9872 -o /dev/null -w <span class="string">&#x27;%&#123;http_code&#125;\n&#x27;</span> https://www.google.com</span><br><span class="line">curl -sS --socks5-hostname 127.0.0.1:9872 https://ipinfo.io/ip</span><br><span class="line"><span class="comment">#    第二个命令返回的应该是你的 VPS IP</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="常见故障对照表"><a href="#常见故障对照表" class="headerlink" title="常见故障对照表"></a>常见故障对照表</h2><table>
+<thead>
+<tr>
+<th>现象</th>
+<th>原因</th>
+<th>处理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>curl: (52) Empty reply from server</code></td>
+<td>key/密码两侧不一致</td>
+<td>三组密钥逐个核对</td>
+</tr>
+<tr>
+<td>改完 unit 但行为没变</td>
+<td>只改了文件没重载</td>
+<td><code>sudo systemctl daemon-reload &amp;&amp; sudo systemctl restart 服务名</code></td>
+</tr>
+<tr>
+<td>日志刷 <code>huge packet,data len=1378 (&gt;=1375)</code></td>
+<td>kcptun mtu 太大</td>
+<td>两端都设 <code>mtu 1200</code></td>
+</tr>
+<tr>
+<td>换了 WiFi / 断了重连后就不通</td>
+<td>udp2raw 卡在死会话里，或源 IP 变了</td>
+<td><code>sudo systemctl restart udp2raw</code></td>
+</tr>
+<tr>
+<td>日志一直 <code>client_tcp_handshake</code>，反复 <code>(re)sent tcp syn</code></td>
+<td>被 TUN 接管路由，源地址选错</td>
+<td>加 <code>--lower-level auto --source-ip &lt;局域网IP&gt; --dev &lt;网卡&gt;</code></td>
+</tr>
+<tr>
+<td><code>sh: 1: iptables: not found</code></td>
+<td>用了 <code>-a</code> 但没装 iptables</td>
+<td><code>apt install iptables</code>，或去掉 <code>-a</code></td>
+</tr>
+<tr>
+<td>服务 <code>status=203/EXEC</code></td>
+<td>ExecStart 里的文件名写错</td>
+<td>二进制实际名字是 <code>server_linux_amd64</code> / <code>client_linux_amd64</code></td>
+</tr>
+<tr>
+<td>隧道通但网速极慢</td>
+<td>热点/2.4G 空口本身就是瓶颈，或 MTU 溢出丢包</td>
+<td>先按上面修 MTU，再换 5G 测</td>
+</tr>
+</tbody></table>
+<p>可选：加一个看门狗，隧道断了自动拉起 udp2raw。用 timer 每两分钟探一次 SOCKS5，不通就 restart。</p>
 <h2 id="谷歌设置shadowsock"><a href="#谷歌设置shadowsock" class="headerlink" title="谷歌设置shadowsock"></a>谷歌设置shadowsock</h2><ol>
-<li>首先下载谷歌插件<code>SwitchyOmega</code></li>
-<li><code>auto switch</code>配置规则列表网址<code>https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt</code></li>
-<li><code>proxy</code> 配置代理协议<code>Sock5</code>，代理服务器<code>127.0.0.1</code>，代理端口为刚才shadowsock端口<code>9872</code></li>
-<li>不代理列表配置<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1</span><br><span class="line">::1</span><br><span class="line">localhost</span><br></pre></td></tr></table></figure></li>
+<li>首先下载谷歌插件 <code>SwitchyOmega</code></li>
+<li><code>auto switch</code> 配置规则列表网址 <code>https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt</code></li>
+<li><code>proxy</code> 配置代理协议 <code>Socks5</code>，代理服务器 <code>127.0.0.1</code>，代理端口为刚才 shadowsock 端口 <code>9872</code></li>
+<li>不代理列表配置</li>
 </ol>
-<h2 id="终端配置科学上网"><a href="#终端配置科学上网" class="headerlink" title="终端配置科学上网"></a>终端配置科学上网</h2><blockquote>
-<p>sudo apt install proxychains4<br>sudo vim /etc/proxychains4.conf<br>在[Proxylist]下增加：sock4 127.0.0.1 9872</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1</span><br><span class="line">::1</span><br><span class="line">localhost</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Chrome 新版本只支持 Manifest V3 扩展，SwitchyOmega 2 已从 Chrome 商店下架。Firefox 上仍可正常安装，Chrome 上可以换 SmartProxy 之类的替代品，或者直接用系统代理 / 终端方式。</p>
 </blockquote>
+<h2 id="终端配置科学上网"><a href="#终端配置科学上网" class="headerlink" title="终端配置科学上网"></a>终端配置科学上网</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install proxychains4</span><br><span class="line">sudo vim /etc/proxychains4.conf</span><br></pre></td></tr></table></figure>
+
+<p>在 <code>[ProxyList]</code> 下增加（**协议名是 <code>socks5</code>，不是 <code>sock4</code>**）：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">socks5 127.0.0.1 9872</span><br></pre></td></tr></table></figure>
+
+<p>几个要点：</p>
+<ul>
+<li>段名是 <code>[ProxyList]</code>，不是 <code>[Proxylist]</code>（大小写敏感，写错整段不生效）。</li>
+<li>默认那行 <code>socks4 127.0.0.1 9050</code> 是给 tor 用的，删掉或注释，保留你自己的 <code>socks5 127.0.0.1 9872</code>。</li>
+<li>确认 <code>proxy_dns</code> 处于开启状态（新版默认就是开着的，行首没有 <code>#</code>），让域名也走代理解析，否则 DNS 泄漏且部分站点解析不到。</li>
+<li>用的时候：<code>proxychains4 curl https://www.google.com</code>。</li>
+<li>不想装 proxychains4 也可以单条命令指定：<code>curl --socks5-hostname 127.0.0.1:9872 https://www.google.com</code>。</li>
+</ul>
+<h2 id="换网络后必须做的一件事"><a href="#换网络后必须做的一件事" class="headerlink" title="换网络后必须做的一件事"></a>换网络后必须做的一件事</h2><p>因为 udp2raw 的源 IP 是启动时探测的，换了 WiFi、换了网段、或者从休眠唤醒之后：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl restart udp2raw</span><br></pre></td></tr></table></figure>
+
+<p>其它服务不用动（kcptun 和 sslocal 只是本地 TCP，不依赖网卡地址）。</p>
+<h2 id="懒人版：一键部署-deb"><a href="#懒人版：一键部署-deb" class="headerlink" title="懒人版：一键部署 deb"></a>懒人版：一键部署 deb</h2><p>上面这些手工步骤可以打包成一个 deb，在任意 amd64 Debian/Ubuntu 上一条命令装完：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo dpkg -i vpn-tunnel_1.0.0_amd64.deb</span><br></pre></td></tr></table></figure>
+
+<p>包内包含三个静态二进制、自动探测网卡源 IP 的 wrapper、看门狗 timer，以及四个 systemd 单元。所有参数集中在 <code>/etc/vpn-tunnel/tunnel.conf</code>（权限 600，作为 conffile 在卸载时保留）：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">SERVER</span>=服务器IP</span><br><span class="line"><span class="attr">UDP2RAW_REMOTE_PORT</span>=<span class="number">4096</span></span><br><span class="line"><span class="attr">UDP2RAW_KEY</span>=你的KEY</span><br><span class="line"><span class="attr">UDP2RAW_LOCAL_PORT</span>=<span class="number">30001</span></span><br><span class="line"><span class="attr">KCP_LISTEN</span>=:<span class="number">30001</span></span><br><span class="line"><span class="attr">KCP_REMOTE</span>=<span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">30001</span></span><br><span class="line"><span class="attr">KCP_KEY</span>=你的KEY</span><br><span class="line"><span class="attr">KCP_CRYPT</span>=salsa20</span><br><span class="line"><span class="attr">KCP_MTU</span>=<span class="number">1200</span></span><br><span class="line"><span class="attr">SS_LOCAL</span>=<span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">9872</span></span><br><span class="line"><span class="attr">SS_SERVER</span>=<span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">30001</span></span><br><span class="line"><span class="attr">SS_PASSWORD</span>=你的密码</span><br><span class="line"><span class="attr">SS_METHOD</span>=aes-<span class="number">256</span>-gcm</span><br></pre></td></tr></table></figure>
+
+<p>改完配置 <code>sudo systemctl restart udp2raw kcptun ss-server</code> 即可。卸载用 <code>sudo apt remove vpn-tunnel</code>（保留配置）或 <code>sudo dpkg --purge vpn-tunnel</code>（连配置一起删）。</p>
 
     </div>
 
@@ -480,7 +687,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#linux%E4%B8%8B%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA"><span class="nav-number">1.</span> <span class="nav-text">linux下科学上网简单搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E9%80%82%E8%AF%BB%E4%BA%BA%E7%BE%A4"><span class="nav-number">1.1.</span> <span class="nav-text">本文适读人群</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E8%83%BD%E5%A4%9F%E7%9F%A5%E9%81%93%E4%BB%80%E4%B9%88"><span class="nav-number">1.2.</span> <span class="nav-text">本文能够知道什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E4%B8%8D%E7%9F%A5%E9%81%93%E4%BB%80%E4%B9%88"><span class="nav-number">1.3.</span> <span class="nav-text">本文不知道什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#VPS%E8%B4%AD%E4%B9%B0"><span class="nav-number">1.4.</span> <span class="nav-text">VPS购买</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#shadowsock%E6%90%AD%E5%BB%BA"><span class="nav-number">1.5.</span> <span class="nav-text">shadowsock搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%85%8D%E7%BD%AE"><span class="nav-number">1.5.1.</span> <span class="nav-text">客户端配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%85%8D%E7%BD%AE"><span class="nav-number">1.5.2.</span> <span class="nav-text">服务端配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#kcptun%E6%90%AD%E5%BB%BA"><span class="nav-number">1.6.</span> <span class="nav-text">kcptun搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%85%8D%E7%BD%AE-1"><span class="nav-number">1.6.1.</span> <span class="nav-text">客户端配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%85%8D%E7%BD%AE-1"><span class="nav-number">1.6.2.</span> <span class="nav-text">服务端配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#udp2raw%E6%90%AD%E5%BB%BA"><span class="nav-number">1.7.</span> <span class="nav-text">udp2raw搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%85%8D%E7%BD%AE-2"><span class="nav-number">1.7.1.</span> <span class="nav-text">客户端配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%85%8D%E7%BD%AE-2"><span class="nav-number">1.7.2.</span> <span class="nav-text">服务端配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B0%B7%E6%AD%8C%E8%AE%BE%E7%BD%AEshadowsock"><span class="nav-number">1.8.</span> <span class="nav-text">谷歌设置shadowsock</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%88%E7%AB%AF%E9%85%8D%E7%BD%AE%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91"><span class="nav-number">1.9.</span> <span class="nav-text">终端配置科学上网</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#linux%E4%B8%8B%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA"><span class="nav-number">1.</span> <span class="nav-text">linux下科学上网简单搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E9%80%82%E8%AF%BB%E4%BA%BA%E7%BE%A4"><span class="nav-number">1.1.</span> <span class="nav-text">本文适读人群</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E8%83%BD%E5%A4%9F%E7%9F%A5%E9%81%93%E4%BB%80%E4%B9%88"><span class="nav-number">1.2.</span> <span class="nav-text">本文能够知道什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E4%B8%8D%E7%9F%A5%E9%81%93%E4%BB%80%E4%B9%88"><span class="nav-number">1.3.</span> <span class="nav-text">本文不知道什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%93%BE%E8%B7%AF%E6%80%BB%E8%A7%88"><span class="nav-number">1.4.</span> <span class="nav-text">链路总览</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#VPS-%E8%B4%AD%E4%B9%B0"><span class="nav-number">1.5.</span> <span class="nav-text">VPS 购买</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%98%B2%E7%81%AB%E5%A2%99%E5%8F%AA%E8%A6%81%E5%BC%80%E4%B8%80%E4%B8%AA%E5%8F%A3"><span class="nav-number">1.5.1.</span> <span class="nav-text">防火墙只要开一个口</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#shadowsocks%E6%90%AD%E5%BB%BA"><span class="nav-number">1.6.</span> <span class="nav-text">shadowsocks搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%85%8D%E7%BD%AE"><span class="nav-number">1.6.1.</span> <span class="nav-text">客户端配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%85%8D%E7%BD%AE"><span class="nav-number">1.6.2.</span> <span class="nav-text">服务端配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#kcptun%E6%90%AD%E5%BB%BA"><span class="nav-number">1.7.</span> <span class="nav-text">kcptun搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%85%8D%E7%BD%AE-1"><span class="nav-number">1.7.1.</span> <span class="nav-text">客户端配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%85%8D%E7%BD%AE-1"><span class="nav-number">1.7.2.</span> <span class="nav-text">服务端配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#udp2raw%E6%90%AD%E5%BB%BA"><span class="nav-number">1.8.</span> <span class="nav-text">udp2raw搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%85%8D%E7%BD%AE-2"><span class="nav-number">1.8.1.</span> <span class="nav-text">客户端配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%85%8D%E7%BD%AE-2"><span class="nav-number">1.8.2.</span> <span class="nav-text">服务端配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%86%E9%92%A5%E5%BF%85%E9%A1%BB%E4%B8%A4%E4%BE%A7%E4%B8%80%E8%87%B4"><span class="nav-number">1.9.</span> <span class="nav-text">密钥必须两侧一致</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%AA%8C%E8%AF%81%E9%93%BE%E8%B7%AF"><span class="nav-number">1.10.</span> <span class="nav-text">验证链路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E5%AF%B9%E7%85%A7%E8%A1%A8"><span class="nav-number">1.11.</span> <span class="nav-text">常见故障对照表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B0%B7%E6%AD%8C%E8%AE%BE%E7%BD%AEshadowsock"><span class="nav-number">1.12.</span> <span class="nav-text">谷歌设置shadowsock</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%88%E7%AB%AF%E9%85%8D%E7%BD%AE%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91"><span class="nav-number">1.13.</span> <span class="nav-text">终端配置科学上网</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8D%A2%E7%BD%91%E7%BB%9C%E5%90%8E%E5%BF%85%E9%A1%BB%E5%81%9A%E7%9A%84%E4%B8%80%E4%BB%B6%E4%BA%8B"><span class="nav-number">1.14.</span> <span class="nav-text">换网络后必须做的一件事</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%87%92%E4%BA%BA%E7%89%88%EF%BC%9A%E4%B8%80%E9%94%AE%E9%83%A8%E7%BD%B2-deb"><span class="nav-number">1.15.</span> <span class="nav-text">懒人版：一键部署 deb</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
